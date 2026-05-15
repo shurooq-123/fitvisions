@@ -34,8 +34,9 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
     try {
       setState(() => loading = true);
 
-      await AppDataService.saveMeasurements(
+      await AppDataService.saveOrUpdateMeasurements(
         measurements: {
+          'measurementType': 'bodyOnly',
           'height': heightController.text.trim(),
           'weight': weightController.text.trim(),
           'chest': chestController.text.trim(),
