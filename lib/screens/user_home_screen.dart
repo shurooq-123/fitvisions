@@ -51,7 +51,7 @@ class UserHomeScreen extends StatelessWidget {
                         ),
                       ),
 
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 9),
 
                       const Text(
                         'Try It Before You Buy It',
