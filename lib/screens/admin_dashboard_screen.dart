@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import 'admin_users_screen.dart';
+import 'admin_system_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -16,7 +19,6 @@ class AdminDashboardScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 12),
-
             Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
@@ -30,9 +32,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 28),
-
             const Text(
               'Dashboard',
               style: TextStyle(
@@ -40,13 +40,36 @@ class AdminDashboardScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 22),
 
             statBox(
               icon: Icons.groups,
               title: 'Total Users',
-              value: '1,254',
+              valueWidget: StreamBuilder<QuerySnapshot>(
+                stream:
+                    FirebaseFirestore.instance.collection('users').snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Text(
+                      '0',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Serif',
+                      ),
+                    );
+                  }
+
+                  return Text(
+                    snapshot.data!.docs.length.toString(),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Serif',
+                    ),
+                  );
+                },
+              ),
             ),
 
             const SizedBox(height: 10),
@@ -54,7 +77,36 @@ class AdminDashboardScreen extends StatelessWidget {
             statBox(
               icon: Icons.stacked_line_chart,
               title: 'Total Revenue',
-              value: '1,254 OMR',
+              valueWidget: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('payments')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  double total = 0;
+
+                  if (snapshot.hasData) {
+                    for (final doc in snapshot.data!.docs) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final amount = data['amount'];
+
+                      if (amount is int) {
+                        total += amount.toDouble();
+                      } else if (amount is double) {
+                        total += amount;
+                      }
+                    }
+                  }
+
+                  return Text(
+                    '${total.toStringAsFixed(0)} OMR',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Serif',
+                    ),
+                  );
+                },
+              ),
             ),
 
             const SizedBox(height: 10),
@@ -69,10 +121,10 @@ class AdminDashboardScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  const Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
+                      const Text(
                         'Issues',
                         style: TextStyle(
                           fontSize: 16,
@@ -80,24 +132,31 @@ class AdminDashboardScreen extends StatelessWidget {
                           fontFamily: 'Serif',
                         ),
                       ),
-                      Text(
-                        '5',
-                        style: TextStyle(fontSize: 15),
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('feedback')
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return const Text('0');
+                          }
+
+                          return Text(
+                            snapshot.data!.docs.length.toString(),
+                            style: const TextStyle(fontSize: 15),
+                          );
+                        },
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 42),
-
                   dashboardButton(
                     text: 'Manage Users',
                     onTap: () {
                       Navigator.pushNamed(context, '/adminUsers');
                     },
                   ),
-
                   const SizedBox(height: 16),
-
                   dashboardButton(
                     text: 'Manage System',
                     onTap: () {
@@ -153,7 +212,7 @@ class AdminDashboardScreen extends StatelessWidget {
   static Widget statBox({
     required IconData icon,
     required String title,
-    required String value,
+    required Widget valueWidget,
   }) {
     return Container(
       width: 250,
@@ -177,14 +236,7 @@ class AdminDashboardScreen extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Serif',
-            ),
-          ),
+          valueWidget,
         ],
       ),
     );
@@ -242,11 +294,26 @@ Widget adminBottomNav(BuildContext context, int index) {
     backgroundColor: Colors.white,
     onTap: (i) {
       if (i == 0) {
-        Navigator.pushReplacementNamed(context, '/adminDashboard');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const AdminDashboardScreen(),
+          ),
+        );
       } else if (i == 1) {
-        Navigator.pushReplacementNamed(context, '/adminUsers');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const AdminUsersScreen(),
+          ),
+        );
       } else if (i == 2) {
-        Navigator.pushReplacementNamed(context, '/adminSystem');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const AdminSystemScreen(),
+          ),
+        );
       }
     },
     items: const [
