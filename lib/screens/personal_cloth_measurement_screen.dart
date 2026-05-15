@@ -1,10 +1,139 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
-class PersonalClothMeasurementScreen extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../services/app_data_service.dart';
+import '../widgets/custom_back_button.dart';
+
+class PersonalClothMeasurementScreen extends StatefulWidget {
   const PersonalClothMeasurementScreen({super.key});
 
+  @override
+  State<PersonalClothMeasurementScreen> createState() =>
+      _PersonalClothMeasurementScreenState();
+}
+
+class _PersonalClothMeasurementScreenState
+    extends State<PersonalClothMeasurementScreen> {
   static const bg = Color(0xFFD3D9CC);
   static const brown = Color(0xFF5E4747);
+
+  final heightController = TextEditingController();
+  final weightController = TextEditingController();
+  final chestController = TextEditingController();
+  final waistController = TextEditingController();
+  final hipController = TextEditingController();
+
+  File? clothImage;
+  File? personalImage;
+
+  bool loading = false;
+
+  Future<void> pickClothImage() async {
+    final picker = ImagePicker();
+
+    final pickedImage = await picker.pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedImage == null) return;
+
+    setState(() {
+      clothImage = File(pickedImage.path);
+    });
+
+    await AppDataService.saveUploadedClothPath(pickedImage.path);
+  }
+
+  Future<void> pickPersonalImage() async {
+    final picker = ImagePicker();
+
+    final pickedImage = await picker.pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedImage == null) return;
+
+    setState(() {
+      personalImage = File(pickedImage.path);
+    });
+
+    await AppDataService.addHistory('Personal image uploaded');
+  }
+
+  Future<void> saveData() async {
+    if (clothImage == null) {
+      showMessage('Please upload cloth image');
+      return;
+    }
+
+    if (personalImage == null) {
+      showMessage('Please upload personal image');
+      return;
+    }
+
+    if (heightController.text.trim().isEmpty ||
+        weightController.text.trim().isEmpty ||
+        chestController.text.trim().isEmpty ||
+        waistController.text.trim().isEmpty ||
+        hipController.text.trim().isEmpty) {
+      showMessage('Please enter all measurements');
+      return;
+    }
+
+    try {
+      setState(() => loading = true);
+
+      await AppDataService.saveOrUpdateMeasurements(
+        measurements: {
+          'measurementType': 'personalAndCloth',
+          'height': heightController.text.trim(),
+          'weight': weightController.text.trim(),
+          'chest': chestController.text.trim(),
+          'waist': waistController.text.trim(),
+          'hip': hipController.text.trim(),
+          'clothImagePath': clothImage!.path,
+          'personalImagePath': personalImage!.path,
+        },
+      );
+
+      await AppDataService.addHistory(
+        'Personal + cloth measurements saved',
+      );
+
+      if (!mounted) return;
+
+      showMessage('Measurements saved successfully');
+
+      Navigator.pushNamed(context, '/avatar');
+    } catch (e) {
+      showMessage(e.toString());
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
+    }
+  }
+
+  void showMessage(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(text),
+        backgroundColor: brown,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    heightController.dispose();
+    weightController.dispose();
+    chestController.dispose();
+    waistController.dispose();
+    hipController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,161 +143,190 @@ class PersonalClothMeasurementScreen extends StatelessWidget {
         child: Center(
           child: SizedBox(
             width: 320,
-            child: Column(
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, size: 30),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const CustomBackButton(),
+
+                  const SizedBox(height: 10),
+
+                  Image.asset(
+                    'images/fv.png',
+                    width: 150,
                   ),
-                ),
 
-                Image.asset(
-                  'images/fv.png',
-                  width: 145,
-                ),
+                  const SizedBox(height: 12),
 
-                const SizedBox(height: 22),
-
-                const Text(
-                  'Enter your\nMeasurements',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    height: 1.1,
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                Expanded(
-                  child: Container(
-                    width: 290,
-                    padding: const EdgeInsets.fromLTRB(26, 34, 26, 16),
+                  Container(
+                    width: 295,
+                    padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF4F4F4),
-                      borderRadius: BorderRadius.circular(58),
+                      borderRadius: BorderRadius.circular(45),
                     ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        row('Height', '175    cm'),
-                        row('Weight', '55    kg'),
-                        row('Chest', '96    cm'),
-                        row('Waist', '75    cm'),
-                        row('Hips', '75    cm'),
-                        row('Upload\nphoto', ''),
-                        row('Personal\nphoto', ''),
-
-                        const Spacer(),
-
-                        SizedBox(
-                          width: 135,
-                          height: 43,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/avatar');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: brown,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(7),
-                              ),
+                        const Center(
+                          child: Text(
+                            'Personal & Cloth',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
-                            child: const Text(
-                              'Generate',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            uploadBox(
+                              title: 'Cloth Image',
+                              image: clothImage,
+                              onTap: pickClothImage,
+                            ),
+                            const SizedBox(width: 12),
+                            uploadBox(
+                              title: 'Personal Image',
+                              image: personalImage,
+                              onTap: pickPersonalImage,
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        label('Height'),
+                        field(heightController, 'cm'),
+
+                        label('Weight'),
+                        field(weightController, 'kg'),
+
+                        label('Chest'),
+                        field(chestController, 'cm'),
+
+                        label('Waist'),
+                        field(waistController, 'cm'),
+
+                        label('Hip'),
+                        field(hipController, 'cm'),
+
+                        const SizedBox(height: 20),
+
+                        Center(
+                          child: SizedBox(
+                            width: 150,
+                            height: 42,
+                            child: ElevatedButton(
+                              onPressed: loading ? null : saveData,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: brown,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
+                              child: loading
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Continue',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      bottomNavigationBar: bottomNav(context),
-    );
-  }
 
-  Widget row(String label, String hint) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 72,
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 15, height: 1.05),
-            ),
-          ),
-          Expanded(
-            child: SizedBox(
-              height: 29,
-              child: TextField(
-                textAlign: TextAlign.center,
-                decoration: InputDecoration(
-                  hintText: hint,
-                  hintStyle: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 16,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 2),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.zero,
-                    borderSide: BorderSide(color: Colors.black54),
-                  ),
-                  enabledBorder: const OutlineInputBorder(
-                    borderRadius: BorderRadius.zero,
-                    borderSide: BorderSide(color: Colors.black54),
-                  ),
-                ),
+                  const SizedBox(height: 25),
+                ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget bottomNav(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: 0,
-      selectedItemColor: Colors.black,
-      unselectedItemColor: Colors.black87,
-      backgroundColor: Colors.white,
-      onTap: (index) {
-        if (index == 0) {
-          Navigator.pushReplacementNamed(context, '/home');
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Text('🏠', style: TextStyle(fontSize: 24)),
-          label: 'Home',
+  Widget uploadBox({
+    required String title,
+    required File? image,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 120,
+        height: 105,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.black26),
+          borderRadius: BorderRadius.circular(18),
         ),
-        BottomNavigationBarItem(
-          icon: Text('🕘', style: TextStyle(fontSize: 24)),
-          label: 'History',
+        child: image == null
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.upload_file,
+                    size: 28,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                ],
+              )
+            : ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: Image.file(
+                  image,
+                  fit: BoxFit.cover,
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget label(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 7, bottom: 4),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 14),
+      ),
+    );
+  }
+
+  Widget field(TextEditingController controller, String hint) {
+    return SizedBox(
+      height: 32,
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+          hintText: hint,
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+          border: const OutlineInputBorder(),
         ),
-        BottomNavigationBarItem(
-          icon: Text('👤', style: TextStyle(fontSize: 24)),
-          label: 'Profile',
-        ),
-      ],
+      ),
     );
   }
 }

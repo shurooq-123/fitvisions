@@ -1,365 +1,285 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
-class ClothMeasurementScreen
-    extends StatelessWidget {
+import '../services/app_data_service.dart';
+import '../widgets/custom_back_button.dart';
 
-  const ClothMeasurementScreen({
-    super.key,
-  });
+class ClothMeasurementScreen extends StatefulWidget {
+  const ClothMeasurementScreen({super.key});
 
-  static const bg =
-      Color(0xFFD3D9CC);
+  @override
+  State<ClothMeasurementScreen> createState() =>
+      _ClothMeasurementScreenState();
+}
 
-  static const brown =
-      Color(0xFF5E4747);
+class _ClothMeasurementScreenState extends State<ClothMeasurementScreen> {
+  static const bg = Color(0xFFD3D9CC);
+  static const brown = Color(0xFF5E4747);
+
+  final chestController = TextEditingController();
+  final waistController = TextEditingController();
+  final shoulderController = TextEditingController();
+  final sleeveController = TextEditingController();
+  final lengthController = TextEditingController();
+
+  File? clothImage;
+  bool loading = false;
+
+  Future<void> pickClothImage() async {
+    final picker = ImagePicker();
+
+    final pickedImage = await picker.pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedImage == null) return;
+
+    setState(() {
+      clothImage = File(pickedImage.path);
+    });
+
+    await AppDataService.saveUploadedClothPath(pickedImage.path);
+  }
+
+  Future<void> saveData() async {
+    if (clothImage == null) {
+      showMessage('Please upload cloth image');
+      return;
+    }
+
+    if (chestController.text.trim().isEmpty ||
+        waistController.text.trim().isEmpty ||
+        shoulderController.text.trim().isEmpty ||
+        sleeveController.text.trim().isEmpty ||
+        lengthController.text.trim().isEmpty) {
+      showMessage('Please enter all cloth measurements');
+      return;
+    }
+
+    try {
+      setState(() => loading = true);
+
+      await AppDataService.saveOrUpdateMeasurements(
+        measurements: {
+          'measurementType': 'clothOnly',
+          'clothChest': chestController.text.trim(),
+          'clothWaist': waistController.text.trim(),
+          'clothShoulder': shoulderController.text.trim(),
+          'clothSleeve': sleeveController.text.trim(),
+          'clothLength': lengthController.text.trim(),
+          'clothImagePath': clothImage!.path,
+        },
+      );
+
+      await AppDataService.addHistory('Cloth measurements saved');
+
+      if (!mounted) return;
+
+      showMessage('Measurements saved successfully');
+
+      Navigator.pushNamed(context, '/avatar');
+    } catch (e) {
+      showMessage(e.toString());
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
+    }
+  }
+
+  void showMessage(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(text),
+        backgroundColor: brown,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    chestController.dispose();
+    waistController.dispose();
+    shoulderController.dispose();
+    sleeveController.dispose();
+    lengthController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: bg,
-
       body: SafeArea(
         child: Center(
           child: SizedBox(
             width: 320,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const CustomBackButton(),
 
-            child: Column(
-              children: [
+                  const SizedBox(height: 12),
 
-                const SizedBox(height: 10),
-
-                Align(
-                  alignment:
-                      Alignment.centerLeft,
-
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back_ios,
-                      size: 34,
-                    ),
-
-                    onPressed: () {
-                      Navigator.pop(
-                        context,
-                      );
-                    },
-                  ),
-                ),
-
-                Container(
-                  width: 235,
-                  height: 88,
-
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.blue,
-                      width: 2,
-                    ),
+                  Image.asset(
+                    'images/fv.png',
+                    width: 155,
                   ),
 
-                  child: Center(
-                    child: Image.asset(
-                      'images/fv.png',
-                      width: 145,
-                    ),
-                  ),
-                ),
+                  const SizedBox(height: 15),
 
-                const SizedBox(height: 28),
-
-                const Text(
-                  'Enter your\nMeasurements',
-
-                  textAlign: TextAlign.center,
-
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight:
-                        FontWeight.bold,
-                    height: 1.1,
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                Expanded(
-                  child: Container(
-                    width: 290,
-
-                    padding:
-                        const EdgeInsets.fromLTRB(
-                      26,
-                      38,
-                      26,
-                      20,
-                    ),
-
+                  Container(
+                    width: 295,
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 25),
                     decoration: BoxDecoration(
-                      color:
-                          const Color(
-                        0xFFF4F4F4,
-                      ),
-
-                      borderRadius:
-                          BorderRadius.circular(
-                        58,
-                      ),
+                      color: const Color(0xFFF4F4F4),
+                      borderRadius: BorderRadius.circular(45),
                     ),
-
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-
-                        row(
-                          'Height',
-                          '175    cm',
+                        const Center(
+                          child: Text(
+                            'Cloth Measurements',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
 
-                        row(
-                          'Weight',
-                          '55    kg',
+                        const SizedBox(height: 18),
+
+                        Center(
+                          child: GestureDetector(
+                            onTap: pickClothImage,
+                            child: Container(
+                              width: 150,
+                              height: 130,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(color: Colors.black26),
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: clothImage == null
+                                  ? const Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.upload_file,
+                                          size: 36,
+                                          color: Colors.grey,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Upload cloth image',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                      ],
+                                    )
+                                  : ClipRRect(
+                                      borderRadius: BorderRadius.circular(18),
+                                      child: Image.file(
+                                        clothImage!,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                            ),
+                          ),
                         ),
 
-                        row(
-                          'Chest',
-                          '96    cm',
-                        ),
+                        const SizedBox(height: 18),
 
-                        row(
-                          'Waist',
-                          '75    cm',
-                        ),
+                        label('Chest'),
+                        field(chestController, 'cm'),
 
-                        row(
-                          'Hips',
-                          '75    cm',
-                        ),
+                        label('Waist'),
+                        field(waistController, 'cm'),
 
-                        row(
-                          'Upload\nphoto',
-                          '',
-                        ),
+                        label('Shoulder'),
+                        field(shoulderController, 'cm'),
 
-                        const Spacer(),
+                        label('Sleeve'),
+                        field(sleeveController, 'cm'),
 
-                        SizedBox(
-                          width: 135,
-                          height: 43,
+                        label('Length'),
+                        field(lengthController, 'cm'),
 
-                          child: ElevatedButton(
-                            onPressed: () {
+                        const SizedBox(height: 22),
 
-                              Navigator.pushNamed(
-                                context,
-                                '/subscription',
-                              );
-                            },
-
-                            style:
-                                ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  brown,
-
-                              elevation: 0,
-
-                              shape:
-                                  RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(
-                                  7,
+                        Center(
+                          child: SizedBox(
+                            width: 150,
+                            height: 42,
+                            child: ElevatedButton(
+                              onPressed: loading ? null : saveData,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: brown,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                            ),
-
-                            child: const Text(
-                              'Continue',
-
-                              style: TextStyle(
-                                color:
-                                    Colors.white,
-
-                                fontWeight:
-                                    FontWeight
-                                        .bold,
-                              ),
+                              child: loading
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Continue',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 25),
+                ],
+              ),
             ),
           ),
         ),
       ),
-
-      bottomNavigationBar:
-          bottomNav(context),
     );
   }
 
-  Widget row(
-    String label,
-    String hint,
-  ) {
-
+  Widget label(String text) {
     return Padding(
-      padding:
-          const EdgeInsets.only(
-        bottom: 16,
-      ),
-
-      child: Row(
-        children: [
-
-          SizedBox(
-            width: 72,
-
-            child: Text(
-              label,
-
-              style: const TextStyle(
-                fontSize: 15,
-                height: 1.05,
-              ),
-            ),
-          ),
-
-          Expanded(
-            child: SizedBox(
-              height: 29,
-
-              child: TextField(
-                textAlign:
-                    TextAlign.center,
-
-                decoration:
-                    InputDecoration(
-                  hintText: hint,
-
-                  hintStyle:
-                      const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 16,
-                  ),
-
-                  contentPadding:
-                      const EdgeInsets
-                          .symmetric(
-                    vertical: 2,
-                  ),
-
-                  filled: true,
-                  fillColor:
-                      Colors.white,
-
-                  border:
-                      const OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.zero,
-
-                    borderSide:
-                        BorderSide(
-                      color:
-                          Colors.black54,
-                    ),
-                  ),
-
-                  enabledBorder:
-                      const OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.zero,
-
-                    borderSide:
-                        BorderSide(
-                      color:
-                          Colors.black54,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.only(top: 8, bottom: 4),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 14),
       ),
     );
   }
 
-  Widget bottomNav(
-    BuildContext context,
-  ) {
-
-    return BottomNavigationBar(
-      currentIndex: 0,
-
-      selectedItemColor:
-          Colors.black,
-
-      unselectedItemColor:
-          Colors.black87,
-
-      backgroundColor:
-          Colors.white,
-
-      onTap: (index) {
-
-        if (index == 0) {
-
-          Navigator.pushReplacementNamed(
-            context,
-            '/tryOnMethod',
-          );
-
-        } else if (index == 1) {
-
-          Navigator.pushNamed(
-            context,
-            '/history',
-          );
-
-        } else if (index == 2) {
-
-          Navigator.pushNamed(
-            context,
-            '/profile',
-          );
-        }
-      },
-
-      items: const [
-
-        BottomNavigationBarItem(
-          icon: Text(
-            '🏠',
-            style:
-                TextStyle(fontSize: 24),
-          ),
-
-          label: 'Home',
+  Widget field(TextEditingController controller, String hint) {
+    return SizedBox(
+      height: 34,
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+          hintText: hint,
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+          border: const OutlineInputBorder(),
         ),
-
-        BottomNavigationBarItem(
-          icon: Text(
-            '🕘',
-            style:
-                TextStyle(fontSize: 24),
-          ),
-
-          label: 'History',
-        ),
-
-        BottomNavigationBarItem(
-          icon: Text(
-            '👤',
-            style:
-                TextStyle(fontSize: 24),
-          ),
-
-          label: 'Profile',
-        ),
-      ],
+      ),
     );
   }
 }

@@ -1,271 +1,128 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../services/app_data_service.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
 
   static const bg = Color(0xFFD3D9CC);
+  static const purple = Color(0xFF51227D);
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: bg,
-
       body: SafeArea(
         child: Column(
           children: [
-
-            const SizedBox(height: 10),
-
-            Align(
-              alignment: Alignment.centerLeft,
-
-              child: IconButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-
-                icon: const Icon(
-                  Icons.arrow_back_ios,
-                  size: 34,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
+            const SizedBox(height: 55),
             const Text(
               'History',
-
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
+            const SizedBox(height: 25),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: AppDataService.userHistoryStream(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
 
-            const SizedBox(height: 20),
+                  final items = snapshot.data!.docs;
 
-            item(
-              image: 'images/fv1.png',
-              title: 'White Dishdasha',
-              date: 'Apr 21, 2025',
-            ),
+                  if (items.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No history yet',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    );
+                  }
 
-            item(
-              image: 'images/fv2.png',
-              title: 'Casual Outfit',
-              date: 'Apr 18, 2025',
-            ),
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 25),
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final data =
+                          items[index].data() as Map<String, dynamic>;
 
-            item(
-              image: 'images/fv3.png',
-              title: 'Black Abaya',
-              date: 'Apr 15, 2025',
-            ),
+                      final title = data['title'] ?? 'Activity';
 
-            const Spacer(),
-
-            Container(
-              width: 220,
-              height: 45,
-
-              decoration: BoxDecoration(
-                color:
-                    const Color(0xFFF4F4F4),
-
-                borderRadius:
-                    BorderRadius.circular(30),
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF4F4F4),
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.history,
+                              color: purple,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: Text(
+                                title,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
-
-              child: const Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
-
-                children: [
-
-                  Text(
-                    'View Details',
-
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
-
-                  SizedBox(width: 28),
-
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 34,
-                    color: Colors.brown,
-                  ),
-                ],
-              ),
             ),
-
-            const SizedBox(height: 35),
           ],
         ),
       ),
-
-      bottomNavigationBar:
-          BottomNavigationBar(
-
-        currentIndex: 1,
-
-        selectedItemColor:
-            Colors.black,
-
-        unselectedItemColor:
-            Colors.black87,
-
-        backgroundColor:
-            Colors.white,
-
-        type:
-            BottomNavigationBarType.fixed,
-
-        onTap: (index) {
-
-          if (index == 0) {
-
-            Navigator.pushNamed(
-              context,
-              '/tryOnMethod',
-            );
-
-          } else if (index == 1) {
-
-            Navigator.pushNamed(
-              context,
-              '/history',
-            );
-
-          } else if (index == 2) {
-
-            Navigator.pushNamed(
-              context,
-              '/profile',
-            );
-          }
-        },
-
-        items: const [
-
-          BottomNavigationBarItem(
-            icon: Text(
-              '🏠',
-              style:
-                  TextStyle(fontSize: 24),
-            ),
-
-            label: 'Home',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Text(
-              '🕘',
-              style:
-                  TextStyle(fontSize: 24),
-            ),
-
-            label: 'History',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Text(
-              '👤',
-              style:
-                  TextStyle(fontSize: 24),
-            ),
-
-            label: 'Profile',
-          ),
-        ],
-      ),
+      bottomNavigationBar: bottomNav(context),
     );
   }
 
-  Widget item({
-    required String image,
-    required String title,
-    required String date,
-  }) {
-
-    return Container(
-      margin:
-          const EdgeInsets.only(
-        bottom: 14,
-      ),
-
-      width: 300,
-      height: 95,
-
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 18,
-      ),
-
-      decoration: BoxDecoration(
-        color:
-            const Color(0xFFF4F4F4),
-
-        borderRadius:
-            BorderRadius.circular(28),
-      ),
-
-      child: Row(
-        children: [
-
-          Image.asset(
-            image,
-            width: 60,
-            height: 70,
-            fit: BoxFit.contain,
-          ),
-
-          const SizedBox(width: 18),
-
-          Expanded(
-            child: Column(
-              mainAxisAlignment:
-                  MainAxisAlignment.center,
-
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-
-              children: [
-
-                Text(
-                  title,
-
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight:
-                        FontWeight.w500,
-                  ),
-                ),
-
-                Text(
-                  date,
-
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const Icon(
-            Icons.arrow_forward_ios,
-            size: 34,
-            color: Colors.grey,
-          ),
-        ],
-      ),
+  Widget bottomNav(BuildContext context) {
+    return BottomNavigationBar(
+      currentIndex: 2,
+      selectedItemColor: Colors.black,
+      unselectedItemColor: Colors.black,
+      backgroundColor: Colors.white,
+      type: BottomNavigationBarType.fixed,
+      onTap: (index) {
+        if (index == 0) {
+          Navigator.pushReplacementNamed(context, '/tryOnMethod');
+        } else if (index == 1) {
+          Navigator.pushReplacementNamed(context, '/profile');
+        } else if (index == 2) {
+          Navigator.pushReplacementNamed(context, '/history');
+        }
+      },
+      items: const [
+        BottomNavigationBarItem(
+          icon: Text('🏠', style: TextStyle(fontSize: 28)),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Text('👤', style: TextStyle(fontSize: 28)),
+          label: 'Profile',
+        ),
+        BottomNavigationBarItem(
+          icon: Text('🕘', style: TextStyle(fontSize: 28)),
+          label: 'History',
+        ),
+      ],
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'admin_dashboard_screen.dart';
 
@@ -5,6 +6,7 @@ class AdminSystemScreen extends StatelessWidget {
   const AdminSystemScreen({super.key});
 
   static const bg = Color(0xFFD3D9CC);
+  static const purple = Color(0xFF51227D);
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +16,6 @@ class AdminSystemScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 12),
-
             Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
@@ -28,9 +29,7 @@ class AdminSystemScreen extends StatelessWidget {
                 ),
               ),
             ),
-
-            const SizedBox(height: 38),
-
+            const SizedBox(height: 25),
             const Text(
               'Manage System',
               style: TextStyle(
@@ -38,55 +37,18 @@ class AdminSystemScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
-            const SizedBox(height: 32),
-
-            Container(
-              width: 285,
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF4F4F4),
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: Column(
+            const SizedBox(height: 22),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
                 children: [
-                  const Text(
-                    'Clothes',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Serif',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  row(Icons.add_box, 'Add'),
-                  row(Icons.edit_square, 'Edit'),
-                  row(Icons.delete, 'Delete'),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            Container(
-              width: 285,
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF4F4F4),
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: Column(
-                children: [
-                  const Text(
-                    'feedback',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Serif',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  row(Icons.flag, 'View Issues'),
+                  sectionTitle('Feedback Issues'),
+                  const SizedBox(height: 12),
+                  feedbackList(),
+                  const SizedBox(height: 22),
+                  sectionTitle('Clothes'),
+                  const SizedBox(height: 12),
+                  clothesCard(),
                 ],
               ),
             ),
@@ -94,6 +56,100 @@ class AdminSystemScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: adminBottomNav(context, 2),
+    );
+  }
+
+  Widget sectionTitle(String title) {
+    return Center(
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          fontFamily: 'Serif',
+        ),
+      ),
+    );
+  }
+
+  Widget feedbackList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('feedback')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        final feedbacks = snapshot.data!.docs;
+
+        if (feedbacks.isEmpty) {
+          return Container(
+            width: 285,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F4),
+              borderRadius: BorderRadius.circular(25),
+            ),
+            child: const Center(
+              child: Text('No feedback yet'),
+            ),
+          );
+        }
+
+        return Column(
+          children: feedbacks.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final email = data['email'] ?? 'Unknown user';
+            final message = data['message'] ?? '';
+
+            return Container(
+              width: 285,
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF4F4F4),
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.flag, color: purple),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '$email\n$message',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget clothesCard() {
+    return Container(
+      width: 285,
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F4F4),
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Column(
+        children: [
+          row(Icons.add_box, 'Add'),
+          row(Icons.edit_square, 'Edit'),
+          row(Icons.delete, 'Delete'),
+        ],
+      ),
     );
   }
 
