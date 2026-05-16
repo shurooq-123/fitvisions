@@ -93,7 +93,7 @@ class _TryOnMethodScreenState
                   index: 1,
 
                   text:
-                      'Photo of cloth +\nMeasurements',
+                      'Photo of cloth',
                 ),
 
                 const SizedBox(height: 35),
@@ -102,7 +102,7 @@ class _TryOnMethodScreenState
                   index: 2,
 
                   text:
-                      'Personal Photo + Photo of\ncloth + Measurements',
+                      'Personal Photo',
                 ),
 
                 const Spacer(),

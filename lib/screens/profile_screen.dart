@@ -19,9 +19,7 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: bg,
       body: SafeArea(
         child: user == null
-            ? const Center(
-                child: Text('No user logged in'),
-              )
+            ? const Center(child: Text('No user logged in'))
             : FutureBuilder<DocumentSnapshot>(
                 future: FirebaseFirestore.instance
                     .collection('users')
@@ -29,9 +27,7 @@ class ProfileScreen extends StatelessWidget {
                     .get(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
+                    return const Center(child: CircularProgressIndicator());
                   }
 
                   final data =
@@ -41,13 +37,13 @@ class ProfileScreen extends StatelessWidget {
                   final lastName = data?['lastName'] ?? '';
                   final email = data?['email'] ?? user.email ?? '';
                   final phone = data?['phone'] ?? '';
-
                   final fullName = '$firstName $lastName'.trim();
 
                   return SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 20),
                     child: Column(
                       children: [
-                        const SizedBox(height: 70),
+                        const SizedBox(height: 35),
 
                         const Text(
                           'Profile',
@@ -57,75 +53,53 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
 
-                        const SizedBox(height: 35),
+                        const SizedBox(height: 25),
 
                         Container(
                           width: 315,
-                          padding: const EdgeInsets.fromLTRB(
-                            22,
-                            28,
-                            22,
-                            22,
-                          ),
+                          padding: const EdgeInsets.fromLTRB(18, 24, 18, 22),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF4F4F4),
-                            borderRadius: BorderRadius.circular(45),
+                            borderRadius: BorderRadius.circular(42),
                           ),
                           child: Column(
                             children: [
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 18),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Edit :',
-                                        style: TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-
-                                      const SizedBox(height: 15),
-
-                                      Text(
-                                        fullName.isEmpty
-                                            ? 'User Name'
-                                            : fullName,
-                                        style: const TextStyle(
-                                          fontSize: 22,
-                                        ),
-                                      ),
-
-                                      const SizedBox(height: 8),
-
-                                      Text(
-                                        email,
-                                        style: const TextStyle(
-                                          fontSize: 22,
-                                        ),
-                                      ),
-
-                                      const SizedBox(height: 8),
-
-                                      Text(
-                                        phone.isEmpty
-                                            ? '+968 --------'
-                                            : '+968 $phone',
-                                        style: const TextStyle(
-                                          fontSize: 22,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                              const Text(
+                                'Edit :',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
 
-                              const SizedBox(height: 25),
+                              const SizedBox(height: 12),
+
+                              Text(
+                                fullName.isEmpty ? 'User Name' : fullName,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 20),
+                              ),
+
+                              const SizedBox(height: 6),
+
+                              Text(
+                                email,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 18),
+                              ),
+
+                              const SizedBox(height: 6),
+
+                              Text(
+                                phone.isEmpty ? '+968 --------' : '+968 $phone',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.black54,
+                                ),
+                              ),
+
+                              const SizedBox(height: 22),
 
                               menuBox([
                                 menuRow(
@@ -139,8 +113,7 @@ class ProfileScreen extends StatelessWidget {
                                   icon: Icons.workspace_premium,
                                   text: 'Subscription',
                                   onTap: () {
-                                    Navigator.pushNamed(
-                                        context, '/subscription');
+                                    Navigator.pushNamed(context, '/subscription');
                                   },
                                 ),
                                 menuRow(
@@ -153,7 +126,7 @@ class ProfileScreen extends StatelessWidget {
                                 ),
                               ]),
 
-                              const SizedBox(height: 18),
+                              const SizedBox(height: 16),
 
                               menuBox([
                                 darkModeRow(),
@@ -178,11 +151,11 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
 
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 22),
 
                         SizedBox(
-                          width: 150,
-                          height: 55,
+                          width: 145,
+                          height: 50,
                           child: ElevatedButton(
                             onPressed: () async {
                               await AuthService.logout();
@@ -206,14 +179,12 @@ class ProfileScreen extends StatelessWidget {
                               'Logout',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 24,
+                                fontSize: 22,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
                         ),
-
-                        const SizedBox(height: 20),
                       ],
                     ),
                   );
@@ -228,11 +199,9 @@ class ProfileScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.black),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(26),
       ),
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 
@@ -245,30 +214,24 @@ class ProfileScreen extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        height: 52,
+        height: 48,
         decoration: BoxDecoration(
           border: isLast
               ? null
               : const Border(
-                  bottom: BorderSide(
-                    color: Colors.black26,
-                  ),
+                  bottom: BorderSide(color: Colors.black26),
                 ),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 22),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: purple,
-              size: 28,
-            ),
-            const SizedBox(width: 22),
+            Icon(icon, color: purple, size: 25),
+            const SizedBox(width: 18),
             Expanded(
               child: Text(
                 text,
                 style: const TextStyle(
-                  fontSize: 22,
+                  fontSize: 19,
                   fontFamily: 'Serif',
                 ),
               ),
@@ -276,7 +239,7 @@ class ProfileScreen extends StatelessWidget {
             const Icon(
               Icons.arrow_forward_ios,
               color: Colors.grey,
-              size: 36,
+              size: 26,
             ),
           ],
         ),
@@ -286,28 +249,19 @@ class ProfileScreen extends StatelessWidget {
 
   Widget darkModeRow() {
     return Container(
-      height: 52,
+      height: 48,
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.black26),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.black26)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Row(
         children: [
-          const Icon(
-            Icons.dark_mode,
-            color: purple,
-            size: 28,
-          ),
-          const SizedBox(width: 22),
+          const Icon(Icons.dark_mode, color: purple, size: 25),
+          const SizedBox(width: 18),
           const Expanded(
             child: Text(
               'Dark Mode',
-              style: TextStyle(
-                fontSize: 22,
-                fontFamily: 'Serif',
-              ),
+              style: TextStyle(fontSize: 19, fontFamily: 'Serif'),
             ),
           ),
           Switch(
@@ -338,24 +292,15 @@ class ProfileScreen extends StatelessWidget {
       },
       items: const [
         BottomNavigationBarItem(
-          icon: Text(
-            '🏠',
-            style: TextStyle(fontSize: 28),
-          ),
+          icon: Text('🏠', style: TextStyle(fontSize: 26)),
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Text(
-            '👤',
-            style: TextStyle(fontSize: 28),
-          ),
+          icon: Text('👤', style: TextStyle(fontSize: 26)),
           label: 'Profile',
         ),
         BottomNavigationBarItem(
-          icon: Text(
-            '🕘',
-            style: TextStyle(fontSize: 28),
-          ),
+          icon: Text('🕘', style: TextStyle(fontSize: 26)),
           label: 'History',
         ),
       ],
