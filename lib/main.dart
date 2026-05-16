@@ -21,7 +21,7 @@ import 'screens/personal_cloth_measurement_screen.dart';
 import 'screens/feedback_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/profile_screen.dart';
-import 'screens/phone_reset_screen.dart';
+
 import 'screens/admin_users_screen.dart';
 import 'screens/admin_system_screen.dart';
 
@@ -68,7 +68,7 @@ class FitVisionsApp extends StatelessWidget {
         '/feedback': (context) => const FeedbackScreen(),
         '/history': (context) => const HistoryScreen(),
         '/profile': (context) => const ProfileScreen(),
-        '/phoneReset': (context) => const PhoneResetScreen(),
+      
         '/adminUsers': (context) => const AdminUsersScreen(),
         '/adminSystem': (context) => const AdminSystemScreen(),
       },

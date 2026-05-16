@@ -1,317 +1,168 @@
 import 'package:flutter/material.dart';
+import '../services/app_data_service.dart';
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
 
   @override
-  State<FeedbackScreen> createState() =>
-      _FeedbackScreenState();
+  State<FeedbackScreen> createState() => _FeedbackScreenState();
 }
 
-class _FeedbackScreenState
-    extends State<FeedbackScreen> {
-
+class _FeedbackScreenState extends State<FeedbackScreen> {
   static const bg = Color(0xFFD3D9CC);
   static const brown = Color(0xFF5E4747);
 
-  final feedbackController =
-      TextEditingController();
+  final feedbackController = TextEditingController();
+  int rating = 5;
+  bool loading = false;
 
-  int selectedStars = 5;
+  Future<void> submitFeedback() async {
+    final message = feedbackController.text.trim();
+
+    if (message.isEmpty) {
+      showMessage('Please write your feedback');
+      return;
+    }
+
+    try {
+      setState(() => loading = true);
+
+      await AppDataService.sendFeedback('Rating: $rating\n$message');
+
+      if (!mounted) return;
+
+      feedbackController.clear();
+
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Feedback Sent'),
+            content: const Text('Thank you, your feedback has been sent.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushReplacementNamed(context, '/history');
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      showMessage(e.toString());
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  void showMessage(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(text), backgroundColor: brown),
+    );
+  }
+
+  @override
+  void dispose() {
+    feedbackController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: bg,
-
       body: SafeArea(
-        child: Column(
-          children: [
-
-            const SizedBox(height: 10),
-
-            Align(
-              alignment: Alignment.centerLeft,
-
-              child: IconButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-
-                icon: const Icon(
-                  Icons.arrow_back_ios,
-                  size: 34,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 35),
-
-            const Text(
-              'Feedback',
-
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 28),
-
-            Container(
-              width: 300,
-              height: 390,
-
-              padding:
-                  const EdgeInsets.fromLTRB(
-                24,
-                30,
-                24,
-                25,
-              ),
-
-              decoration: BoxDecoration(
-                color:
-                    const Color(0xFFF4F4F4),
-
-                borderRadius:
-                    BorderRadius.circular(45),
-              ),
-
+        child: Center(
+          child: SizedBox(
+            width: 320,
+            child: SingleChildScrollView(
               child: Column(
                 children: [
-
+                  const SizedBox(height: 55),
                   const Text(
-                    'Rate Your Experience',
-
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight:
-                          FontWeight.w500,
-                    ),
+                    'Feedback',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
-
-                  const SizedBox(height: 18),
-
-                  Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center,
-
-                    children: List.generate(
-                      5,
-
-                      (index) {
-
-                        return GestureDetector(
-                          onTap: () {
-
-                            setState(() {
-                              selectedStars =
-                                  index + 1;
-                            });
-                          },
-
-                          child: Icon(
-                            Icons.star,
-
-                            size: 42,
-
-                            color:
-                                index <
-                                        selectedStars
-                                    ? Colors.amber
-                                    : Colors.grey,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  const Align(
-                    alignment:
-                        Alignment.centerLeft,
-
-                    child: Text(
-                      'Write the feedback :',
-
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight:
-                            FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
+                  const SizedBox(height: 30),
                   Container(
-                    width: double.infinity,
-                    height: 140,
-
+                    width: 295,
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.black54,
-                      ),
+                      color: const Color(0xFFF4F4F4),
+                      borderRadius: BorderRadius.circular(45),
                     ),
-
-                    child: TextField(
-                      controller:
-                          feedbackController,
-
-                      maxLines: null,
-
-                      expands: true,
-
-                      decoration:
-                          const InputDecoration(
-                        border:
-                            InputBorder.none,
-
-                        contentPadding:
-                            EdgeInsets.all(10),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  SizedBox(
-                    width: 135,
-                    height: 44,
-
-                    child: ElevatedButton(
-                      onPressed: () {
-
-                        Navigator.pushNamed(
-                          context,
-                          '/history',
-                        );
-                      },
-
-                      style:
-                          ElevatedButton.styleFrom(
-                        backgroundColor:
-                            brown,
-
-                        elevation: 0,
-
-                        shape:
-                            RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius
-                                  .circular(7),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Rate Your Experience',
+                          style: TextStyle(fontSize: 24),
                         ),
-                      ),
-
-                      child: const Text(
-                        'Submit',
-
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight:
-                              FontWeight.bold,
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(5, (index) {
+                            return IconButton(
+                              onPressed: () {
+                                setState(() => rating = index + 1);
+                              },
+                              icon: Icon(
+                                index < rating ? Icons.star : Icons.star_border,
+                                color: Colors.amber,
+                                size: 34,
+                              ),
+                            );
+                          }),
                         ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  const Text(
-                    'Your feedback helps us improve\nthe app !!',
-
-                    textAlign: TextAlign.center,
-
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
+                        const SizedBox(height: 10),
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Write the feedback:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: feedbackController,
+                          maxLines: 6,
+                          decoration: const InputDecoration(
+                            filled: true,
+                            fillColor: Color(0xFFEFF3FF),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: 145,
+                          height: 42,
+                          child: ElevatedButton(
+                            onPressed: loading ? null : submitFeedback,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: brown,
+                            ),
+                            child: loading
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white)
+                                : const Text(
+                                    'Submit',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
-
-      bottomNavigationBar:
-          BottomNavigationBar(
-
-        currentIndex: 1,
-
-        selectedItemColor:
-            Colors.black,
-
-        unselectedItemColor:
-            Colors.black87,
-
-        backgroundColor:
-            Colors.white,
-
-        type:
-            BottomNavigationBarType.fixed,
-
-        onTap: (index) {
-
-          if (index == 0) {
-
-            Navigator.pushNamed(
-              context,
-              '/tryOnMethod',
-            );
-
-          } else if (index == 1) {
-
-            Navigator.pushNamed(
-              context,
-              '/history',
-            );
-
-          } else if (index == 2) {
-
-            Navigator.pushNamed(
-              context,
-              '/profile',
-            );
-          }
-        },
-
-        items: const [
-
-          BottomNavigationBarItem(
-            icon: Text(
-              '🏠',
-              style:
-                  TextStyle(fontSize: 24),
-            ),
-
-            label: 'Home',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Text(
-              '🕘',
-              style:
-                  TextStyle(fontSize: 24),
-            ),
-
-            label: 'History',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Text(
-              '👤',
-              style:
-                  TextStyle(fontSize: 24),
-            ),
-
-            label: 'Profile',
-          ),
-        ],
       ),
     );
   }
