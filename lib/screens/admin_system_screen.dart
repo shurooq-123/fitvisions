@@ -41,23 +41,42 @@ class AdminSystemScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 22),
+            const SizedBox(height: 24),
 
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 18),
                 children: [
-                  sectionTitle('Subscription Plans'),
 
-                  const SizedBox(height: 12),
+                  // Subscription Plans
+                  const Center(
+                    child: Text(
+                      'Subscription Plans',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
 
                   plansCard(context),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
 
-                  sectionTitle('Feedback Issues'),
+                  // Feedback
+                  const Center(
+                    child: Text(
+                      'Feedback Issues',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
                   feedbackList(),
                 ],
@@ -66,51 +85,55 @@ class AdminSystemScreen extends StatelessWidget {
           ],
         ),
       ),
+
       bottomNavigationBar: adminBottomNav(context, 2),
     );
   }
 
-  Widget sectionTitle(String title) {
-    return Center(
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 19,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
+  // ONE BOX ONLY
   Widget plansCard(BuildContext context) {
-    return Container(
-      width: 285,
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4F4F4),
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Column(
-        children: [
-          row(
-            context,
-            Icons.add_box,
-            'Add Plan',
-            '/adminAddPlan',
-          ),
-          row(
-            context,
-            Icons.edit_square,
-            'Edit Plans',
-            '/adminPlans',
-          ),
-          row(
-            context,
-            Icons.delete,
-            'Delete Plans',
-            '/adminPlans',
-          ),
-        ],
+    return InkWell(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          '/adminPlans',
+        );
+      },
+      child: Container(
+        width: 285,
+        height: 90,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF4F4F4),
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: const Row(
+          children: [
+            Icon(
+              Icons.workspace_premium,
+              color: Colors.grey,
+              size: 30,
+            ),
+
+            SizedBox(width: 18),
+
+            Expanded(
+              child: Text(
+                'Manage Subscription Plans',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+
+            Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.grey,
+              size: 24,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -150,8 +173,15 @@ class AdminSystemScreen extends StatelessWidget {
         return Column(
           children: feedbacks.map((doc) {
             final data = doc.data() as Map<String, dynamic>;
-            final email = data['email'] ?? 'Unknown user';
-            final message = data['message'] ?? '';
+
+            final email =
+                data['email'] ?? 'Unknown user';
+
+            final rating =
+                data['rating'] ?? 0;
+
+            final message =
+                data['message'] ?? '';
 
             return Container(
               width: 285,
@@ -162,17 +192,23 @@ class AdminSystemScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(25),
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
+
                   const Icon(
                     Icons.flag,
                     color: purple,
                   ),
+
                   const SizedBox(width: 12),
+
                   Expanded(
                     child: Text(
-                      '$email\n$message',
-                      style: const TextStyle(fontSize: 13),
+                      '$email\nRating: $rating\n$message',
+                      style: const TextStyle(
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],
@@ -181,48 +217,6 @@ class AdminSystemScreen extends StatelessWidget {
           }).toList(),
         );
       },
-    );
-  }
-
-  Widget row(
-    BuildContext context,
-    IconData icon,
-    String title,
-    String route,
-  ) {
-    return InkWell(
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          route,
-        );
-      },
-      child: SizedBox(
-        height: 52,
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: Colors.grey,
-              size: 23,
-            ),
-            const SizedBox(width: 25),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.grey,
-              size: 26,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

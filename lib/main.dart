@@ -5,9 +5,15 @@ import 'screens/welcome_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/forgot_password_screen.dart';
+
 import 'screens/admin_login_screen.dart';
 import 'screens/admin_forgot_password_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
+import 'screens/admin_users_screen.dart';
+import 'screens/admin_system_screen.dart';
+import 'screens/admin_plans_screen.dart';
+
+
 import 'screens/user_home_screen.dart';
 import 'screens/avatar_screen.dart';
 import 'screens/measurement_screen.dart';
@@ -21,9 +27,6 @@ import 'screens/personal_cloth_measurement_screen.dart';
 import 'screens/feedback_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/profile_screen.dart';
-
-import 'screens/admin_users_screen.dart';
-import 'screens/admin_system_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,9 +54,7 @@ class FitVisionsApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/forgot': (context) => const ForgotPasswordScreen(),
-        '/adminLogin': (context) => const AdminLoginScreen(),
-        '/adminForgot': (context) => const AdminForgotPasswordScreen(),
-        '/adminDashboard': (context) => const AdminDashboardScreen(),
+
         '/home': (context) => const UserHomeScreen(),
         '/avatar': (context) => const AvatarScreen(),
         '/measurement': (context) => const MeasurementScreen(),
@@ -68,9 +69,15 @@ class FitVisionsApp extends StatelessWidget {
         '/feedback': (context) => const FeedbackScreen(),
         '/history': (context) => const HistoryScreen(),
         '/profile': (context) => const ProfileScreen(),
-      
+
+        '/adminLogin': (context) => const AdminLoginScreen(),
+        '/adminForgot': (context) => const AdminForgotPasswordScreen(),
+        '/adminDashboard': (context) => const AdminDashboardScreen(),
         '/adminUsers': (context) => const AdminUsersScreen(),
         '/adminSystem': (context) => const AdminSystemScreen(),
+
+        '/adminPlans': (context) => const AdminPlansScreen(),
+   
       },
     );
   }
