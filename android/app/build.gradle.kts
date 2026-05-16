@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.example.fitvisions"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.fitvisions"
         minSdk = 23
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

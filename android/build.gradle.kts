@@ -1,33 +1,22 @@
-android {
-    namespace = "com.example.fitvisions"
-
-    compileSdk = 35
-
-    ndkVersion = flutter.ndkVersion
-
-    defaultConfig {
-        applicationId = "com.example.fitvisions"
-
-        minSdk = 21
-
-        targetSdk = 35
-
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
     }
+}
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
+val newBuildDir = rootProject.layout.buildDirectory.dir("../../build").get()
+rootProject.layout.buildDirectory.set(newBuildDir)
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+subprojects {
+    val newSubprojectBuildDir = newBuildDir.dir(project.name)
+    project.layout.buildDirectory.set(newSubprojectBuildDir)
+}
 
-    buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("debug")
-        }
-    }
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+
+tasks.register<Delete>("clean") {
+    delete(rootProject.layout.buildDirectory)
 }
