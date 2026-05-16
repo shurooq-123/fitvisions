@@ -40,22 +40,22 @@ class AvatarScreen extends StatelessWidget {
                       width: 320,
                       child: Column(
                         children: [
-                          const SizedBox(height: 55),
+                          const SizedBox(height: 40),
 
                           const Text(
                             'Generate Avatar',
                             style: TextStyle(
-                              fontSize: 24,
+                              fontSize: 25,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
 
-                          const SizedBox(height: 35),
+                          const SizedBox(height: 28),
 
                           Container(
-                            width: 280,
-                            height: 430,
-                            padding: const EdgeInsets.all(20),
+                            width: 290,
+                            height: 455,
+                            padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF4F4F4),
                               borderRadius: BorderRadius.circular(45),
@@ -70,54 +70,120 @@ class AvatarScreen extends StatelessWidget {
                                   ),
                                 ),
 
-                                const SizedBox(height: 25),
+                                const SizedBox(height: 18),
 
-                                SizedBox(
-                                  width: 220,
-                                  height: 260,
+                                Container(
+                                  width: 245,
+                                  height: 320,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(32),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 8,
+                                        offset: Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
                                   child: Stack(
                                     alignment: Alignment.center,
                                     children: [
-                                      // Simple person body placeholder
+                                      // More realistic simple body prototype
                                       Positioned(
-                                        top: 0,
+                                        top: 18,
                                         child: Container(
                                           width: 58,
                                           height: 58,
                                           decoration: const BoxDecoration(
-                                            color: Color(0xFFE4C7A1),
+                                            color: Color(0xFFE8C6A5),
                                             shape: BoxShape.circle,
                                           ),
                                         ),
                                       ),
 
                                       Positioned(
-                                        top: 65,
+                                        top: 80,
                                         child: Container(
-                                          width: 115,
-                                          height: 155,
+                                          width: 118,
+                                          height: 160,
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFE8E8E8),
+                                            color: const Color(0xFFE6E6E6),
                                             borderRadius:
                                                 BorderRadius.circular(55),
-                                            border: Border.all(
-                                              color: Colors.black26,
-                                            ),
                                           ),
                                         ),
                                       ),
 
                                       Positioned(
-                                        top: 75,
+                                        top: 95,
+                                        left: 35,
+                                        child: Container(
+                                          width: 35,
+                                          height: 125,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFE6E6E6),
+                                            borderRadius:
+                                                BorderRadius.circular(25),
+                                          ),
+                                        ),
+                                      ),
+
+                                      Positioned(
+                                        top: 95,
+                                        right: 35,
+                                        child: Container(
+                                          width: 35,
+                                          height: 125,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFE6E6E6),
+                                            borderRadius:
+                                                BorderRadius.circular(25),
+                                          ),
+                                        ),
+                                      ),
+
+                                      Positioned(
+                                        bottom: 25,
+                                        left: 88,
+                                        child: Container(
+                                          width: 32,
+                                          height: 95,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFD2D2D2),
+                                            borderRadius:
+                                                BorderRadius.circular(18),
+                                          ),
+                                        ),
+                                      ),
+
+                                      Positioned(
+                                        bottom: 25,
+                                        right: 88,
+                                        child: Container(
+                                          width: 32,
+                                          height: 95,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFD2D2D2),
+                                            borderRadius:
+                                                BorderRadius.circular(18),
+                                          ),
+                                        ),
+                                      ),
+
+                                      // Uploaded cloth over the body
+                                      Positioned(
+                                        top: 92,
                                         child: clothImagePath == null ||
                                                 clothImagePath.isEmpty
                                             ? Container(
-                                                width: 105,
+                                                width: 135,
                                                 height: 120,
                                                 decoration: BoxDecoration(
-                                                  color: Colors.white,
+                                                  color:
+                                                      const Color(0xFFF7F7F7),
                                                   borderRadius:
-                                                      BorderRadius.circular(35),
+                                                      BorderRadius.circular(25),
                                                   border: Border.all(
                                                     color: Colors.black26,
                                                   ),
@@ -132,74 +198,49 @@ class AvatarScreen extends StatelessWidget {
                                                   ),
                                                 ),
                                               )
-                                            : ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(35),
-                                                child: Image.file(
-                                                  File(clothImagePath),
-                                                  width: 105,
-                                                  height: 120,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) {
-                                                    return Container(
-                                                      width: 105,
-                                                      height: 120,
-                                                      color: Colors.white,
-                                                      child: const Center(
-                                                        child: Text(
-                                                          'Image not found',
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          style: TextStyle(
-                                                            fontSize: 12,
+                                            : Opacity(
+                                                opacity: 0.96,
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(22),
+                                                  child: Image.file(
+                                                    File(clothImagePath),
+                                                    width: 140,
+                                                    height: 135,
+                                                    fit: BoxFit.contain,
+                                                    errorBuilder: (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) {
+                                                      return Container(
+                                                        width: 135,
+                                                        height: 120,
+                                                        color: Colors.white,
+                                                        child: const Center(
+                                                          child: Text(
+                                                            'Image not found',
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            style: TextStyle(
+                                                              fontSize: 12,
+                                                            ),
                                                           ),
                                                         ),
-                                                      ),
-                                                    );
-                                                  },
+                                                      );
+                                                    },
+                                                  ),
                                                 ),
                                               ),
-                                      ),
-
-                                      Positioned(
-                                        bottom: 0,
-                                        left: 78,
-                                        child: Container(
-                                          width: 28,
-                                          height: 75,
-                                          decoration: BoxDecoration(
-                                            color: Colors.black26,
-                                            borderRadius:
-                                                BorderRadius.circular(14),
-                                          ),
-                                        ),
-                                      ),
-
-                                      Positioned(
-                                        bottom: 0,
-                                        right: 78,
-                                        child: Container(
-                                          width: 28,
-                                          height: 75,
-                                          decoration: BoxDecoration(
-                                            color: Colors.black26,
-                                            borderRadius:
-                                                BorderRadius.circular(14),
-                                          ),
-                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
 
-                                const SizedBox(height: 18),
+                                const SizedBox(height: 16),
 
                                 const Text(
-                                  'This is a basic preview until AI integration is added.',
+                                  'Basic preview until AI try-on is connected.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 13,
@@ -210,7 +251,7 @@ class AvatarScreen extends StatelessWidget {
                             ),
                           ),
 
-                          const SizedBox(height: 25),
+                          const SizedBox(height: 22),
 
                           SizedBox(
                             width: 160,

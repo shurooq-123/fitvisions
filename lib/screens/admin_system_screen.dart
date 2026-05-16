@@ -16,6 +16,7 @@ class AdminSystemScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 12),
+
             Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
@@ -29,26 +30,36 @@ class AdminSystemScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 25),
+
+            const SizedBox(height: 22),
+
             const Text(
               'Manage System',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
             ),
+
             const SizedBox(height: 22),
+
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 18),
                 children: [
+                  sectionTitle('Subscription Plans'),
+
+                  const SizedBox(height: 12),
+
+                  plansCard(context),
+
+                  const SizedBox(height: 24),
+
                   sectionTitle('Feedback Issues'),
+
                   const SizedBox(height: 12),
+
                   feedbackList(),
-                  const SizedBox(height: 22),
-                  sectionTitle('Clothes'),
-                  const SizedBox(height: 12),
-                  clothesCard(),
                 ],
               ),
             ),
@@ -64,10 +75,42 @@ class AdminSystemScreen extends StatelessWidget {
       child: Text(
         title,
         style: const TextStyle(
-          fontSize: 18,
+          fontSize: 19,
           fontWeight: FontWeight.bold,
-          fontFamily: 'Serif',
         ),
+      ),
+    );
+  }
+
+  Widget plansCard(BuildContext context) {
+    return Container(
+      width: 285,
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F4F4),
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Column(
+        children: [
+          row(
+            context,
+            Icons.add_box,
+            'Add Plan',
+            '/adminAddPlan',
+          ),
+          row(
+            context,
+            Icons.edit_square,
+            'Edit Plans',
+            '/adminPlans',
+          ),
+          row(
+            context,
+            Icons.delete,
+            'Delete Plans',
+            '/adminPlans',
+          ),
+        ],
       ),
     );
   }
@@ -76,7 +119,10 @@ class AdminSystemScreen extends StatelessWidget {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('feedback')
-          .orderBy('createdAt', descending: true)
+          .orderBy(
+            'createdAt',
+            descending: true,
+          )
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -118,7 +164,10 @@ class AdminSystemScreen extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.flag, color: purple),
+                  const Icon(
+                    Icons.flag,
+                    color: purple,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -135,46 +184,44 @@ class AdminSystemScreen extends StatelessWidget {
     );
   }
 
-  Widget clothesCard() {
-    return Container(
-      width: 285,
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4F4F4),
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Column(
-        children: [
-          row(Icons.add_box, 'Add'),
-          row(Icons.edit_square, 'Edit'),
-          row(Icons.delete, 'Delete'),
-        ],
-      ),
-    );
-  }
-
-  Widget row(IconData icon, String title) {
-    return SizedBox(
-      height: 50,
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.grey, size: 23),
-          const SizedBox(width: 25),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontFamily: 'Serif',
+  Widget row(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String route,
+  ) {
+    return InkWell(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          route,
+        );
+      },
+      child: SizedBox(
+        height: 52,
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: Colors.grey,
+              size: 23,
+            ),
+            const SizedBox(width: 25),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                ),
               ),
             ),
-          ),
-          const Icon(
-            Icons.arrow_forward_ios,
-            color: Colors.grey,
-            size: 30,
-          ),
-        ],
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.grey,
+              size: 26,
+            ),
+          ],
+        ),
       ),
     );
   }

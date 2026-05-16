@@ -43,7 +43,9 @@ class _PersonalClothMeasurementScreenState
       clothImage = File(pickedImage.path);
     });
 
-    await AppDataService.saveUploadedClothPath(pickedImage.path);
+    await AppDataService.saveUploadedClothPath(
+      pickedImage.path,
+    );
   }
 
   Future<void> pickPersonalImage() async {
@@ -59,7 +61,9 @@ class _PersonalClothMeasurementScreenState
       personalImage = File(pickedImage.path);
     });
 
-    await AppDataService.addHistory('Personal image uploaded');
+    await AppDataService.addHistory(
+      'Personal image uploaded',
+    );
   }
 
   Future<void> saveData() async {
@@ -106,7 +110,10 @@ class _PersonalClothMeasurementScreenState
 
       showMessage('Measurements saved successfully');
 
-      Navigator.pushNamed(context, '/avatar');
+      Navigator.pushNamed(
+        context,
+        '/subscription',
+      );
     } catch (e) {
       showMessage(e.toString());
     } finally {
@@ -159,20 +166,27 @@ class _PersonalClothMeasurementScreenState
 
                   Container(
                     width: 295,
-                    padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
+                    padding: const EdgeInsets.fromLTRB(
+                      22,
+                      18,
+                      22,
+                      24,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF4F4F4),
                       borderRadius: BorderRadius.circular(45),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
                       children: [
                         const Center(
                           child: Text(
                             'Personal & Cloth',
                             style: TextStyle(
                               fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                              fontWeight:
+                                  FontWeight.bold,
                             ),
                           ),
                         ),
@@ -180,14 +194,17 @@ class _PersonalClothMeasurementScreenState
                         const SizedBox(height: 16),
 
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisAlignment:
+                              MainAxisAlignment.center,
                           children: [
                             uploadBox(
                               title: 'Cloth Image',
                               image: clothImage,
                               onTap: pickClothImage,
                             ),
+
                             const SizedBox(width: 12),
+
                             uploadBox(
                               title: 'Personal Image',
                               image: personalImage,
@@ -220,27 +237,42 @@ class _PersonalClothMeasurementScreenState
                             width: 150,
                             height: 42,
                             child: ElevatedButton(
-                              onPressed: loading ? null : saveData,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: brown,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                              onPressed:
+                                  loading
+                                      ? null
+                                      : saveData,
+                              style:
+                                  ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    brown,
+
+                                shape:
+                                    RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(
+                                    8,
+                                  ),
                                 ),
                               ),
+
                               child: loading
                                   ? const SizedBox(
                                       width: 18,
                                       height: 18,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
+                                      child:
+                                          CircularProgressIndicator(
+                                        color:
+                                            Colors.white,
                                         strokeWidth: 2,
                                       ),
                                     )
                                   : const Text(
                                       'Continue',
                                       style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
+                                        color:
+                                            Colors.white,
+                                        fontWeight:
+                                            FontWeight.bold,
                                       ),
                                     ),
                             ),
@@ -272,28 +304,39 @@ class _PersonalClothMeasurementScreenState
         height: 105,
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border.all(color: Colors.black26),
-          borderRadius: BorderRadius.circular(18),
+          border:
+              Border.all(color: Colors.black26),
+
+          borderRadius:
+              BorderRadius.circular(18),
         ),
+
         child: image == null
             ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment:
+                    MainAxisAlignment.center,
                 children: [
                   const Icon(
                     Icons.upload_file,
                     size: 28,
                     color: Colors.grey,
                   ),
+
                   const SizedBox(height: 6),
+
                   Text(
                     title,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 11),
+                    style: const TextStyle(
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               )
             : ClipRRect(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius:
+                    BorderRadius.circular(18),
+
                 child: Image.file(
                   image,
                   fit: BoxFit.cover,
@@ -305,7 +348,11 @@ class _PersonalClothMeasurementScreenState
 
   Widget label(String text) {
     return Padding(
-      padding: const EdgeInsets.only(top: 7, bottom: 4),
+      padding: const EdgeInsets.only(
+        top: 7,
+        bottom: 4,
+      ),
+
       child: Text(
         text,
         style: const TextStyle(fontSize: 14),
@@ -313,17 +360,26 @@ class _PersonalClothMeasurementScreenState
     );
   }
 
-  Widget field(TextEditingController controller, String hint) {
+  Widget field(
+    TextEditingController controller,
+    String hint,
+  ) {
     return SizedBox(
       height: 32,
       child: TextField(
         controller: controller,
         keyboardType: TextInputType.number,
+
         decoration: InputDecoration(
           hintText: hint,
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+
+          contentPadding:
+              const EdgeInsets.symmetric(
+            horizontal: 10,
+          ),
+
           border: const OutlineInputBorder(),
         ),
       ),

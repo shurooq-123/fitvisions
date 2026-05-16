@@ -15,15 +15,18 @@ class HistoryScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 55),
+            const SizedBox(height: 45),
+
             const Text(
               'History',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 26,
                 fontWeight: FontWeight.bold,
               ),
             ),
+
             const SizedBox(height: 25),
+
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: AppDataService.userHistoryStream(),
@@ -46,7 +49,7 @@ class HistoryScreen extends StatelessWidget {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 25),
+                    padding: const EdgeInsets.symmetric(horizontal: 22),
                     itemCount: items.length,
                     itemBuilder: (context, index) {
                       final data =
@@ -54,8 +57,34 @@ class HistoryScreen extends StatelessWidget {
 
                       final title = data['title'] ?? 'Activity';
 
+                      IconData icon = Icons.history;
+
+                      if (title.toString().toLowerCase().contains('payment')) {
+                        icon = Icons.payment;
+                      } else if (title
+                          .toString()
+                          .toLowerCase()
+                          .contains('subscription')) {
+                        icon = Icons.workspace_premium;
+                      } else if (title
+                          .toString()
+                          .toLowerCase()
+                          .contains('feedback')) {
+                        icon = Icons.feedback;
+                      } else if (title
+                          .toString()
+                          .toLowerCase()
+                          .contains('avatar')) {
+                        icon = Icons.person;
+                      } else if (title
+                          .toString()
+                          .toLowerCase()
+                          .contains('measurement')) {
+                        icon = Icons.straighten;
+                      }
+
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
+                        margin: const EdgeInsets.only(bottom: 14),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 18,
                           vertical: 16,
@@ -66,16 +95,19 @@ class HistoryScreen extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            const Icon(
-                              Icons.history,
+                            Icon(
+                              icon,
                               color: purple,
-                              size: 28,
+                              size: 30,
                             ),
-                            const SizedBox(width: 15),
+                            const SizedBox(width: 16),
                             Expanded(
                               child: Text(
                                 title,
-                                style: const TextStyle(fontSize: 16),
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ],

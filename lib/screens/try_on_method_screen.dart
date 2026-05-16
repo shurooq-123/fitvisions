@@ -39,14 +39,22 @@ class _TryOnMethodScreenState
 
       Navigator.pushNamed(
         context,
-        '/clothMeasurement',
+        '/subscription',
+
+        arguments: {
+          'method': 'cloth',
+        },
       );
 
     } else {
 
       Navigator.pushNamed(
         context,
-        '/personalClothMeasurement',
+        '/subscription',
+
+        arguments: {
+          'method': 'personal',
+        },
       );
     }
   }

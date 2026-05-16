@@ -51,115 +51,86 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       body: SafeArea(
         child: Center(
           child: SizedBox(
-            width: 320,
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-                const CustomBackButton(),
+            width: 330,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  const CustomBackButton(),
 
-                const SizedBox(height: 70),
+                  const SizedBox(height: 25),
 
-                const Text(
-                  'Subscription',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                planCard(
-                  title: 'Premium Plan',
-                  priceText: '7 OMR /',
-                  periodText: '6 Months',
-                  features: const [
-                    'Unlimited try-ons',
-                    'Save your looks',
-                    'No watermark',
-                    'Priority access',
-                    'Advanced AI recommendations',
-                  ],
-                  plan: 'Premium Plan',
-                  price: 7,
-                ),
-
-                const SizedBox(height: 32),
-
-                planCard(
-                  title: 'Basic Plan',
-                  priceText: '3 OMR /',
-                  periodText: 'Month',
-                  features: const [
-                    'Limited try-ons',
-                    'Save your looks',
-                    'Basic size recommendations',
-                    'Standard access',
-                  ],
-                  plan: 'Basic Plan',
-                  price: 3,
-                ),
-
-                const Spacer(),
-
-                SizedBox(
-                  width: 170,
-                  height: 58,
-                  child: ElevatedButton(
-                    onPressed: subscribe,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: brown,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                    ),
-                    child: const Text(
-                      'Subscribe',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 27,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  const Text(
+                    'Subscription',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 28),
-              ],
+                  const SizedBox(height: 25),
+
+                  planCard(
+                    title: 'Premium Plan',
+                    priceText: '7 OMR',
+                    periodText: '6 Months',
+                    features: const [
+                      'Unlimited try-ons',
+                      'Save your looks',
+                      'No watermark',
+                      'Priority access',
+                    ],
+                    plan: 'Premium Plan',
+                    price: 7,
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  planCard(
+                    title: 'Basic Plan',
+                    priceText: '3 OMR',
+                    periodText: '1 Month',
+                    features: const [
+                      'Limited try-ons',
+                      'Save your looks',
+                      'Basic recommendations',
+                      'Standard access',
+                    ],
+                    plan: 'Basic Plan',
+                    price: 3,
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  SizedBox(
+                    width: 155,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: subscribe,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: brown,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Subscribe',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 21,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black87,
-        backgroundColor: Colors.white,
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/tryOnMethod');
-          } else if (index == 1) {
-            Navigator.pushNamed(context, '/profile');
-          } else if (index == 2) {
-            Navigator.pushNamed(context, '/history');
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Text('🏠', style: TextStyle(fontSize: 28)),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Text('👤', style: TextStyle(fontSize: 28)),
-            label: 'Profile',
-          ),
-          BottomNavigationBarItem(
-            icon: Text('🕘', style: TextStyle(fontSize: 28)),
-            label: 'History',
-          ),
-        ],
       ),
     );
   }
@@ -183,52 +154,36 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       },
       child: Container(
         width: 285,
-        padding: const EdgeInsets.fromLTRB(24, 26, 24, 28),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
         decoration: BoxDecoration(
           color: const Color(0xFFF4F4F4),
-          borderRadius: BorderRadius.circular(55),
-          border: isSelected
-              ? Border.all(
-                  color: brown,
-                  width: 3,
-                )
-              : null,
+          borderRadius: BorderRadius.circular(35),
+          border: Border.all(
+            color: isSelected ? brown : Colors.transparent,
+            width: 3,
+          ),
         ),
         child: Column(
           children: [
             Text(
               title,
               style: const TextStyle(
-                fontSize: 27,
+                fontSize: 23,
                 fontWeight: FontWeight.bold,
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  priceText,
-                  style: const TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  periodText,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
+            Text(
+              '$priceText / $periodText',
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
             ),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
 
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,9 +193,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   child: Text(
                     '✓ $feature',
                     style: const TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54,
+                      fontSize: 15,
+                      color: Colors.black87,
                     ),
                   ),
                 );

@@ -79,7 +79,7 @@ class _ClothMeasurementScreenState extends State<ClothMeasurementScreen> {
 
       showMessage('Measurements saved successfully');
 
-      Navigator.pushNamed(context, '/avatar');
+      Navigator.pushNamed(context, '/subscription');
     } catch (e) {
       showMessage(e.toString());
     } finally {
