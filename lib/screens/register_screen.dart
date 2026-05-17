@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../widgets/custom_back_button.dart';
 
@@ -31,21 +32,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    final firstName = firstNameController.text.trim();
-    final lastName = lastNameController.text.trim();
-    final mobile = mobileController.text.trim();
-    final email = emailController.text.trim();
-    final password = passwordController.text.trim();
-
     try {
       setState(() => loading = true);
 
       await AuthService.registerUser(
-        firstName: firstName,
-        lastName: lastName,
-        phone: mobile,
-        email: email,
-        password: password,
+        firstName: firstNameController.text.trim(),
+        lastName: lastNameController.text.trim(),
+        phone: mobileController.text.trim(),
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
       );
 
       if (!mounted) return;
@@ -66,9 +61,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       );
     } finally {
-      if (mounted) {
-        setState(() => loading = false);
-      }
+      if (mounted) setState(() => loading = false);
     }
   }
 
@@ -99,7 +92,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const CustomBackButton(),
                     Image.asset('images/fv.png', width: 185),
                     const SizedBox(height: 18),
-
                     Container(
                       width: 295,
                       padding: const EdgeInsets.fromLTRB(26, 18, 26, 26),
@@ -111,12 +103,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Center(
-                            child: Text(
-                              'REGISTER',
-                              style: TextStyle(fontSize: 21),
-                            ),
+                            child: Text('REGISTER', style: TextStyle(fontSize: 21)),
                           ),
-
                           const SizedBox(height: 18),
 
                           label('First Name'),
@@ -125,16 +113,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             hint: 'Enter Your First Name',
                             validator: (value) {
                               final name = value!.trim();
-
-                              if (name.isEmpty) {
-                                return 'First name is required';
-                              }
-
-                              if (!RegExp(r'^[a-zA-Z\u0600-\u06FF]+$')
-                                  .hasMatch(name)) {
+                              if (name.isEmpty) return 'First name is required';
+                              if (!RegExp(r'^[a-zA-Z\u0600-\u06FF]+$').hasMatch(name)) {
                                 return 'First name must be one word and letters only';
                               }
-
                               return null;
                             },
                           ),
@@ -145,16 +127,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             hint: 'Enter Your Last Name',
                             validator: (value) {
                               final name = value!.trim();
-
-                              if (name.isEmpty) {
-                                return 'Last name is required';
-                              }
-
-                              if (!RegExp(r'^[a-zA-Z\u0600-\u06FF]+$')
-                                  .hasMatch(name)) {
+                              if (name.isEmpty) return 'Last name is required';
+                              if (!RegExp(r'^[a-zA-Z\u0600-\u06FF]+$').hasMatch(name)) {
                                 return 'Last name must be one word and letters only';
                               }
-
                               return null;
                             },
                           ),
@@ -169,15 +145,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             keyboard: TextInputType.emailAddress,
                             validator: (value) {
                               final email = value!.trim();
-
-                              if (email.isEmpty) {
-                                return 'Email is required';
-                              }
-
+                              if (email.isEmpty) return 'Email is required';
                               if (!AuthService.isValidEmail(email)) {
                                 return 'Enter a valid email address';
                               }
-
                               return null;
                             },
                           ),
@@ -187,21 +158,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             controller: passwordController,
                             hide: hidePassword,
                             onTap: () {
-                              setState(() {
-                                hidePassword = !hidePassword;
-                              });
+                              setState(() => hidePassword = !hidePassword);
                             },
                             validator: (value) {
                               final password = value!.trim();
-
-                              if (password.isEmpty) {
-                                return 'Password is required';
-                              }
-
+                              if (password.isEmpty) return 'Password is required';
                               if (!AuthService.isValidPassword(password)) {
                                 return '8-15 chars, uppercase, lowercase, special char';
                               }
-
                               return null;
                             },
                           ),
@@ -211,36 +175,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             controller: confirmPasswordController,
                             hide: hideConfirmPassword,
                             onTap: () {
-                              setState(() {
-                                hideConfirmPassword = !hideConfirmPassword;
-                              });
+                              setState(() => hideConfirmPassword = !hideConfirmPassword);
                             },
                             validator: (value) {
                               final confirmPassword = value!.trim();
-
                               if (confirmPassword.isEmpty) {
                                 return 'Confirm password is required';
                               }
-
-                              if (confirmPassword !=
-                                  passwordController.text.trim()) {
+                              if (confirmPassword != passwordController.text.trim()) {
                                 return 'Passwords do not match';
                               }
-
                               return null;
                             },
                           ),
 
                           const SizedBox(height: 8),
-
                           const Text(
                             'Password: 8-15 chars, uppercase, lowercase, special character',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.black54,
-                            ),
+                            style: TextStyle(fontSize: 10, color: Colors.black54),
                           ),
-
                           const SizedBox(height: 16),
 
                           Center(
@@ -291,10 +244,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget label(String text) {
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 4),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 14),
-      ),
+      child: Text(text, style: const TextStyle(fontSize: 14)),
     );
   }
 
@@ -313,15 +263,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         hintText: hint,
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 6,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         border: const OutlineInputBorder(),
-        errorStyle: const TextStyle(
-          fontSize: 10,
-          height: 0.9,
-        ),
+        errorStyle: const TextStyle(fontSize: 10, height: 0.9),
       ),
     );
   }
@@ -329,8 +273,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget phoneField() {
     return TextFormField(
       controller: mobileController,
-      keyboardType: TextInputType.phone,
+      keyboardType: TextInputType.number,
       maxLength: 8,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(8),
+        TextInputFormatter.withFunction((oldValue, newValue) {
+          final text = newValue.text;
+
+          if (text.isEmpty) {
+            return newValue;
+          }
+
+          if (!text.startsWith('7') && !text.startsWith('9')) {
+            return oldValue;
+          }
+
+          return newValue;
+        }),
+      ],
       autovalidateMode: AutovalidateMode.onUserInteraction,
       validator: (value) {
         final phone = value!.trim();
@@ -339,8 +300,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           return 'Mobile number is required';
         }
 
-        if (!RegExp(r'^[0-9]{8}$').hasMatch(phone)) {
-          return 'Mobile number must be 8 digits after +968';
+        if (!RegExp(r'^[79][0-9]{7}$').hasMatch(phone)) {
+          return 'Number must start with 7 or 9 and contain 8 digits';
         }
 
         return null;
@@ -351,15 +312,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         hintText: '91234567',
         filled: true,
         fillColor: Colors.white,
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 6,
-        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         border: OutlineInputBorder(),
-        errorStyle: TextStyle(
-          fontSize: 10,
-          height: 0.9,
+        errorBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.red, width: 1.5),
         ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.red, width: 1.5),
+        ),
+        errorStyle: TextStyle(fontSize: 10, height: 0.9),
       ),
     );
   }
@@ -379,15 +340,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         hintText: '',
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 6,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         border: const OutlineInputBorder(),
-        errorStyle: const TextStyle(
-          fontSize: 10,
-          height: 0.9,
-        ),
+        errorStyle: const TextStyle(fontSize: 10, height: 0.9),
         suffixIcon: IconButton(
           padding: EdgeInsets.zero,
           icon: Icon(
@@ -399,4 +354,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
-} 
+}
