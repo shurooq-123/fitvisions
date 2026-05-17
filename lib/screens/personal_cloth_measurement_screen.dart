@@ -16,6 +16,7 @@ class PersonalClothMeasurementScreen extends StatefulWidget {
 
 class _PersonalClothMeasurementScreenState
     extends State<PersonalClothMeasurementScreen> {
+
   static const bg = Color(0xFFD3D9CC);
   static const brown = Color(0xFF5E4747);
 
@@ -31,6 +32,7 @@ class _PersonalClothMeasurementScreenState
   bool loading = false;
 
   Future<void> pickClothImage() async {
+
     final picker = ImagePicker();
 
     final pickedImage = await picker.pickImage(
@@ -49,6 +51,7 @@ class _PersonalClothMeasurementScreenState
   }
 
   Future<void> pickPersonalImage() async {
+
     final picker = ImagePicker();
 
     final pickedImage = await picker.pickImage(
@@ -67,6 +70,7 @@ class _PersonalClothMeasurementScreenState
   }
 
   Future<void> saveData() async {
+
     if (clothImage == null) {
       showMessage('Please upload cloth image');
       return;
@@ -82,23 +86,41 @@ class _PersonalClothMeasurementScreenState
         chestController.text.trim().isEmpty ||
         waistController.text.trim().isEmpty ||
         hipController.text.trim().isEmpty) {
+
       showMessage('Please enter all measurements');
       return;
     }
 
     try {
+
       setState(() => loading = true);
 
       await AppDataService.saveOrUpdateMeasurements(
         measurements: {
-          'measurementType': 'personalAndCloth',
-          'height': heightController.text.trim(),
-          'weight': weightController.text.trim(),
-          'chest': chestController.text.trim(),
-          'waist': waistController.text.trim(),
-          'hip': hipController.text.trim(),
-          'clothImagePath': clothImage!.path,
-          'personalImagePath': personalImage!.path,
+
+          'measurementType':
+              'personalAndCloth',
+
+          'height':
+              heightController.text.trim(),
+
+          'weight':
+              weightController.text.trim(),
+
+          'chest':
+              chestController.text.trim(),
+
+          'waist':
+              waistController.text.trim(),
+
+          'hip':
+              hipController.text.trim(),
+
+          'clothImagePath':
+              clothImage!.path,
+
+          'personalImagePath':
+              personalImage!.path,
         },
       );
 
@@ -108,15 +130,23 @@ class _PersonalClothMeasurementScreenState
 
       if (!mounted) return;
 
-      showMessage('Measurements saved successfully');
+      showMessage(
+        'Measurements saved successfully',
+      );
+
+      // GO TO SUBSCRIPTION
 
       Navigator.pushNamed(
         context,
         '/subscription',
       );
+
     } catch (e) {
+
       showMessage(e.toString());
+
     } finally {
+
       if (mounted) {
         setState(() => loading = false);
       }
@@ -124,6 +154,7 @@ class _PersonalClothMeasurementScreenState
   }
 
   void showMessage(String text) {
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
@@ -134,25 +165,31 @@ class _PersonalClothMeasurementScreenState
 
   @override
   void dispose() {
+
     heightController.dispose();
     weightController.dispose();
     chestController.dispose();
     waistController.dispose();
     hipController.dispose();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: bg,
+
       body: SafeArea(
         child: Center(
           child: SizedBox(
             width: 320,
+
             child: SingleChildScrollView(
               child: Column(
                 children: [
+
                   const CustomBackButton(),
 
                   const SizedBox(height: 10),
@@ -166,23 +203,31 @@ class _PersonalClothMeasurementScreenState
 
                   Container(
                     width: 295,
+
                     padding: const EdgeInsets.fromLTRB(
                       22,
                       18,
                       22,
                       24,
                     ),
+
                     decoration: BoxDecoration(
                       color: const Color(0xFFF4F4F4),
-                      borderRadius: BorderRadius.circular(45),
+
+                      borderRadius:
+                          BorderRadius.circular(45),
                     ),
+
                     child: Column(
                       crossAxisAlignment:
                           CrossAxisAlignment.start,
+
                       children: [
+
                         const Center(
                           child: Text(
                             'Personal & Cloth',
+
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight:
@@ -196,10 +241,14 @@ class _PersonalClothMeasurementScreenState
                         Row(
                           mainAxisAlignment:
                               MainAxisAlignment.center,
+
                           children: [
+
                             uploadBox(
                               title: 'Cloth Image',
+
                               image: clothImage,
+
                               onTap: pickClothImage,
                             ),
 
@@ -207,7 +256,9 @@ class _PersonalClothMeasurementScreenState
 
                             uploadBox(
                               title: 'Personal Image',
+
                               image: personalImage,
+
                               onTap: pickPersonalImage,
                             ),
                           ],
@@ -236,11 +287,13 @@ class _PersonalClothMeasurementScreenState
                           child: SizedBox(
                             width: 150,
                             height: 42,
+
                             child: ElevatedButton(
                               onPressed:
                                   loading
                                       ? null
                                       : saveData,
+
                               style:
                                   ElevatedButton.styleFrom(
                                 backgroundColor:
@@ -259,18 +312,23 @@ class _PersonalClothMeasurementScreenState
                                   ? const SizedBox(
                                       width: 18,
                                       height: 18,
+
                                       child:
                                           CircularProgressIndicator(
                                         color:
                                             Colors.white,
+
                                         strokeWidth: 2,
                                       ),
                                     )
+
                                   : const Text(
                                       'Continue',
+
                                       style: TextStyle(
                                         color:
                                             Colors.white,
+
                                         fontWeight:
                                             FontWeight.bold,
                                       ),
@@ -297,13 +355,17 @@ class _PersonalClothMeasurementScreenState
     required File? image,
     required VoidCallback onTap,
   }) {
+
     return GestureDetector(
       onTap: onTap,
+
       child: Container(
         width: 120,
         height: 105,
+
         decoration: BoxDecoration(
           color: Colors.white,
+
           border:
               Border.all(color: Colors.black26),
 
@@ -312,10 +374,13 @@ class _PersonalClothMeasurementScreenState
         ),
 
         child: image == null
+
             ? Column(
                 mainAxisAlignment:
                     MainAxisAlignment.center,
+
                 children: [
+
                   const Icon(
                     Icons.upload_file,
                     size: 28,
@@ -326,13 +391,16 @@ class _PersonalClothMeasurementScreenState
 
                   Text(
                     title,
+
                     textAlign: TextAlign.center,
+
                     style: const TextStyle(
                       fontSize: 11,
                     ),
                   ),
                 ],
               )
+
             : ClipRRect(
                 borderRadius:
                     BorderRadius.circular(18),
@@ -347,6 +415,7 @@ class _PersonalClothMeasurementScreenState
   }
 
   Widget label(String text) {
+
     return Padding(
       padding: const EdgeInsets.only(
         top: 7,
@@ -355,7 +424,10 @@ class _PersonalClothMeasurementScreenState
 
       child: Text(
         text,
-        style: const TextStyle(fontSize: 14),
+
+        style: const TextStyle(
+          fontSize: 14,
+        ),
       ),
     );
   }
@@ -364,15 +436,21 @@ class _PersonalClothMeasurementScreenState
     TextEditingController controller,
     String hint,
   ) {
+
     return SizedBox(
       height: 32,
+
       child: TextField(
         controller: controller,
-        keyboardType: TextInputType.number,
+
+        keyboardType:
+            TextInputType.number,
 
         decoration: InputDecoration(
           hintText: hint,
+
           filled: true,
+
           fillColor: Colors.white,
 
           contentPadding:
@@ -380,7 +458,8 @@ class _PersonalClothMeasurementScreenState
             horizontal: 10,
           ),
 
-          border: const OutlineInputBorder(),
+          border:
+              const OutlineInputBorder(),
         ),
       ),
     );
