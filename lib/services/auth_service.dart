@@ -6,7 +6,8 @@ class AuthService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   static bool isValidEmail(String email) {
-    return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email.trim());
+    return RegExp
+    (r'^[^@]+@[^@]+\.[^@]+').hasMatch(email.trim());
   }
 
   static bool isValidPassword(String password) {
