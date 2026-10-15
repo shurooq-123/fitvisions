@@ -3,15 +3,16 @@ import 'package:flutter/material.dart';
 import 'admin_dashboard_screen.dart';
 
 class AdminPlansScreen extends StatefulWidget {
-  const AdminPlansScreen({super.key});
+  const AdminPlansScreen({super.key, this.firestore});
+  final FirebaseFirestore? firestore;
 
   @override
   State<AdminPlansScreen> createState() => _AdminPlansScreenState();
 }
 
 class _AdminPlansScreenState extends State<AdminPlansScreen> {
-  static const bg = Color(0xFFD3D9CC);
-  static const brown = Color(0xFF5E4747);
+  static const bg = Color(0xFFD5DBCD);
+  static const brown = Color(0xFF574543);
   static const purple = Color(0xFF51227D);
 
   final nameController = TextEditingController();
@@ -26,32 +27,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
   @override
   void initState() {
     super.initState();
-    createDefaultPlans();
-  }
-
-  Future<void> createDefaultPlans() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('plans').get();
-
-    if (snapshot.docs.isNotEmpty) return;
-
-    await FirebaseFirestore.instance.collection('plans').add({
-      'name': 'Premium Plan',
-      'price': 7,
-      'duration': '6 Months',
-      'features':
-          'Unlimited try-ons\nSave your looks\nNo watermark\nPriority access',
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    await FirebaseFirestore.instance.collection('plans').add({
-      'name': 'Basic Plan',
-      'price': 3,
-      'duration': '1 Month',
-      'features':
-          'Limited try-ons\nSave your looks\nBasic recommendations\nStandard access',
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+    // Loading this screen must not create database records.
   }
 
   void clearForm() {
@@ -69,6 +45,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
     setState(() {
       editingId = null;
       showAddForm = true;
+
       nameController.clear();
       priceController.clear();
       durationController.clear();
@@ -108,14 +85,16 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
       };
 
       if (editingId == null) {
-        await FirebaseFirestore.instance.collection('plans').add({
+        await (widget.firestore ?? FirebaseFirestore.instance)
+            .collection('plans')
+            .add({
           ...data,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
         showMessage('Plan added successfully');
       } else {
-        await FirebaseFirestore.instance
+        await (widget.firestore ?? FirebaseFirestore.instance)
             .collection('plans')
             .doc(editingId)
             .update(data);
@@ -134,7 +113,10 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
   }
 
   Future<void> deletePlan(String id) async {
-    await FirebaseFirestore.instance.collection('plans').doc(id).delete();
+    await (widget.firestore ?? FirebaseFirestore.instance)
+        .collection('plans')
+        .doc(id)
+        .delete();
 
     showMessage('Plan deleted successfully');
 
@@ -201,8 +183,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
               width: 320,
               child: Column(
                 children: [
-                  const SizedBox(height: 25),
-
+                  const SizedBox(height: 28),
                   const Text(
                     'Subscription Plans',
                     style: TextStyle(
@@ -210,9 +191,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   const SizedBox(height: 18),
-
                   SizedBox(
                     width: 180,
                     height: 43,
@@ -233,16 +212,13 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
                       ),
                     ),
                   ),
-
                   if (showForm) ...[
                     const SizedBox(height: 18),
                     formBox(),
                   ],
-
                   const SizedBox(height: 20),
-
                   StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
+                    stream: (widget.firestore ?? FirebaseFirestore.instance)
                         .collection('plans')
                         .orderBy('price', descending: true)
                         .snapshots(),
@@ -275,7 +251,6 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
                       );
                     },
                   ),
-
                   const SizedBox(height: 25),
                 ],
               ),
@@ -309,18 +284,13 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 10),
-
           label('Plan Name'),
           field(nameController, 'Premium Plan'),
-
           label('Price'),
           field(priceController, '7'),
-
           label('Duration'),
           field(durationController, '6 Months'),
-
           label('Features'),
           TextField(
             controller: featuresController,
@@ -332,9 +302,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
               border: OutlineInputBorder(),
             ),
           ),
-
           const SizedBox(height: 14),
-
           Row(
             children: [
               Expanded(
@@ -358,9 +326,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
                         ),
                 ),
               ),
-
               const SizedBox(width: 10),
-
               Expanded(
                 child: OutlinedButton(
                   onPressed: clearForm,
@@ -379,7 +345,10 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
     required Map<String, dynamic> data,
   }) {
     final name = data['name'] ?? '';
-    final price = data['price'] ?? 0;
+    final rawPrice = data['price'] ?? 0;
+    final price = rawPrice is num && rawPrice == rawPrice.roundToDouble()
+        ? rawPrice.toInt().toString()
+        : rawPrice.toString();
     final duration = data['duration'] ?? '';
     final features = data['features'] ?? '';
 
@@ -405,9 +374,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
                 color: purple,
                 size: 28,
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
                 child: Text(
                   name,
@@ -417,21 +384,23 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
                   ),
                 ),
               ),
-
               IconButton(
+                tooltip: 'Edit plan',
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 48),
+                padding: EdgeInsets.zero,
                 onPressed: () => fillForm(id, data),
                 icon: const Icon(Icons.edit),
               ),
-
               IconButton(
+                tooltip: 'Delete plan',
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 48),
+                padding: EdgeInsets.zero,
                 onPressed: () => confirmDelete(id, name),
                 icon: const Icon(Icons.delete),
               ),
             ],
           ),
-
           const SizedBox(height: 6),
-
           Text(
             '$price OMR / $duration',
             style: const TextStyle(
@@ -439,9 +408,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 8),
-
           Text(
             features,
             style: const TextStyle(fontSize: 13),

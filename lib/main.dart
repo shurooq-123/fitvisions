@@ -13,7 +13,6 @@ import 'screens/admin_users_screen.dart';
 import 'screens/admin_system_screen.dart';
 import 'screens/admin_plans_screen.dart';
 
-
 import 'screens/user_home_screen.dart';
 import 'screens/avatar_screen.dart';
 import 'screens/measurement_screen.dart';
@@ -22,7 +21,7 @@ import 'screens/payment_screen.dart';
 import 'screens/about_screen.dart';
 import 'screens/change_password_screen.dart';
 import 'screens/try_on_method_screen.dart';
-import 'screens/cloth_measurement_screen.dart';
+import 'screens/create_clothes_screen.dart';
 import 'screens/personal_cloth_measurement_screen.dart';
 import 'screens/feedback_screen.dart';
 import 'screens/history_screen.dart';
@@ -46,15 +45,25 @@ class FitVisionsApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       theme: ThemeData(
-        fontFamily: 'Arial',
-        scaffoldBackgroundColor: const Color(0xFFD3D9CC),
+        useMaterial3: false,
+        fontFamily: 'sans-serif',
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF574543), brightness: Brightness.light),
+        inputDecorationTheme: const InputDecorationTheme(
+            isDense: true,
+            border: OutlineInputBorder(borderRadius: BorderRadius.zero)),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF574543),
+                foregroundColor: Colors.white,
+                elevation: 0)),
+        scaffoldBackgroundColor: const Color(0xFFCED1C6),
       ),
       routes: {
         '/': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/forgot': (context) => const ForgotPasswordScreen(),
-
         '/home': (context) => const UserHomeScreen(),
         '/avatar': (context) => const AvatarScreen(),
         '/measurement': (context) => const MeasurementScreen(),
@@ -63,21 +72,21 @@ class FitVisionsApp extends StatelessWidget {
         '/about': (context) => const AboutScreen(),
         '/changePassword': (context) => const ChangePasswordScreen(),
         '/tryOnMethod': (context) => const TryOnMethodScreen(),
-        '/clothMeasurement': (context) => const ClothMeasurementScreen(),
+        '/generateAvatar': (context) => const PersonalClothMeasurementScreen(),
+        '/createClothes': (context) => const CreateClothesScreen(),
+        '/clothMeasurement': (context) =>
+            const PersonalClothMeasurementScreen(),
         '/personalClothMeasurement': (context) =>
             const PersonalClothMeasurementScreen(),
         '/feedback': (context) => const FeedbackScreen(),
         '/history': (context) => const HistoryScreen(),
         '/profile': (context) => const ProfileScreen(),
-
         '/adminLogin': (context) => const AdminLoginScreen(),
         '/adminForgot': (context) => const AdminForgotPasswordScreen(),
         '/adminDashboard': (context) => const AdminDashboardScreen(),
         '/adminUsers': (context) => const AdminUsersScreen(),
         '/adminSystem': (context) => const AdminSystemScreen(),
-
         '/adminPlans': (context) => const AdminPlansScreen(),
-   
       },
     );
   }

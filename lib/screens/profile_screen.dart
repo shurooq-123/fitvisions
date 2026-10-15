@@ -1,3 +1,4 @@
+import '../widgets/prototype_ui.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -7,303 +8,130 @@ import '../services/auth_service.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  static const bg = Color(0xFFD3D9CC);
-  static const brown = Color(0xFF5E4747);
+  static const bg = Color(0xFFCED1C6);
+  static const brown = Color(0xFF574543);
   static const purple = Color(0xFF51227D);
 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-
-    return Scaffold(
-      backgroundColor: bg,
-      body: SafeArea(
+    return PrototypePage(
+        title: 'Profile',
+        index: 1,
         child: user == null
-            ? const Center(child: Text('No user logged in'))
+            ? const Text('No user logged in')
             : FutureBuilder<DocumentSnapshot>(
                 future: FirebaseFirestore.instance
                     .collection('users')
                     .doc(user.uid)
                     .get(),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                  if (snapshot.hasError) {
+                    return const Text(
+                        'Could not load profile. Please try again.');
                   }
-
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const CircularProgressIndicator();
+                  }
                   final data =
-                      snapshot.data?.data() as Map<String, dynamic>?;
-
-                  final firstName = data?['firstName'] ?? '';
-                  final lastName = data?['lastName'] ?? '';
-                  final email = data?['email'] ?? user.email ?? '';
-                  final phone = data?['phone'] ?? '';
-                  final fullName = '$firstName $lastName'.trim();
-
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 35),
-
-                        const Text(
-                          'Profile',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(height: 25),
-
-                        Container(
-                          width: 315,
-                          padding: const EdgeInsets.fromLTRB(18, 24, 18, 22),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF4F4F4),
-                            borderRadius: BorderRadius.circular(42),
-                          ),
-                          child: Column(
-                            children: [
-                              const Text(
-                                'Edit :',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              Text(
-                                fullName.isEmpty ? 'User Name' : fullName,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 20),
-                              ),
-
-                              const SizedBox(height: 6),
-
-                              Text(
-                                email,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 18),
-                              ),
-
-                              const SizedBox(height: 6),
-
-                              Text(
-                                phone.isEmpty ? '+968 --------' : '+968 $phone',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.black54,
-                                ),
-                              ),
-
-                              const SizedBox(height: 22),
-
-                              menuBox([
-                                menuRow(
-                                  icon: Icons.history,
-                                  text: 'My History',
-                                  onTap: () {
-                                    Navigator.pushNamed(context, '/history');
-                                  },
-                                ),
-                                menuRow(
-                                  icon: Icons.workspace_premium,
-                                  text: 'Subscription',
-                                  onTap: () {
-                                    Navigator.pushNamed(context, '/subscription');
-                                  },
-                                ),
-                                menuRow(
-                                  icon: Icons.payment,
-                                  text: 'Payment',
-                                  onTap: () {
-                                    Navigator.pushNamed(context, '/payment');
-                                  },
-                                  isLast: true,
-                                ),
-                              ]),
-
-                              const SizedBox(height: 16),
-
-                              menuBox([
-                                darkModeRow(),
-                                menuRow(
-                                  icon: Icons.language,
-                                  text: 'Language',
-                                  onTap: () {},
-                                ),
-                                menuRow(
-                                  icon: Icons.help,
-                                  text: 'Help & support',
-                                  onTap: () {},
-                                ),
-                                menuRow(
-                                  icon: Icons.phone,
-                                  text: 'Contact Us',
-                                  onTap: () {},
-                                  isLast: true,
-                                ),
-                              ]),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 22),
-
-                        SizedBox(
-                          width: 145,
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              await AuthService.logout();
-
-                              if (!context.mounted) return;
-
-                              Navigator.pushNamedAndRemoveUntil(
-                                context,
-                                '/',
-                                (route) => false,
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: brown,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                      snapshot.data?.data() as Map<String, dynamic>? ?? {};
+                  final name =
+                      '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'
+                          .trim();
+                  return Column(children: [
+                    PrototypePanel(
+                        radius: 30,
+                        padding: 12,
+                        child: Column(children: [
+                          Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              child: Row(children: [
+                                const Icon(Icons.account_circle,
+                                    size: 65, color: purple),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                    child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                      Text(name.isEmpty ? 'User' : name),
+                                      const SizedBox(height: 5),
+                                      Text(data['email'] ?? user.email ?? '',
+                                          style: const TextStyle(fontSize: 12)),
+                                      if ((data['phone'] ?? '')
+                                          .toString()
+                                          .isNotEmpty)
+                                        Text('+968 ${data['phone']}',
+                                            style:
+                                                const TextStyle(fontSize: 12)),
+                                    ]))
+                              ])),
+                          group([
+                            menu(context, Icons.history, 'My History',
+                                '/history'),
+                            menu(context, Icons.workspace_premium,
+                                'Subscription', '/subscription'),
+                            menu(context, Icons.payment, 'Payment', '/payment'),
+                          ]),
+                          const SizedBox(height: 12),
+                          if (!user.emailVerified)
+                            TextButton.icon(
+                              icon: const Icon(Icons.mark_email_unread_outlined),
+                              label: const Text('Send verification email'),
+                              onPressed: () async {
+                                try {
+                                  await user.reload();
+                                  final current = FirebaseAuth.instance.currentUser;
+                                  if (current == null) return;
+                                  if (!current.emailVerified) {
+                                    await current.sendEmailVerification();
+                                  }
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text(current.emailVerified
+                                        ? 'Your email is already verified.'
+                                        : 'Verification email requested. Check your inbox and spam folder.'),
+                                  ));
+                                } catch (error) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text(AuthService.errorMessage(error)),
+                                  ));
+                                }
+                              },
                             ),
-                            child: const Text(
-                              'Logout',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-      ),
-      bottomNavigationBar: bottomNav(context),
-    );
+                          group([
+                            menu(context, Icons.lock_outline, 'Change Password',
+                                '/changePassword'),
+                            menu(context, Icons.help_outline, 'Help & support',
+                                '/feedback'),
+                            menu(context, Icons.info_outline, 'About Us',
+                                '/about'),
+                          ]),
+                        ])),
+                    const SizedBox(height: 25),
+                    PrototypeButton('Logout', onPressed: () async {
+                      await AuthService.logout();
+                      if (!context.mounted) return;
+                      Navigator.pushNamedAndRemoveUntil(
+                          context, '/', (_) => false);
+                    }),
+                  ]);
+                }));
   }
 
-  Widget menuBox(List<Widget> children) {
-    return Container(
+  Widget group(List<Widget> children) => Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.black),
-        borderRadius: BorderRadius.circular(26),
-      ),
-      child: Column(children: children),
-    );
-  }
-
-  Widget menuRow({
-    required IconData icon,
-    required String text,
-    required VoidCallback onTap,
-    bool isLast = false,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          border: isLast
-              ? null
-              : const Border(
-                  bottom: BorderSide(color: Colors.black26),
-                ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        child: Row(
-          children: [
-            Icon(icon, color: purple, size: 25),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 19,
-                  fontFamily: 'Serif',
-                ),
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.grey,
-              size: 26,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget darkModeRow() {
-    return Container(
-      height: 48,
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.black26)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: Row(
-        children: [
-          const Icon(Icons.dark_mode, color: purple, size: 25),
-          const SizedBox(width: 18),
-          const Expanded(
-            child: Text(
-              'Dark Mode',
-              style: TextStyle(fontSize: 19, fontFamily: 'Serif'),
-            ),
-          ),
-          Switch(
-            value: true,
-            activeColor: purple,
-            onChanged: (value) {},
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget bottomNav(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: 1,
-      selectedItemColor: Colors.black,
-      unselectedItemColor: Colors.black,
-      backgroundColor: Colors.white,
-      type: BottomNavigationBarType.fixed,
-      onTap: (index) {
-        if (index == 0) {
-          Navigator.pushReplacementNamed(context, '/tryOnMethod');
-        } else if (index == 1) {
-          Navigator.pushReplacementNamed(context, '/profile');
-        } else if (index == 2) {
-          Navigator.pushReplacementNamed(context, '/history');
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Text('🏠', style: TextStyle(fontSize: 26)),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Text('👤', style: TextStyle(fontSize: 26)),
-          label: 'Profile',
-        ),
-        BottomNavigationBarItem(
-          icon: Text('🕘', style: TextStyle(fontSize: 26)),
-          label: 'History',
-        ),
-      ],
-    );
-  }
+          border: Border.all(color: Colors.black54),
+          borderRadius: BorderRadius.circular(25)),
+      child: Column(children: children));
+  Widget menu(BuildContext context, IconData icon, String text, String route) =>
+      ListTile(
+          dense: true,
+          leading: Icon(icon, color: purple, size: 23),
+          title: Text(text,
+              style: const TextStyle(fontFamily: 'serif', fontSize: 16)),
+          trailing:
+              const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 23),
+          onTap: () => Navigator.pushNamed(context, route));
 }

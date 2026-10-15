@@ -5,10 +5,11 @@ import 'admin_users_screen.dart';
 import 'admin_system_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
-  const AdminDashboardScreen({super.key});
+  const AdminDashboardScreen({super.key, this.firestore});
+  final FirebaseFirestore? firestore;
 
-  static const bg = Color(0xFFD3D9CC);
-  static const brown = Color(0xFF5E4747);
+  static const bg = Color(0xFFD5DBCD);
+  static const brown = Color(0xFF574543);
   static const purple = Color(0xFF51227D);
 
   @override
@@ -16,194 +17,210 @@ class AdminDashboardScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                icon: const Icon(
-                  Icons.arrow_back_ios,
-                  size: 32,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            const SizedBox(height: 28),
-            const Text(
-              'Dashboard',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 22),
-
-            statBox(
-              icon: Icons.groups,
-              title: 'Total Users',
-              valueWidget: StreamBuilder<QuerySnapshot>(
-                stream:
-                    FirebaseFirestore.instance.collection('users').snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Text(
-                      '0',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Serif',
-                      ),
-                    );
-                  }
-
-                  return Text(
-                    snapshot.data!.docs.length.toString(),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Serif',
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            statBox(
-              icon: Icons.stacked_line_chart,
-              title: 'Total Revenue',
-              valueWidget: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('payments')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  double total = 0;
-
-                  if (snapshot.hasData) {
-                    for (final doc in snapshot.data!.docs) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      final amount = data['amount'];
-
-                      if (amount is int) {
-                        total += amount.toDouble();
-                      } else if (amount is double) {
-                        total += amount;
-                      }
-                    }
-                  }
-
-                  return Text(
-                    '${total.toStringAsFixed(0)} OMR',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Serif',
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            Container(
-              width: 250,
-              height: 210,
-              padding: const EdgeInsets.fromLTRB(24, 18, 24, 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF4F4F4),
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Issues',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Serif',
+        child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+                child: ConstrainedBox(
+                    constraints:
+                        BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                        child: Column(
+                      children: [
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  icon: const Icon(
+                                    Icons.arrow_back_ios,
+                                    size: 32,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                PopupMenuButton<String>(
+                                    tooltip: 'Account settings',
+                                    onSelected: (_) => Navigator.pushNamed(
+                                        context, '/changePassword'),
+                                    itemBuilder: (_) => [
+                                          const PopupMenuItem(
+                                              value: 'password',
+                                              child: Text('Change password'))
+                                        ])
+                              ]),
                         ),
-                      ),
-                      StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('feedback')
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const Text('0');
-                          }
+                        const SizedBox(height: 28),
+                        const Text(
+                          'Admin Dashboard',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        statBox(
+                          icon: Icons.groups,
+                          title: 'Total Users',
+                          valueWidget: StreamBuilder<QuerySnapshot>(
+                            stream: (firestore ?? FirebaseFirestore.instance)
+                                .collection('users')
+                                .snapshots(),
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData) {
+                                return const Text(
+                                  '0',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'serif',
+                                  ),
+                                );
+                              }
 
-                          return Text(
-                            snapshot.data!.docs.length.toString(),
-                            style: const TextStyle(fontSize: 15),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 42),
-                  dashboardButton(
-                    text: 'Manage Users',
-                    onTap: () {
-                      Navigator.pushNamed(context, '/adminUsers');
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  dashboardButton(
-                    text: 'Manage System',
-                    onTap: () {
-                      Navigator.pushNamed(context, '/adminSystem');
-                    },
-                  ),
-                ],
-              ),
-            ),
+                              return Text(
+                                snapshot.data!.docs.length.toString(),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'serif',
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        statBox(
+                          icon: Icons.stacked_line_chart,
+                          title: 'Total Revenue',
+                          valueWidget: StreamBuilder<QuerySnapshot>(
+                            stream: (firestore ?? FirebaseFirestore.instance)
+                                .collection('payments')
+                                .snapshots(),
+                            builder: (context, snapshot) {
+                              double total = 0;
 
-            const Spacer(),
+                              if (snapshot.hasData) {
+                                for (final doc in snapshot.data!.docs) {
+                                  final data =
+                                      doc.data() as Map<String, dynamic>;
+                                  if (data['status'] != 'paid') continue;
+                                  final amount = data['amount'];
 
-            SizedBox(
-              width: 120,
-              height: 42,
-              child: ElevatedButton(
-                onPressed: () async {
-                  await AuthService.logout();
+                                  if (amount is int) {
+                                    total += amount.toDouble();
+                                  } else if (amount is double) {
+                                    total += amount;
+                                  }
+                                }
+                              }
 
-                  if (!context.mounted) return;
+                              return Text(
+                                '${total.toStringAsFixed(0)} OMR',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'serif',
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          width: 250,
+                          height: 210,
+                          padding: const EdgeInsets.fromLTRB(24, 18, 24, 20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF4F4F4),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Issues',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'serif',
+                                    ),
+                                  ),
+                                  StreamBuilder<QuerySnapshot>(
+                                    stream: (firestore ??
+                                            FirebaseFirestore.instance)
+                                        .collection('feedback')
+                                        .snapshots(),
+                                    builder: (context, snapshot) {
+                                      if (!snapshot.hasData) {
+                                        return const Text('0');
+                                      }
 
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/',
-                    (route) => false,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: brown,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(7),
-                  ),
-                ),
-                child: const Text(
-                  'Logout',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
+                                      return Text(
+                                        snapshot.data!.docs.length.toString(),
+                                        style: const TextStyle(fontSize: 15),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 32),
+                              dashboardButton(
+                                text: 'Manage Users',
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/adminUsers');
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              dashboardButton(
+                                text: 'Manage System',
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/adminSystem');
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Spacer(),
+                        SizedBox(
+                          width: 120,
+                          height: 42,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await AuthService.logout();
 
-            const SizedBox(height: 18),
-          ],
-        ),
+                              if (!context.mounted) return;
+
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/',
+                                (route) => false,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: brown,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(7),
+                              ),
+                            ),
+                            child: const Text(
+                              'Logout',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                      ],
+                    ))))),
       ),
       bottomNavigationBar: adminBottomNav(context, 0),
     );
@@ -217,7 +234,7 @@ class AdminDashboardScreen extends StatelessWidget {
     return Container(
       width: 250,
       height: 42,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         color: const Color(0xFFF4F4F4),
         borderRadius: BorderRadius.circular(22),
@@ -225,14 +242,14 @@ class AdminDashboardScreen extends StatelessWidget {
       child: Row(
         children: [
           Icon(icon, color: purple, size: 28),
-          const SizedBox(width: 18),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               title,
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
-                fontFamily: 'Serif',
+                fontFamily: 'serif',
               ),
             ),
           ),
@@ -261,16 +278,18 @@ class AdminDashboardScreen extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
+            Flexible(
+                child: Text(
               text,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.black,
                 fontSize: 16,
-                fontFamily: 'Serif',
+                fontFamily: 'serif',
                 fontWeight: FontWeight.bold,
               ),
-            ),
-            const SizedBox(width: 28),
+            )),
+            const SizedBox(width: 8),
             const Icon(
               Icons.arrow_forward_ios,
               color: Colors.grey,

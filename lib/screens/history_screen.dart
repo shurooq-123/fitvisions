@@ -1,12 +1,23 @@
+import '../widgets/prototype_ui.dart';
+import '../widgets/history_preview.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/app_data_service.dart';
 
-class HistoryScreen extends StatelessWidget {
-  const HistoryScreen({super.key});
+class HistoryScreen extends StatefulWidget {
+  const HistoryScreen({super.key, this.history});
+  final Stream<QuerySnapshot>? history;
 
-  static const bg = Color(0xFFD3D9CC);
-  static const purple = Color(0xFF51227D);
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+  Map<String, dynamic>? selected;
+  void showDetails(Map<String, dynamic> data) =>
+      showHistoryResult(context, data);
+
+  static const bg = Color(0xFFCED1C6);
 
   @override
   Widget build(BuildContext context) {
@@ -15,29 +26,44 @@ class HistoryScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 45),
-
+            Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                    onPressed: () => Navigator.maybePop(context),
+                    icon: const Icon(Icons.arrow_back_ios, size: 30))),
+            const SizedBox(height: 25),
             const Text(
               'History',
               style: TextStyle(
-                fontSize: 26,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 25),
-
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: AppDataService.userHistoryStream(),
+                stream: widget.history ?? AppDataService.userHistoryStream(),
                 builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return const Center(
+                        child: Text(
+                            'Could not load history. Check your connection and try again.'));
+                  }
                   if (!snapshot.hasData) {
                     return const Center(
                       child: CircularProgressIndicator(),
                     );
                   }
 
-                  final items = snapshot.data!.docs;
+                  final items = snapshot.data!.docs.toList()
+                    ..sort((a, b) {
+                      final aTime = (a.data()
+                          as Map<String, dynamic>)['createdAt'] as Timestamp?;
+                      final bTime = (b.data()
+                          as Map<String, dynamic>)['createdAt'] as Timestamp?;
+                      return (bTime?.millisecondsSinceEpoch ?? 0)
+                          .compareTo(aTime?.millisecondsSinceEpoch ?? 0);
+                    });
 
                   if (items.isEmpty) {
                     return const Center(
@@ -52,72 +78,77 @@ class HistoryScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 22),
                     itemCount: items.length,
                     itemBuilder: (context, index) {
-                      final data =
-                          items[index].data() as Map<String, dynamic>;
+                      final data = items[index].data() as Map<String, dynamic>;
 
                       final title = data['title'] ?? 'Activity';
-
-                      IconData icon = Icons.history;
-
-                      if (title.toString().toLowerCase().contains('payment')) {
-                        icon = Icons.payment;
-                      } else if (title
-                          .toString()
-                          .toLowerCase()
-                          .contains('subscription')) {
-                        icon = Icons.workspace_premium;
-                      } else if (title
-                          .toString()
-                          .toLowerCase()
-                          .contains('feedback')) {
-                        icon = Icons.feedback;
-                      } else if (title
-                          .toString()
-                          .toLowerCase()
-                          .contains('avatar')) {
-                        icon = Icons.person;
-                      } else if (title
-                          .toString()
-                          .toLowerCase()
-                          .contains('measurement')) {
-                        icon = Icons.straighten;
-                      }
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 14),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 18,
-                          vertical: 16,
+                          vertical: 12,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF4F4F4),
+                          color: const Color(0xFFEFEFEF),
                           borderRadius: BorderRadius.circular(25),
                         ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              icon,
-                              color: purple,
-                              size: 30,
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Text(
-                                title,
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w500,
+                        child: InkWell(
+                            onTap: () {
+                              setState(() => selected = data);
+                              showDetails(data);
+                            },
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                    width: 65,
+                                    height: 65,
+                                    child: HistoryPreview(data)),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Text(
+                                    "$title\n${data['createdAt'] is Timestamp ? (data['createdAt'] as Timestamp).toDate().toString().split(' ').first : ''}",
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontFamily: 'serif',
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ],
-                        ),
+                                const Icon(Icons.arrow_forward_ios,
+                                    color: Colors.grey, size: 24),
+                              ],
+                            )),
                       );
                     },
                   );
                 },
               ),
             ),
+            Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: SizedBox(
+                  width: 220,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                        backgroundColor: const Color(0xFFEFEFEF),
+                        foregroundColor: Colors.black,
+                        shape: const StadiumBorder()),
+                    onPressed: () {
+                      if (selected != null) {
+                        showDetails(selected!);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text(
+                                'Select a history item to view its details.')));
+                      }
+                    },
+                    child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Text('View Details'),
+                          Icon(Icons.arrow_forward_ios, color: Colors.grey)
+                        ]),
+                  ),
+                )),
           ],
         ),
       ),
@@ -125,36 +156,5 @@ class HistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget bottomNav(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: 2,
-      selectedItemColor: Colors.black,
-      unselectedItemColor: Colors.black,
-      backgroundColor: Colors.white,
-      type: BottomNavigationBarType.fixed,
-      onTap: (index) {
-        if (index == 0) {
-          Navigator.pushReplacementNamed(context, '/tryOnMethod');
-        } else if (index == 1) {
-          Navigator.pushReplacementNamed(context, '/profile');
-        } else if (index == 2) {
-          Navigator.pushReplacementNamed(context, '/history');
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Text('🏠', style: TextStyle(fontSize: 28)),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Text('👤', style: TextStyle(fontSize: 28)),
-          label: 'Profile',
-        ),
-        BottomNavigationBarItem(
-          icon: Text('🕘', style: TextStyle(fontSize: 28)),
-          label: 'History',
-        ),
-      ],
-    );
-  }
+  Widget bottomNav(BuildContext context) => const PrototypeNav(index: 2);
 }

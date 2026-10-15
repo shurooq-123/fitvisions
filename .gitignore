@@ -30,6 +30,11 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+node_modules/
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
 
 # Symbolication related
 app.*.symbols

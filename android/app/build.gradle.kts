@@ -7,11 +7,11 @@ plugins {
 
 android {
     namespace = "com.example.fitvisions"
-    compileSdk = 35
+    compileSdk = flutter.compileSdkVersion
 
     defaultConfig {
         applicationId = "com.example.fitvisions"
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -24,7 +24,7 @@ android {
 }
 
 kotlin {
-    jvmToolchain(17)
+    compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
 }
 
 flutter {
@@ -34,3 +34,4 @@ flutter {
 dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.13.0"))
 }
+

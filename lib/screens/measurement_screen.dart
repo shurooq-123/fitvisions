@@ -10,8 +10,8 @@ class MeasurementScreen extends StatefulWidget {
 }
 
 class _MeasurementScreenState extends State<MeasurementScreen> {
-  static const bg = Color(0xFFD3D9CC);
-  static const brown = Color(0xFF5E4747);
+  static const bg = Color(0xFFCED1C6);
+  static const brown = Color(0xFF574543);
 
   final heightController = TextEditingController();
   final weightController = TextEditingController();
@@ -100,7 +100,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
                     width: 295,
                     padding: const EdgeInsets.fromLTRB(24, 22, 24, 26),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF4F4F4),
+                      color: const Color(0xFFEFEFEF),
                       borderRadius: BorderRadius.circular(45),
                     ),
                     child: Column(

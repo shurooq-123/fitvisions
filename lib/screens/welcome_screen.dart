@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
-  static const bg = Color(0xFFD3D9CC);
-  static const brown = Color(0xFF5E4747);
+  static const bg = Color(0xFFCED1C6);
+  static const brown = Color(0xFF574543);
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class WelcomeScreen extends StatelessWidget {
 
                 Image.asset(
                   'images/fv.png',
-                  width: 260,
+                  width: 320,
                 ),
 
                 const SizedBox(height: 55),
@@ -29,14 +29,14 @@ class WelcomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     mainButton(
-                      text: 'LOGIN',
+                      text: 'Login',
                       onTap: () {
                         Navigator.pushNamed(context, '/login');
                       },
                     ),
                     const SizedBox(width: 20),
                     mainButton(
-                      text: 'REGISTER',
+                      text: 'Register',
                       onTap: () {
                         Navigator.pushNamed(context, '/register');
                       },

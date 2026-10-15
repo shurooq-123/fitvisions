@@ -6,14 +6,15 @@ class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
 
   @override
-  State<ChangePasswordScreen> createState() =>
-      _ChangePasswordScreenState();
+  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
 }
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
-  static const bg = Color(0xFFD3D9CC);
-  static const brown = Color(0xFF5E4747);
+  static const bg = Color(0xFFCED1C6);
+  static const brown = Color(0xFF574543);
 
+  final currentController = TextEditingController();
+  bool hideCurrent = true;
   final passwordController = TextEditingController();
   final confirmController = TextEditingController();
 
@@ -25,7 +26,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final password = passwordController.text.trim();
     final confirm = confirmController.text.trim();
 
-    if (password.isEmpty || confirm.isEmpty) {
+    if (password.isEmpty || confirm.isEmpty || currentController.text.isEmpty) {
       showMessage('Please fill all fields');
       return;
     }
@@ -45,14 +46,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     try {
       setState(() => loading = true);
 
-      await AuthService.changePassword(password);
+      await AuthService.changePassword(password,
+          currentPassword: currentController.text.trim());
 
       if (!mounted) return;
 
       showMessage('Password changed successfully');
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
     } catch (e) {
-      showMessage(e.toString());
+      showMessage(AuthService.errorMessage(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -66,6 +68,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   void dispose() {
+    currentController.dispose();
     passwordController.dispose();
     confirmController.dispose();
     super.dispose();
@@ -76,6 +79,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
+          child: SingleChildScrollView(
         child: Center(
           child: SizedBox(
             width: 320,
@@ -88,7 +92,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   width: 295,
                   padding: const EdgeInsets.fromLTRB(26, 24, 26, 28),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF4F4F4),
+                    color: const Color(0xFFEFEFEF),
                     borderRadius: BorderRadius.circular(58),
                   ),
                   child: Column(
@@ -101,6 +105,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('Current Password'),
+                      ),
+                      const SizedBox(height: 5),
+                      passwordField(
+                          controller: currentController,
+                          hide: hideCurrent,
+                          onTap: () =>
+                              setState(() => hideCurrent = !hideCurrent)),
+                      const SizedBox(height: 16),
                       const Align(
                         alignment: Alignment.centerLeft,
                         child: Text('New Password'),
@@ -166,7 +181,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 

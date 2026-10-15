@@ -1,294 +1,158 @@
+import '../widgets/prototype_ui.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../services/app_data_service.dart';
 
 class SubscriptionScreen extends StatefulWidget {
-  const SubscriptionScreen({super.key});
+  const SubscriptionScreen({super.key, this.firestore, this.savePlan});
+  final FirebaseFirestore? firestore;
+  final Future<String> Function(String)? savePlan;
 
   @override
-  State<SubscriptionScreen> createState() =>
-      _SubscriptionScreenState();
+  State<SubscriptionScreen> createState() => _SubscriptionScreenState();
 }
 
-class _SubscriptionScreenState
-    extends State<SubscriptionScreen> {
-
-  static const bg = Color(0xFFD3D9CC);
-  static const brown = Color(0xFF5E4747);
-  static const purple = Color(0xFF51227D);
-
+class _SubscriptionScreenState extends State<SubscriptionScreen> {
   String selectedPlan = '';
   double selectedPrice = 0;
+  String selectedPlanId = '';
+  bool saving = false;
+
+  Future<void> continueWithPlan() async {
+    if (saving) return;
+    if (selectedPlanId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please choose a subscription plan')));
+      return;
+    }
+    setState(() => saving = true);
+    try {
+      final subscriptionId = widget.savePlan == null
+          ? await AppDataService.saveSubscription(planId: selectedPlanId)
+          : await widget.savePlan!(selectedPlanId);
+      if (!mounted) return;
+      final returnToDesign = (ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?)?['returnToDesign'] ==
+          true;
+      final paid =
+          await Navigator.pushNamed(context, '/payment', arguments: {
+        'subscriptionId': subscriptionId,
+        'plan': selectedPlan,
+        'price': selectedPrice,
+        'returnToDesign': returnToDesign,
+      });
+      if (mounted && returnToDesign && paid == true) {
+        Navigator.pop(context, true);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Could not save the subscription. Check your connection and try again.')));
+      }
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
+  }
 
   @override
+  Widget build(BuildContext context) => PrototypePage(
+      title: 'Subscription',
+      child: Column(children: [
+        StreamBuilder<QuerySnapshot>(
+            stream: (widget.firestore ?? FirebaseFirestore.instance)
+                .collection('plans')
+                .orderBy('price', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const Text('Could not load plans. Please try again.');
+              }
+              if (!snapshot.hasData) return const CircularProgressIndicator();
+              if (snapshot.data!.docs.isEmpty) {
+                return const Text('No subscription plans available');
+              }
+              return Column(
+                  children: snapshot.data!.docs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                return Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: SubscriptionPlanCard(
+                        data: data,
+                        selected: selectedPlanId == doc.id,
+                        onTap: () => setState(() {
+                              selectedPlanId = doc.id;
+                              selectedPlan = data['name'] ?? '';
+                              selectedPrice =
+                                  (data['price'] as num?)?.toDouble() ?? 0;
+                            })));
+              }).toList());
+            }),
+        PrototypeButton(saving ? 'Saving...' : 'Subscribe',
+            onPressed: saving ? null : continueWithPlan),
+        const SizedBox(height: 8),
+        const Text('Demo subscription • No real charge',
+            style: TextStyle(fontSize: 11)),
+      ]));
+}
+
+class SubscriptionPlanCard extends StatelessWidget {
+  const SubscriptionPlanCard(
+      {super.key,
+      required this.data,
+      required this.selected,
+      required this.onTap});
+  final Map<String, dynamic> data;
+  final bool selected;
+  final VoidCallback onTap;
+  @override
   Widget build(BuildContext context) {
-
-    return Scaffold(
-      backgroundColor: bg,
-
-      body: SafeArea(
-        child: Column(
-          children: [
-
-            const SizedBox(height: 45),
-
-            const Text(
-              'Choose Subscription',
-
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('plans')
-                    .snapshots(),
-
-                builder: (context, snapshot) {
-
-                  if (!snapshot.hasData) {
-
-                    return const Center(
-                      child:
-                          CircularProgressIndicator(),
-                    );
-                  }
-
-                  final plans = snapshot.data!.docs;
-
-                  if (plans.isEmpty) {
-
-                    return const Center(
-                      child: Text(
-                        'No subscription plans available',
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    padding:
-                        const EdgeInsets.symmetric(
-                      horizontal: 22,
-                    ),
-
-                    itemCount: plans.length,
-
-                    itemBuilder: (context, index) {
-
-                      final data =
-                          plans[index].data()
-                              as Map<String, dynamic>;
-
-                      final name =
-                          data['name'] ?? '';
-
-                      final price =
-                          (data['price'] ?? 0)
-                              .toDouble();
-
-                      final duration =
-                          data['duration'] ?? '';
-
-                      final features =
-                          data['features'] ?? '';
-
-                      final isSelected =
-                          selectedPlan == name;
-
-                      return GestureDetector(
-                        onTap: () {
-
-                          setState(() {
-
-                            selectedPlan = name;
-
-                            selectedPrice = price;
-                          });
-                        },
-
-                        child: Container(
-                          margin:
-                              const EdgeInsets.only(
-                            bottom: 18,
-                          ),
-
-                          padding:
-                              const EdgeInsets.all(
-                            20,
-                          ),
-
-                          decoration: BoxDecoration(
-                            color:
-                                const Color(
-                                    0xFFF4F4F4),
-
-                            borderRadius:
-                                BorderRadius.circular(
-                              30,
-                            ),
-
-                            border: isSelected
-                                ? Border.all(
-                                    color: purple,
-                                    width: 2,
-                                  )
-                                : null,
-                          ),
-
-                          child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment
-                                    .start,
-
-                            children: [
-
-                              Row(
-                                children: [
-
-                                  const Icon(
-                                    Icons
-                                        .workspace_premium,
-
-                                    color: purple,
-                                    size: 30,
-                                  ),
-
-                                  const SizedBox(
-                                      width: 12),
-
-                                  Expanded(
-                                    child: Text(
-                                      name,
-
-                                      style:
-                                          const TextStyle(
-                                        fontSize:
-                                            20,
-
-                                        fontWeight:
-                                            FontWeight
-                                                .bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(
-                                  height: 10),
-
-                              Text(
-                                '$price OMR / $duration',
-
-                                style:
-                                    const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight:
-                                      FontWeight.w500,
-                                ),
-                              ),
-
-                              const SizedBox(
-                                  height: 10),
-
-                              Text(
-                                features,
-
-                                style:
-                                    const TextStyle(
-                                  fontSize: 14,
-                                  color:
-                                      Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.only(
-                bottom: 25,
-              ),
-
-              child: SizedBox(
-                width: 170,
-                height: 48,
-
-                child: ElevatedButton(
-                  onPressed: () {
-
-                    if (selectedPlan.isEmpty) {
-
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Please choose a subscription plan',
-                          ),
-
-                          backgroundColor:
-                              brown,
-                        ),
-                      );
-
-                      return;
-                    }
-
-                    Navigator.pushNamed(
-                      context,
-                      '/payment',
-
-                      arguments: {
-
-                        'plan':
-                            selectedPlan,
-
-                        'price':
-                            selectedPrice,
-                      },
-                    );
-                  },
-
-                  style:
-                      ElevatedButton.styleFrom(
-                    backgroundColor: brown,
-
-                    shape:
-                        RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        8,
-                      ),
-                    ),
-                  ),
-
-                  child: const Text(
-                    'Continue',
-
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    final price = (data['price'] as num?)?.toDouble() ?? 0;
+    final amount = price == price.roundToDouble()
+        ? price.toInt().toString()
+        : price.toString();
+    final raw = data['features'];
+    final features = raw is List
+        ? raw.map((v) => v.toString()).toList()
+        : '$raw'.split('\n');
+    return Semantics(
+        selected: selected,
+        button: true,
+        child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(52),
+            child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
+                decoration: BoxDecoration(
+                    color: prototypeCard,
+                    borderRadius: BorderRadius.circular(52),
+                    border: Border.all(
+                        color: selected ? prototypeBrown : Colors.transparent,
+                        width: 2)),
+                child: Column(children: [
+                  Text(data['name'] ?? '',
+                      style: const TextStyle(
+                          fontSize: 21, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  Text('$amount OMR / ${data['duration'] ?? ''}',
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  ...features.where((v) => v.trim().isNotEmpty).map((v) => Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.check,
+                                size: 18, color: Colors.black54),
+                            const SizedBox(width: 3),
+                            Expanded(
+                                child: Text(
+                                    v.replaceFirst(RegExp(r'^\s*[✓✔]\s*'), ''),
+                                    style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black54))),
+                          ])),
+                ]))));
   }
 }

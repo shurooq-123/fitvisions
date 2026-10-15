@@ -1,23 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'admin_dashboard_screen.dart';
+import 'admin_user_history_screen.dart';
 
 class AdminUsersScreen extends StatefulWidget {
-  const AdminUsersScreen({super.key});
+  const AdminUsersScreen({super.key, this.firestore});
+  final FirebaseFirestore? firestore;
 
   @override
   State<AdminUsersScreen> createState() => _AdminUsersScreenState();
 }
 
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
-  static const bg = Color(0xFFD3D9CC);
-  static const brown = Color(0xFF5E4747);
+  static const bg = Color(0xFFD5DBCD);
+  static const brown = Color(0xFF574543);
 
   final searchController = TextEditingController();
   String searchText = '';
 
   Future<void> deleteUser(String id) async {
-    await FirebaseFirestore.instance.collection('users').doc(id).delete();
+    await (widget.firestore ?? FirebaseFirestore.instance)
+        .collection('users')
+        .doc(id)
+        .delete();
 
     if (!mounted) return;
 
@@ -70,7 +75,6 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         child: Column(
           children: [
             const SizedBox(height: 12),
-
             Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
@@ -83,9 +87,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
             const Text(
               'Users',
               style: TextStyle(
@@ -93,9 +95,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 18),
-
             Container(
               width: 285,
               height: 44,
@@ -114,16 +114,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 decoration: const InputDecoration(
                   hintText: 'Search users',
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
                   icon: Icon(Icons.search),
                 ),
               ),
             ),
-
             const SizedBox(height: 18),
-
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
+                stream: (widget.firestore ?? FirebaseFirestore.instance)
                     .collection('users')
                     .snapshots(),
                 builder: (context, snapshot) {
@@ -156,7 +157,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 22),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: users.length,
                     itemBuilder: (context, index) {
                       final doc = users[index];
@@ -195,7 +196,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.symmetric(
         horizontal: 14,
-        vertical: 16,
+        vertical: 14,
       ),
       decoration: BoxDecoration(
         color: const Color(0xFFF4F4F4),
@@ -212,17 +213,18 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               ),
             ),
           ),
-
           IconButton(
-            onPressed: () {
-              confirmDelete(id, name);
-            },
-            icon: const Icon(
-              Icons.delete,
-              color: Colors.red,
-              size: 26,
-            ),
-          ),
+              tooltip: 'View user history',
+              icon: const Icon(Icons.history, color: Color(0xFF51227D)),
+              onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => AdminUserHistoryScreen(
+                          uid: id, name: name, firestore: widget.firestore)))),
+          IconButton(
+              tooltip: 'Delete user',
+              onPressed: () => confirmDelete(id, name),
+              icon: const Icon(Icons.delete, color: Colors.red)),
         ],
       ),
     );

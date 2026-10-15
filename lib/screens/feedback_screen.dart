@@ -1,3 +1,4 @@
+import '../widgets/prototype_ui.dart';
 import 'package:flutter/material.dart';
 import '../services/app_data_service.dart';
 
@@ -9,8 +10,7 @@ class FeedbackScreen extends StatefulWidget {
 }
 
 class _FeedbackScreenState extends State<FeedbackScreen> {
-  static const bg = Color(0xFFD3D9CC);
-  static const brown = Color(0xFF5E4747);
+  static const brown = Color(0xFF574543);
 
   final feedbackController = TextEditingController();
   int rating = 5;
@@ -27,7 +27,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     try {
       setState(() => loading = true);
 
-      await AppDataService.sendFeedback('Rating: $rating\n$message');
+      await AppDataService.sendFeedback(message, rating: rating);
 
       if (!mounted) return;
 
@@ -71,99 +71,48 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bg,
-      body: SafeArea(
-        child: Center(
-          child: SizedBox(
-            width: 320,
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(height: 55),
-                  const Text(
-                    'Feedback',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 30),
-                  Container(
-                    width: 295,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF4F4F4),
-                      borderRadius: BorderRadius.circular(45),
-                    ),
-                    child: Column(
-                      children: [
-                        const Text(
-                          'Rate Your Experience',
-                          style: TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(5, (index) {
-                            return IconButton(
-                              onPressed: () {
-                                setState(() => rating = index + 1);
-                              },
-                              icon: Icon(
-                                index < rating ? Icons.star : Icons.star_border,
-                                color: Colors.amber,
-                                size: 34,
-                              ),
-                            );
-                          }),
-                        ),
-                        const SizedBox(height: 10),
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Write the feedback:',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        TextField(
-                          controller: feedbackController,
-                          maxLines: 6,
-                          decoration: const InputDecoration(
-                            filled: true,
-                            fillColor: Color(0xFFEFF3FF),
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: 145,
-                          height: 42,
-                          child: ElevatedButton(
-                            onPressed: loading ? null : submitFeedback,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: brown,
-                            ),
-                            child: loading
-                                ? const CircularProgressIndicator(
-                                    color: Colors.white)
-                                : const Text(
-                                    'Submit',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => PrototypePage(
+      title: 'Feedback',
+      child: Column(children: [
+        PrototypePanel(
+            child: Column(children: [
+          const SizedBox(height: 24),
+          const FittedBox(
+              child:
+                  Text('Rate Your Experience', style: TextStyle(fontSize: 27))),
+          const SizedBox(height: 8),
+          Row(
+              children: List.generate(
+                  5,
+                  (i) => Expanded(
+                      child: IconButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: () => setState(() => rating = i + 1),
+                          icon: Icon(
+                              i < rating ? Icons.star : Icons.star_border,
+                              color: Colors.amber,
+                              size: 38))))),
+          const SizedBox(height: 22),
+          const Align(
+              alignment: Alignment.centerLeft,
+              child: Text('Write the feedback:',
+                  style: TextStyle(fontWeight: FontWeight.bold))),
+          const SizedBox(height: 6),
+          TextField(
+              controller: feedbackController,
+              maxLines: 7,
+              maxLength: 4000,
+              decoration: const InputDecoration(
+                  filled: true,
+                  fillColor: Color(0xFFE8EBF3),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.zero))),
+        ])),
+        const SizedBox(height: 14),
+        PrototypeButton(loading ? 'Sending...' : 'Submit',
+            onPressed: loading ? null : submitFeedback),
+        const SizedBox(height: 10),
+        const Text('Your feedback helps us improve\nthe app !!',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.bold)),
+      ]));
 }

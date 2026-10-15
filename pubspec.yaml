@@ -18,6 +18,7 @@ dependencies:
   image_picker: ^1.1.2
 
   cupertino_icons: ^1.0.8
+  firebase_storage: 12.4.10
 
 dev_dependencies:
   flutter_test:
@@ -27,9 +28,16 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^4.0.0
+  mocktail: ^1.0.5
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: TimesNewRoman
+      fonts:
+        - asset: assets/fonts/times.ttf
+        - asset: assets/fonts/timesbd.ttf
+          weight: 700
 
   assets:
     - images/

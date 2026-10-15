@@ -11,8 +11,8 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  static const bg = Color(0xFFD3D9CC);
-  static const brown = Color(0xFF5E4747);
+  static const bg = Color(0xFFCED1C6);
+  static const brown = Color(0xFF574543);
 
   final emailController = TextEditingController();
   bool loading = false;
@@ -82,7 +82,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: SizedBox(
             width: 320,
             child: SingleChildScrollView(
@@ -95,7 +96,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     width: 295,
                     padding: const EdgeInsets.fromLTRB(26, 25, 26, 28),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF4F4F4),
+                      color: const Color(0xFFEFEFEF),
                       borderRadius: BorderRadius.circular(58),
                     ),
                     child: Column(
@@ -104,12 +105,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           'FORGET PASSWORD',
                           style: TextStyle(
                             fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.normal,
                           ),
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 60),
                         const Text(
-                          'Enter your registered email to receive a password reset link.',
+                          'Enter your email',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 14),
                         ),
@@ -128,7 +129,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             controller: emailController,
                             keyboardType: TextInputType.emailAddress,
                             decoration: const InputDecoration(
-                              hintText: 'example@gmail.com',
+                              hintText: 'name@gmail.com',
                               filled: true,
                               fillColor: Colors.white,
                               border: OutlineInputBorder(),

@@ -4,11 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fitvisions/main.dart';
 
 void main() {
-
   testWidgets(
     'First name validation test',
     (WidgetTester tester) async {
-
       await tester.pumpWidget(
         const FitVisionsApp(),
       );
@@ -16,7 +14,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(
-        find.text('REGISTER'),
+        find.text('Register'),
       );
 
       await tester.pumpAndSettle();
@@ -46,20 +44,16 @@ void main() {
         'Aa@12345',
       );
 
-      await tester.enterText(
-        find.byType(TextField).at(5),
-        'Aa@12345',
-      );
-
+      await tester.ensureVisible(find.text('Sign up'));
       await tester.tap(
-        find.text('SIGN UP'),
+        find.text('Sign up'),
       );
 
       await tester.pumpAndSettle();
 
       expect(
         find.textContaining(
-          'First name must be',
+          'Only one word and maximum 15 letters',
         ),
         findsOneWidget,
       );
