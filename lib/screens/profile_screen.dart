@@ -1,3 +1,4 @@
+import '../widgets/subscription_summary.dart';
 import '../widgets/prototype_ui.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -39,6 +40,8 @@ class ProfileScreen extends StatelessWidget {
                       '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'
                           .trim();
                   return Column(children: [
+                    const SubscriptionSummary(),
+                    const SizedBox(height: 18),
                     PrototypePanel(
                         radius: 30,
                         padding: 12,
@@ -61,7 +64,10 @@ class ProfileScreen extends StatelessWidget {
                                       if ((data['phone'] ?? '')
                                           .toString()
                                           .isNotEmpty)
-                                        Text('+968 ${data['phone']}',
+                                        Text(
+                                            '${data['phone']}'.startsWith('+')
+                                                ? '${data['phone']}'
+                                                : '+968 ${data['phone']}',
                                             style:
                                                 const TextStyle(fontSize: 12)),
                                     ]))
@@ -74,32 +80,6 @@ class ProfileScreen extends StatelessWidget {
                             menu(context, Icons.payment, 'Payment', '/payment'),
                           ]),
                           const SizedBox(height: 12),
-                          if (!user.emailVerified)
-                            TextButton.icon(
-                              icon: const Icon(Icons.mark_email_unread_outlined),
-                              label: const Text('Send verification email'),
-                              onPressed: () async {
-                                try {
-                                  await user.reload();
-                                  final current = FirebaseAuth.instance.currentUser;
-                                  if (current == null) return;
-                                  if (!current.emailVerified) {
-                                    await current.sendEmailVerification();
-                                  }
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text(current.emailVerified
-                                        ? 'Your email is already verified.'
-                                        : 'Verification email requested. Check your inbox and spam folder.'),
-                                  ));
-                                } catch (error) {
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text(AuthService.errorMessage(error)),
-                                  ));
-                                }
-                              },
-                            ),
                           group([
                             menu(context, Icons.lock_outline, 'Change Password',
                                 '/changePassword'),

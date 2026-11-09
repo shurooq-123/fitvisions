@@ -7,6 +7,9 @@ class HistoryPreview extends StatelessWidget {
   final Map<String, dynamic> data;
   @override
   Widget build(BuildContext context) {
+    if (data['kind'] == 'subscription') {
+      return const Icon(Icons.workspace_premium, color: Color(0xFF51227D));
+    }
     final encoded = data['previewBase64'];
     if (encoded is String && encoded.isNotEmpty) {
       try {
@@ -34,7 +37,10 @@ void showHistoryResult(BuildContext context, Map<String, dynamic> data) {
                     child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (data['previewBase64'] is String ||
+                    if (data['kind'] == 'subscription')
+                      Text(
+                          "${data['plan']}\n${data['price']} OMR\nStatus: ${data['status']}\nDemo subscription • No real charge")
+                    else if (data['previewBase64'] is String ||
                         data['imagePath'] is String) ...[
                       SizedBox(height: 330, child: HistoryPreview(data)),
                       const Text('Saved preview'),

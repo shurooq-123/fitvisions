@@ -1,13 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../services/auth_service.dart';
 import '../widgets/custom_back_button.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() =>
-      _ForgotPasswordScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
@@ -19,45 +20,63 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Future<void> sendResetLink() async {
     final email = emailController.text.trim();
-
-    if (email.isEmpty) {
-      showMessage('Please enter your email');
+    if (!AuthService.isValidEmail(email)) {
+      showMessage('Please enter a valid email address.');
       return;
     }
 
+    setState(() => loading = true);
     try {
-      setState(() => loading = true);
-
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-
+      await AuthService.sendResetLink(email);
       if (!mounted) return;
-
-      showDialog(
+      await showDialog<void>(
         context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Reset Link Sent'),
-            content: Text(
-              'Password reset link sent to:\n\n$email\n\nCheck Inbox or Spam.',
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Check your email'),
+          content: const Text(
+            'If an account exists, you will receive a FitVisions email. '
+            'Open the newest link to choose a different password.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('OK'),
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushReplacementNamed(context, '/login');
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
+          ],
+        ),
       );
-    } on FirebaseAuthException catch (e) {
-      showMessage(e.message ?? 'Failed to send reset link');
-    } catch (e) {
-      showMessage(e.toString());
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+      if (error.code == 'user-not-found') {
+        showMessage('If an account exists, check your inbox for a reset link.');
+      } else {
+        showMessage(AuthService.errorMessage(error));
+      }
+    } catch (error) {
+      if (mounted) showMessage(AuthService.errorMessage(error));
     } finally {
       if (mounted) setState(() => loading = false);
+    }
+  }
+
+  Future<void> openCopiedResetLink() async {
+    try {
+      final clipboard = await Clipboard.getData(Clipboard.kTextPlain);
+      if (!mounted) return;
+      final link = clipboard?.text?.trim();
+      if (link == null || link.isEmpty) {
+        showMessage('Copy the reset link from your FitVisions email first.');
+        return;
+      }
+      await const MethodChannel('fitvisions/password-reset')
+          .invokeMethod<void>('openResetLink', link);
+    } on PlatformException catch (error) {
+      if (!mounted) return;
+      showMessage(error.code == 'invalid_link'
+          ? 'Copy the reset link from your FitVisions email first.'
+          : 'Could not open the reset link.');
+    } catch (_) {
+      if (mounted) showMessage('Could not open the reset link.');
     }
   }
 
@@ -90,6 +109,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               child: Column(
                 children: [
                   const CustomBackButton(),
+                  TextButton(
+                    onPressed: loading ? null : openCopiedResetLink,
+                    child: const Text('Open copied reset link'),
+                  ),
                   Image.asset('images/fv.png', width: 180),
                   const SizedBox(height: 30),
                   Container(

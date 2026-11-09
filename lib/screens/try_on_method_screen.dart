@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import '../widgets/prototype_ui.dart';
 import 'package:flutter/material.dart';
-import 'ready_outfits_screen.dart';
 
 class TryOnMethodScreen extends StatefulWidget {
   const TryOnMethodScreen({super.key, this.dashboard = false});
@@ -15,6 +17,26 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
   static const brown = Color(0xFF574543);
 
   int selectedMethod = 0;
+  late final Future<String?> userName = loadUserName();
+
+  Future<String?> loadUserName() async {
+    if (Firebase.apps.isEmpty) return null;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    try {
+      final profile = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      final data = profile.data();
+      final name =
+          '${data?['firstName'] ?? ''} ${data?['lastName'] ?? ''}'.trim();
+      if (name.isNotEmpty) return name;
+    } on FirebaseException {
+      // Use the signed-in identity if the profile cannot be read.
+    }
+    return user.displayName ?? user.email;
+  }
 
   void continueToNextPage() {
     if (selectedMethod == 0) {
@@ -31,8 +53,6 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
       Navigator.pushNamed(context, '/generateAvatar');
     } else if (selectedMethod == 2) {
       Navigator.pushNamed(context, '/createClothes');
-    } else {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const ReadyOutfitsScreen()));
     }
   }
 
@@ -45,7 +65,8 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
         child: Center(
           child: SizedBox(
             width: 320,
-            child: SingleChildScrollView(child: Column(
+            child: SingleChildScrollView(
+                child: Column(
               children: [
                 Align(
                     alignment: Alignment.centerLeft,
@@ -58,6 +79,19 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
                       child: Text('User Dashboard',
                           style: TextStyle(
                               fontSize: 20, fontWeight: FontWeight.bold))),
+                if (widget.dashboard)
+                  FutureBuilder<String?>(
+                    future: userName,
+                    builder: (context, snapshot) => Column(
+                      children: [
+                        const Text('Welcome',
+                            style: TextStyle(
+                                fontSize: 19, fontWeight: FontWeight.bold)),
+                        if (snapshot.data case final name?)
+                          Text(name, textAlign: TextAlign.center),
+                      ],
+                    ),
+                  ),
                 const PrototypeLogo(width: 200, symbolOnly: true),
                 const SizedBox(height: 35),
                 const Text(
@@ -72,31 +106,8 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
                 const SizedBox(height: 35),
                 methodButton(index: 1, text: 'Generate Avatar'),
                 const SizedBox(height: 35),
-                methodButton(index: 2, text: 'Create Clothes'),
-                const SizedBox(height: 16),
-                methodButton(index: 3, text: 'Ready-made outfits'),
+                methodButton(index: 2, text: 'Design Clothes'),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: 135,
-                  height: 43,
-                  child: ElevatedButton(
-                    onPressed: continueToNextPage,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: brown,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    child: const Text(
-                      'Continue',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 32),
               ],
             )),
@@ -117,10 +128,11 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
         setState(() {
           selectedMethod = index;
         });
+        continueToNextPage();
       },
       child: Container(
         width: 250,
-        height: 76,
+        padding: const EdgeInsets.all(16),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: const Color(0xFFEFEFEF),
@@ -129,9 +141,19 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
         ),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Flexible(
-              child: Text(text,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 19))),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 19)),
+            const SizedBox(height: 6),
+            Text(
+                const [
+                  'Create a 3D-style image from your measurements.',
+                  'Design an outfit with your own preferences.',
+                ][index - 1],
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12))
+          ])),
           const SizedBox(width: 18),
           const Icon(Icons.arrow_forward_ios, size: 24)
         ]),

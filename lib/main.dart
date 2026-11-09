@@ -43,15 +43,24 @@ class FitVisionsApp extends StatelessWidget {
     return MaterialApp(
       title: 'FitVisions',
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
       theme: ThemeData(
         useMaterial3: false,
-        fontFamily: 'sans-serif',
+        fontFamily: 'TimesNewRoman',
         colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF574543), brightness: Brightness.light),
         inputDecorationTheme: const InputDecorationTheme(
             isDense: true,
-            border: OutlineInputBorder(borderRadius: BorderRadius.zero)),
+            filled: true,
+            fillColor: Color(0xFFFFFDFC),
+            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(14))),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(14)),
+                borderSide: BorderSide(color: Color(0xFFB8B9AE))),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(14)),
+                borderSide: BorderSide(color: Color(0xFF574543), width: 1.6))),
         elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF574543),
@@ -59,6 +68,16 @@ class FitVisionsApp extends StatelessWidget {
                 elevation: 0)),
         scaffoldBackgroundColor: const Color(0xFFCED1C6),
       ),
+      onGenerateRoute: (settings) {
+        final link = Uri.tryParse(settings.name ?? '');
+        if (link?.scheme == 'https' &&
+            link?.host == 'fitvisions-33e6d.firebaseapp.com' &&
+            link?.path == '/login') {
+          return MaterialPageRoute<void>(
+              settings: settings, builder: (_) => const LoginScreen());
+        }
+        return null;
+      },
       routes: {
         '/': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),

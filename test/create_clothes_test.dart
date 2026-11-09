@@ -7,6 +7,7 @@ void main() {
       'Other occasion is required and choices survive review and editing',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: CreateClothesScreen()));
+    await tester.pumpAndSettle();
     for (final entry in {
       'Gender / clothing style': 'Female',
       'Age group': 'Adult (18–29)',

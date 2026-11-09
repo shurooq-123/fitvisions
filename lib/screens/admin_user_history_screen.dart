@@ -12,15 +12,18 @@ class AdminUserHistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         backgroundColor: const Color(0xFFD5DBCD),
         appBar: AppBar(
             backgroundColor: const Color(0xFFD5DBCD),
             elevation: 0,
             title: const Text('User History'),
-            bottom: const TabBar(
-                tabs: [Tab(text: 'History / Try-ons'), Tab(text: 'Feedback')])),
+            bottom: const TabBar(tabs: [
+              Tab(text: 'History / Try-ons'),
+              Tab(text: 'Feedback'),
+              Tab(text: 'Payments')
+            ])),
         body: Column(children: [
           Padding(
               padding: const EdgeInsets.all(16),
@@ -112,6 +115,53 @@ class AdminUserHistoryScreen extends StatelessWidget {
                 return ListView(
                     children: records.map((record) {
                   return FeedbackMessage(record.data());
+                }).toList());
+              },
+            ),
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: (firestore ?? FirebaseFirestore.instance)
+                  .collection('payments')
+                  .where('uid', isEqualTo: uid)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Center(
+                      child: Text('Could not load payments. Please retry.'));
+                }
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final records = snapshot.data!.docs.toList()
+                  ..sort((a, b) => ((b.data()['createdAt'] as Timestamp?)
+                              ?.millisecondsSinceEpoch ??
+                          0)
+                      .compareTo((a.data()['createdAt'] as Timestamp?)
+                              ?.millisecondsSinceEpoch ??
+                          0));
+                if (records.isEmpty) {
+                  return const Center(child: Text('No payments yet'));
+                }
+                return ListView(
+                    children: records.map((record) {
+                  final data = record.data();
+                  final stamp = data['createdAt'];
+                  final date = stamp is Timestamp
+                      ? stamp
+                          .toDate()
+                          .toUtc()
+                          .add(const Duration(hours: 4))
+                          .toString()
+                          .split('.')
+                          .first
+                      : 'Saving date...';
+                  return Card(
+                      child: ListTile(
+                    title: Text(
+                        '${data['plan'] ?? 'Subscription'} — ${data['amount']} OMR'),
+                    subtitle: Text(
+                        '${data['email'] ?? ''}\n$date (Oman)\nDemo payment • No real charge'),
+                    isThreeLine: true,
+                  ));
                 }).toList());
               },
             )

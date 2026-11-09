@@ -149,7 +149,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
                                       ),
                                     )
                                   : const Text(
-                                      'Continue',
+                                      'Save measurements',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,

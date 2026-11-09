@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import '../services/ai_generation_service.dart';
 import '../widgets/prototype_ui.dart';
 import 'ai_generation_screen.dart';
-import '../widgets/clothing_library.dart';
 import '../services/dress_reference.dart';
-import '../widgets/dress_reference_picker.dart';
+import '../services/omani_outfit.dart';
 import '../widgets/favourite_colour_strip.dart';
 
 class CreateClothesScreen extends StatefulWidget {
@@ -17,41 +15,31 @@ class CreateClothesScreen extends StatefulWidget {
 
 class _CreateClothesScreenState extends State<CreateClothesScreen> {
   final formKey = GlobalKey<FormState>();
-  final otherOccasion = TextEditingController();
   final notes = TextEditingController();
   final answers = <String, String>{};
   bool reviewing = false;
-  String? template;
   String? facePhoto;
   DressReference? dressReference;
-  bool analyzingSkin = false;
   int formRevision = 0;
+  bool get male => answers['Gender / clothing style'] == 'Male';
+  bool get traditional => answers['Outfit type'] == traditionalOmaniClothes;
 
   static const baseQuestions = <String, List<String>>{
     'Gender / clothing style': ['Female', 'Male', 'Unisex'],
     'Age group': [
-      'Child (0–12)',
-      'Teen (13–17)',
       'Adult (18–29)',
       'Adult (30–49)',
-      'Adult (50+)'
-    ],
-    'Size': [
-      'XS',
-      'Small',
-      'Medium',
-      'Large',
-      'XL',
-      'XXL',
-      'Custom / not sure'
+      'Adult (50–64)',
+      'Adult (65+)'
     ],
     'Occasion': [
       'Eid',
       'Bridal dress',
       'Wedding guest',
       'Birthday',
-      'Abaya',
-      'Other'
+      'Graduation',
+      'Work / formal event',
+      'Everyday'
     ],
     'Skin tone (optional)': [
       'Prefer not to specify',
@@ -59,8 +47,7 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
       'Light',
       'Medium',
       'Tan',
-      'Deep',
-      'Not sure — use camera'
+      'Deep'
     ],
     'Style': ['Evening', 'Party', 'Soft', 'No preference'],
     'Silhouette': ['Bodycon', 'Sheath', 'Mermaid', 'A-line', 'No preference'],
@@ -109,37 +96,221 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
     'Details': ['Minimal', 'Embroidery', 'Lace', 'Beading', 'No preference'],
   };
 
+  String? get occasion => answers['Occasion'];
+
+  String get ageGuidance => switch (answers['Age group']) {
+        'Adult (18–29)' => 'Use contemporary styling for a younger adult.',
+        'Adult (30–49)' => 'Use refined, tailored styling for a middle adult.',
+        'Adult (50–64)' =>
+          'Use classic lines and a comfortable fit for a mature adult.',
+        'Adult (65+)' =>
+          'Show an older adult and favor comfortable, elegant cuts and ease of movement.',
+        _ => '',
+      };
+
+  List<String> get occasions => male
+      ? [
+          'Eid',
+          'Wedding groom',
+          'Wedding guest',
+          'Birthday',
+          'Graduation',
+          'Work / formal event',
+          'Sports / training',
+          'Everyday',
+        ]
+      : baseQuestions['Occasion']!;
+
+  List<String> get outfitTypes {
+    if (male) {
+      return switch (occasion) {
+        'Sports / training' => ['Sportswear'],
+        'Wedding groom' || 'Wedding guest' || 'Eid' => [
+            traditionalOmaniClothes,
+            'Formal suit'
+          ],
+        'Work / formal event' || 'Graduation' => [
+            'Formal suit',
+            'Casual outfit'
+          ],
+        'Birthday' => ['Casual outfit', 'Formal suit'],
+        'Everyday' => [traditionalOmaniClothes, 'Casual outfit'],
+        _ => [
+            traditionalOmaniClothes,
+            'Formal suit',
+            'Sportswear',
+            'Casual outfit'
+          ],
+      };
+    }
+    return switch (occasion) {
+      'Bridal dress' => ['Bridal gown', traditionalOmaniClothes],
+      'Graduation' => ['Graduation dress', traditionalOmaniClothes],
+      'Eid' || 'Wedding guest' || 'Birthday' || 'Everyday' => [
+          traditionalOmaniClothes,
+          'Other outfits'
+        ],
+      _ => ['Other outfits'],
+    };
+  }
+
+  List<String> get ageOutfits {
+    final variations = switch (occasion) {
+      'Bridal dress' => [
+          'Contemporary bridal gown',
+          'Elegant tailored bridal gown',
+          'Classic bridal gown',
+          'Timeless bridal gown with comfortable coverage',
+        ],
+      'Wedding groom' => [
+          'Contemporary wedding suit',
+          'Elegant wedding suit',
+          'Classic wedding suit',
+          'Timeless wedding suit with a comfortable cut',
+        ],
+      'Wedding guest' => male
+          ? [
+              'Contemporary wedding-guest suit',
+              'Elegant wedding-guest suit',
+              'Classic wedding-guest suit',
+              'Comfortable formal wedding-guest suit'
+            ]
+          : [
+              'Contemporary wedding-guest dress',
+              'Elegant wedding-guest dress',
+              'Classic wedding-guest dress',
+              'Timeless wedding-guest dress with comfortable coverage'
+            ],
+      'Eid' => [
+          'Contemporary Eid outfit',
+          'Elegant Eid outfit',
+          'Classic Eid outfit',
+          'Comfortable festive Eid outfit'
+        ],
+      'Graduation' => [
+          'Contemporary graduation outfit',
+          'Elegant graduation outfit',
+          'Classic graduation outfit',
+          'Comfortable formal graduation outfit'
+        ],
+      'Birthday' => [
+          'Contemporary birthday outfit',
+          'Elegant birthday outfit',
+          'Classic birthday outfit',
+          'Comfortable celebration outfit'
+        ],
+      'Work / formal event' => [
+          'Contemporary tailored outfit',
+          'Structured tailored outfit',
+          'Classic tailored outfit',
+          'Comfortable formal tailoring'
+        ],
+      'Sports / training' => [
+          'Contemporary training outfit',
+          'Performance training outfit',
+          'Classic training outfit',
+          'Comfortable easy-movement training outfit'
+        ],
+      _ => [
+          'Contemporary everyday outfit',
+          'Polished everyday outfit',
+          'Classic everyday outfit',
+          'Comfortable easy-movement everyday outfit'
+        ],
+    };
+    final index =
+        baseQuestions['Age group']!.indexOf(answers['Age group'] ?? '');
+    return [variations[index < 0 ? 0 : index], 'No preference'];
+  }
+
   Map<String, List<String>> get questions {
-    if (answers['Gender / clothing style'] != 'Male') return baseQuestions;
+    final gender = answers['Gender / clothing style'];
     final type = answers['Outfit type'];
-    return {
+    final bridal = occasion == 'Bridal dress';
+    final common = {
       'Gender / clothing style': baseQuestions['Gender / clothing style']!,
       'Age group': baseQuestions['Age group']!,
-      'Size': baseQuestions['Size']!,
-      'Outfit type': [
-        'Omani formal wear',
-        'Formal suit',
-        'Sportswear',
-        'Casual outfit'
-      ],
-      'Occasion': [
-        'Eid',
-        'Wedding groom',
-        'Wedding guest',
-        'Work / formal event',
-        'Birthday',
-        'Sports / training',
-        'Everyday',
-        'Other'
-      ],
+      'Occasion': occasions,
+      if (gender == 'Male' || gender == 'Female') 'Outfit type': outfitTypes,
       'Skin tone (optional)': baseQuestions['Skin tone (optional)']!,
-      if (type == 'Omani formal wear') ...{
-        'Headwear': answers['Occasion'] == 'Wedding groom'
-            ? ['Massar']
-            : ['Kumma', 'Massar', 'No headwear'],
-        'Dishdasha collar': ['Traditional Omani collar', 'Simple round collar'],
-        'Embroidery': ['Subtle', 'Decorative', 'None'],
-      } else if (type == 'Formal suit') ...{
+    };
+
+    if (traditional) {
+      return {
+        ...common,
+        if (male) ...{
+          'Headwear': ['Kumma', 'Kumma with Mussar'],
+          'Bisht (optional)': ['No bisht', 'Add bisht'],
+        } else ...{
+          'Dress embroidery': ['Subtle', 'Decorative'],
+          'Lihaf colour (optional)': ['Match the dress', 'Contrasting colour'],
+        },
+        'Fabric': baseQuestions['Fabric']!,
+        'Favourite colour': baseQuestions['Favourite colour']!,
+      };
+    }
+
+    if (!male) {
+      return {
+        ...common,
+        'Style': switch (occasion) {
+          'Bridal dress' => [
+              'Classic bridal',
+              'Contemporary bridal',
+              'Modest bridal',
+              'No preference'
+            ],
+          'Work / formal event' => [
+              'Tailored',
+              'Classic formal',
+              'Minimal',
+              'No preference'
+            ],
+          'Everyday' => ['Casual', 'Minimal', 'Relaxed', 'No preference'],
+          'Eid' => ['Festive', 'Classic festive', 'Elegant', 'No preference'],
+          'Wedding guest' => [
+              'Formal wedding guest',
+              'Elegant wedding guest',
+              'Modest wedding guest',
+              'No preference'
+            ],
+          'Graduation' => [
+              'Polished',
+              'Classic formal',
+              'Minimal',
+              'No preference'
+            ],
+          _ => baseQuestions['Style']!,
+        },
+        'Outfit preference': ageOutfits,
+        for (final key in [
+          'Silhouette',
+          'Length',
+          'Neckline',
+          'Sleeves',
+          'Fit',
+          'Fabric',
+          'Favourite colour',
+          'Details'
+        ])
+          key: bridal && key == 'Length'
+              ? ['Floor length', 'Chapel train', 'No preference']
+              : baseQuestions[key]!,
+      };
+    }
+    return {
+      ...common,
+      'Style': switch (type) {
+        'Sportswear' => ['Performance', 'Classic sportswear', 'No preference'],
+        'Formal suit' => [
+            'Classic formal',
+            'Contemporary formal',
+            'No preference'
+          ],
+        _ => ['Classic', 'Casual', 'Formal', 'No preference'],
+      },
+      'Outfit preference': ageOutfits,
+      if (type == 'Formal suit') ...{
         'Suit style': ['Two-piece', 'Three-piece', 'Blazer and trousers'],
         'Lapel': ['Notch', 'Peak', 'Shawl'],
         'Tie': ['Tie', 'Bow tie', 'No tie'],
@@ -175,82 +346,13 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
     }
   }
 
-  Future<void> estimateSkin() async {
-    if (analyzingSkin) return;
-    try {
-      final shot = await ImagePicker().pickImage(
-          source: ImageSource.camera, maxWidth: 1000, maxHeight: 1000);
-      if (shot == null || !mounted) return;
-      final approved = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-                title: const Text('Estimate visible skin tone'),
-                content: SingleChildScrollView(
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Image.file(File(shot.path), height: 180),
-                  const Text(
-                      'Use a close-up of your hand or forearm in natural light, without filters. This photo will be sent to Cloudflare AI for an approximate colour estimate, not an ethnicity or medical analysis. Lighting can change the result.'),
-                ])),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel')),
-                  TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Analyze with Cloudflare'))
-                ],
-              ));
-      if (approved != true || !mounted) return;
-      setState(() => analyzingSkin = true);
-      final tone = await AiGenerationService.estimateSkin(
-          await File(shot.path).readAsBytes());
-      if (!mounted) return;
-      if (tone == 'Unknown') {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(
-                'The photo is unclear. Try natural light or choose a tone yourself.')));
-        return;
-      }
-      final accepted = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-                title: Text('Estimated tone: $tone'),
-                content: const Text(
-                    'This is an approximate visible colour. You can change it manually.'),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Choose myself')),
-                  TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Use this tone'))
-                ],
-              ));
-      if (accepted == true && mounted) {
-        setState(() {
-          answers['Skin tone (optional)'] = tone;
-          formRevision++;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', ''))));
-      }
-    } finally {
-      if (mounted) setState(() => analyzingSkin = false);
-    }
-  }
-
   @override
   void dispose() {
-    otherOccasion.dispose();
     notes.dispose();
     super.dispose();
   }
 
   void review() {
-    if (analyzingSkin) return;
     if (!formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
     setState(() => reviewing = true);
@@ -258,137 +360,60 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
 
   @override
   Widget build(BuildContext context) => PrototypePage(
-        title: reviewing ? 'Your Clothing Design' : 'Create Clothes',
+        title: reviewing ? 'Your Clothing Design' : 'Design Clothes',
         child: Column(children: [
           const PrototypeLogo(width: 160, symbolOnly: true),
-          const SizedBox(height: 16),
-          Text(
-              reviewing
-                  ? 'Review your choices before generation.'
-                  : 'Tell us what you would like to wear.',
-              textAlign: TextAlign.center),
-          const SizedBox(height: 20),
-          TextButton.icon(
-            icon: const Icon(Icons.checkroom),
-            label: const Text('Choose a ready-made outfit (optional)'),
-            onPressed: () async {
-              final path = await chooseClothingTemplate(context,
-                  gender: answers['Gender / clothing style']);
-              if (path == null || !mounted) return;
-              setState(() {
-                template = path;
-                dressReference = null;
-              });
-            },
-          ),
-          TextButton.icon(
-              icon: const Icon(Icons.collections),
-              label: const Text('Browse dress references (50)'),
-              onPressed: () async {
-                final reference = await chooseDressReference(context, answers);
-                if (reference == null || !mounted) return;
-                setState(() {
-                  dressReference = reference;
-                  template = null;
-                });
-              }),
-          if (dressReference != null) ...[
-            SizedBox(
-                height: 230, child: DressReferencePreview(dressReference!)),
-            Text(dressReference!.description, textAlign: TextAlign.center),
-            const Text(
-                'Your selected preferences take priority where they differ from the reference.'),
-            TextButton(
-                onPressed: () => setState(() => dressReference = null),
-                child: const Text('Remove dress reference')),
-          ],
-          if (template != null) ...[
-            if (clothingTemplates.containsKey(template))
-              Image.asset(template!, height: 180)
-            else
-              Image.file(File(template!), height: 180),
-            Text(clothingTemplates[template!] ?? 'Your clothing photo'),
-            TextButton(
-                onPressed: () => setState(() => template = null),
-                child: const Text('Remove outfit')),
-          ],
-          const Text('Face photo (optional)',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          const Text(
-              'Add your face to preview the design on a person. Without a photo, the design uses a headless display.',
-              textAlign: TextAlign.center),
-          Wrap(alignment: WrapAlignment.center, children: [
-            TextButton.icon(
-                onPressed: () => pickFace(ImageSource.gallery),
-                icon: const Icon(Icons.photo_library),
-                label: const Text('Gallery')),
-            TextButton.icon(
-                onPressed: () => pickFace(ImageSource.camera),
-                icon: const Icon(Icons.camera_alt),
-                label: const Text('Camera')),
-          ]),
-          if (facePhoto != null) ...[
-            Image.file(File(facePhoto!), height: 150),
-            TextButton(
-                onPressed: () => setState(() => facePhoto = null),
-                child: const Text('Remove face photo')),
-          ],
           const SizedBox(height: 16),
           PrototypePanel(
               radius: 30,
               padding: 20,
               child: reviewing ? summary() : questionnaire()),
           const SizedBox(height: 20),
-          if (reviewing && rankedDressReferences(answers).isNotEmpty)
-            TextButton.icon(
-                icon: const Icon(Icons.auto_awesome),
-                label: const Text('Find references for these choices'),
-                onPressed: () async {
-                  final reference =
-                      await chooseDressReference(context, answers);
-                  if (reference != null && mounted) {
-                    setState(() {
-                      dressReference = reference;
-                      template = null;
-                    });
-                  }
-                }),
           if (reviewing) ...[
-            const Icon(Icons.checkroom, size: 58, color: prototypeBrown),
-            const SizedBox(height: 10),
-            const Text(
-                'Generate a clothing concept, then describe any changes you want.',
-                textAlign: TextAlign.center),
-            const SizedBox(height: 14),
             PrototypeButton('Create design', onPressed: () {
-              final details = {...answers};
-              if (details['Gender / clothing style'] == 'Male' &&
-                  details['Occasion'] == 'Wedding groom' &&
-                  details['Outfit type'] == 'Omani formal wear') {
-                details['Headwear'] = 'Traditional wrapped Omani Massar';
-                details['Bisht'] =
-                    'Formal bisht with gold edging over the dishdasha';
-              }
-              if (details['Occasion'] == 'Other') {
-                details['Occasion'] = otherOccasion.text.trim();
-              }
+              final details = Map<String, String>.of(answers);
+              final templates =
+                  traditional ? omaniReferencePaths(male, details) : <String>[];
+              final rules =
+                  traditional ? omaniOutfitInstructions(male, details) : '';
+              final selectedDress = traditional ? null : dressReference;
+              final faceIndex =
+                  templates.length + (selectedDress == null ? 0 : 1);
+              final graduation = occasion == 'Graduation'
+                  ? 'GRADUATION ATTIRE. Show one front-facing, full-body avatar. The '
+                      'selected outfit is the focal point, clearly visible down to its hem. '
+                      'Put a square black academic mortarboard with a tassel '
+                      'on the avatar’s head and an open-front academic graduation gown '
+                      'in plain matte black over the selected outfit. Wear the gown '
+                      'unfastened, with its left and right panels falling behind both '
+                      'arms like an open coat. Leave the neckline, bodice and front of '
+                      'the outfit unobstructed. Preserve the chosen silhouette, colour, '
+                      'fabric and embroidery on the outfit underneath. '
+                      '${traditional && !male ? 'Wear the lihaf under the mortarboard, framing the visible face, with one end draped over a shoulder.' : ''}'
+                  : '';
               Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (_) => AiGenerationScreen(
-                            title: 'Create Clothes',
-                            dressReference: dressReference,
-                            outfitDetails: dressReference?.description ?? '',
+                            title: 'Design Clothes',
+                            compactDesignResult: true,
+                            personalPhoto: facePhoto,
+                            dressReference: selectedDress,
+                            outfitDetails: [
+                              graduation,
+                              if (traditional) rules,
+                              if (selectedDress != null)
+                                selectedDress.description,
+                            ].join(' '),
                             photos: [
-                              if (template != null) template!,
+                              ...templates,
                               if (facePhoto != null) facePhoto!
                             ],
                             preferredColour: answers['Favourite colour'],
-                            size: answers['Size'],
                             prompt:
-                                '${dressReference == null ? '' : 'The first image is the single selected garment reference: ${dressReference!.description}. Match its cut and details closely while applying the user preferences; output only one outfit. '} '
-                                '${template == null ? '' : 'Use the supplied garment image as the design reference and adapt it to the preferences. '} '
-                                '${facePhoto == null ? 'Create a high quality fashion product photograph of one outfit on a headless display mannequin.' : 'The last supplied image is the face reference, not a garment. Show one person wearing the requested outfit, preserving the reference face. Do not copy clothing from the face photo.'} Neutral studio background, full outfit visible, realistic fabric, no text. Age-appropriate clothing only. Design preferences: ${details.entries.map((e) => '${e.key}: ${e.value}').join('; ')}. Additional wishes: ${notes.text.trim()}.',
+                                '${selectedDress == null ? '' : 'The first image is the single selected garment reference: ${selectedDress.description}. Match its cut and details closely while applying the user preferences; output only one outfit. '} '
+                                '${templates.isEmpty ? '' : 'Reference image 0 shows the Omani garment cut and embroidery. Use the other Omani clothing references to understand how the pieces are worn. Follow the user’s garment, colour and accessory choices. Ignore the reference models’ faces. '} '
+                                '${facePhoto == null ? 'Create one full-body 3D-style adult avatar wearing the designed outfit. Use a smooth featureless mannequin head without eyes, nose or mouth.' : 'Use reference image $faceIndex only for the face. Show one full-body 3D-style avatar wearing the requested outfit, preserving the reference face. Ignore the clothes in the face photo.'} Output one combined dressed avatar. Apply the selected clothing preferences. Neutral studio background, head to feet visible, realistic fabric, no text. $ageGuidance Keep the outfit within the selected occasion. Design preferences: ${details.entries.map((e) => '${e.key}: ${e.value}').join('; ')}. Additional wishes: ${notes.text.trim()}.',
                           )));
             }),
             const SizedBox(height: 12),
@@ -396,10 +421,6 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                 onPressed: () => setState(() => reviewing = false)),
           ] else
             PrototypeButton('Review design', onPressed: review),
-          const SizedBox(height: 14),
-          const Text('Your choices are kept while this page is open.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.black54)),
         ]),
       );
 
@@ -500,15 +521,25 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                         DropdownMenuItem(value: value, child: Text(value)))
                     .toList(),
                 onChanged: (value) => setState(() {
+                  if (question.key == 'Gender / clothing style' &&
+                      value != answers[question.key]) {
+                    answers.remove('Outfit type');
+                  }
                   if (value != null) answers[question.key] = value;
-                  if (question.key == 'Gender / clothing style') {
-                    template = null;
+                  if (!outfitTypes.contains(answers['Outfit type'])) {
+                    answers.remove('Outfit type');
+                    if ((male ||
+                            answers['Gender / clothing style'] == 'Female') &&
+                        outfitTypes.length == 1) {
+                      answers['Outfit type'] = outfitTypes.single;
+                    }
                   }
                   if (rankedDressReferences(answers).isEmpty) {
                     dressReference = null;
                   }
                   if (question.key == 'Gender / clothing style' ||
                       question.key == 'Outfit type' ||
+                      question.key == 'Age group' ||
                       question.key == 'Occasion') {
                     final valid = questions;
                     answers.removeWhere((key, value) =>
@@ -517,38 +548,18 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                     formRevision++;
                   }
                 }),
-                validator: (value) => value == 'Not sure — use camera'
-                    ? 'Use the camera or choose a tone / Prefer not to specify'
-                    : question.key.contains('(optional)') || value != null
-                        ? null
-                        : 'Please select an option',
+                validator: (value) => question.key.contains('(optional)') ||
+                        value != null ||
+                        (answers['Style'] == 'No preference' &&
+                            questions.keys.toList().indexOf(question.key) >
+                                questions.keys.toList().indexOf('Style'))
+                    ? null
+                    : 'Please select an option',
               ),
-            if (question.key == 'Skin tone (optional)' &&
-                answers[question.key] == 'Not sure — use camera') ...[
-              const SizedBox(height: 8),
-              TextButton.icon(
-                  onPressed: analyzingSkin ? null : estimateSkin,
-                  icon: const Icon(Icons.camera_alt),
-                  label:
-                      Text(analyzingSkin ? 'Analyzing…' : 'Take skin photo')),
-              const Text(
-                  'Photograph a small area of your hand or forearm in natural light.',
-                  style: TextStyle(fontSize: 12)),
-            ],
-            if (question.key == 'Occasion' &&
-                answers['Occasion'] == 'Other') ...[
-              const SizedBox(height: 10),
-              TextFormField(
-                  controller: otherOccasion,
-                  maxLength: 100,
-                  decoration: const InputDecoration(
-                      labelText: 'Describe the occasion',
-                      filled: true,
-                      fillColor: Colors.white),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Please describe the occasion'
-                      : null),
-            ],
+            if (question.key == 'Outfit type' && traditional)
+              Text(male
+                  ? 'Ankle-length dishdasha and embroidered kumma'
+                  : 'Below-knee dress, sirwal trousers and lihaf shawl'),
             const SizedBox(height: 18),
           ],
           TextFormField(
@@ -560,6 +571,34 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                   hintText: 'Preferred colours, coverage or details…',
                   filled: true,
                   fillColor: Colors.white)),
+          const SizedBox(height: 18),
+          PrototypePanel(
+              child: Column(children: [
+            const Text('Personal photo (optional)',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+                'Add your face to the outfit preview. Without a photo, the face has no features.',
+                textAlign: TextAlign.center),
+            Wrap(alignment: WrapAlignment.center, children: [
+              TextButton.icon(
+                  onPressed: () => pickFace(ImageSource.gallery),
+                  icon: const Icon(Icons.photo_library),
+                  label: const Text('Gallery')),
+              TextButton.icon(
+                  onPressed: () => pickFace(ImageSource.camera),
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Camera')),
+            ]),
+            if (facePhoto != null) ...[
+              Image.file(File(facePhoto!), height: 150),
+              const Text('Your selected photo is sent to Cloudflare AI.',
+                  textAlign: TextAlign.center),
+              TextButton(
+                  onPressed: () => setState(() => facePhoto = null),
+                  child: const Text('Remove face photo')),
+            ],
+            const SizedBox(height: 16),
+          ])),
         ],
       ));
 
@@ -574,9 +613,7 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                     Text(question,
                         style: const TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    Text(question == 'Occasion' && answers[question] == 'Other'
-                        ? otherOccasion.text.trim()
-                        : answers[question] ?? 'Not specified'),
+                    Text(answers[question] ?? 'Not specified'),
                   ])),
         if (notes.text.trim().isNotEmpty) ...[
           const Text('Additional wishes',

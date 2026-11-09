@@ -2,12 +2,18 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AiGenerationService {
-  static const endpoint = String.fromEnvironment('FITVISIONS_AI_URL');
+  static const cloudEndpoint = String.fromEnvironment('FITVISIONS_CLOUD_URL');
+  static const localEndpoint = String.fromEnvironment('FITVISIONS_AI_URL');
+  static bool get cloudEnabled =>
+      Uri.tryParse(cloudEndpoint)?.scheme == 'https';
+  static String get endpoint => cloudEnabled ? cloudEndpoint : localEndpoint;
   static const session = String.fromEnvironment('FITVISIONS_AI_SESSION');
   static bool get available =>
-      kDebugMode && endpoint == 'http://127.0.0.1:8787' && session.isNotEmpty;
+      cloudEnabled ||
+      (kDebugMode && endpoint == 'http://127.0.0.1:8787' && session.isNotEmpty);
 
   static Future<String> reference(Uint8List bytes) async {
     final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
@@ -29,13 +35,29 @@ class AiGenerationService {
     return base64Encode(png.buffer.asUint8List());
   }
 
-  static Future<Uint8List> generate(
-      String prompt, List<Uint8List> images) async {
+  static Future<Uint8List> generate(String prompt, List<Uint8List> images,
+      {int? seed}) async {
     final refs = <String>[];
     for (final image in images) {
       refs.add(await reference(image));
     }
-    final data = await _post('/generate', {'prompt': prompt, 'images': refs});
+    final data = await _post('/generate', {
+      'prompt': prompt,
+      'images': refs,
+      if (seed != null) 'seed': seed,
+    });
+    return base64Decode((data['image'] as String)
+        .replaceFirst(RegExp(r'^data:image/[^;]+;base64,'), ''));
+  }
+
+  static Future<Uint8List> generateCandidate(
+      String prompt, List<String> references, String model) async {
+    final data = await _post('/generate',
+        {'prompt': prompt, 'images': references, 'model': model, 'seed': 42});
+    if (data['model'] != model) {
+      throw Exception(
+          'Restart the AI bridge to enable verified model comparisons.');
+    }
     return base64Decode((data['image'] as String)
         .replaceFirst(RegExp(r'^data:image/[^;]+;base64,'), ''));
   }
@@ -60,7 +82,13 @@ class AiGenerationService {
     try {
       final request = await client.postUrl(Uri.parse('$endpoint$path'));
       request.headers.contentType = ContentType.json;
-      request.headers.set('x-fitvisions-session', session);
+      if (cloudEnabled) {
+        final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+        if (token == null) throw Exception('Please sign in before generating.');
+        request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
+      } else {
+        request.headers.set('x-fitvisions-session', session);
+      }
       request.write(jsonEncode(body));
       final response =
           await request.close().timeout(const Duration(seconds: 190));
@@ -73,8 +101,9 @@ class AiGenerationService {
       }
       return data;
     } on SocketException {
-      throw Exception(
-          'The local AI trial is disconnected. Keep the laptop server running.');
+      throw Exception(cloudEnabled
+          ? 'Cannot reach AI. Check your internet connection and try again.'
+          : 'The local AI trial is disconnected. Keep the laptop server running.');
     } finally {
       client.close(force: true);
     }

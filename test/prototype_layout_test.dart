@@ -128,6 +128,74 @@ void main() {
       }
     }
   });
+  testWidgets('admin dashboard counts distinct subscribers and sorts records',
+      (tester) async {
+    final db = LayoutFirestore();
+    final users = LayoutCollection();
+    final payments = LayoutCollection();
+    when(() => db.collection('users')).thenReturn(users);
+    when(() => db.collection('payments')).thenReturn(payments);
+    when(() => users.snapshots()).thenAnswer((_) => Stream.value(records([
+          {'firstName': 'Sara', 'lastName': 'Ali'},
+          {'firstName': 'Omar', 'lastName': 'Khan'},
+        ])));
+    when(() => payments.snapshots()).thenAnswer((_) => Stream.value(records([
+          {
+            'uid': 'sample-0',
+            'amount': 3,
+            'status': 'pending',
+            'createdAt': Timestamp.fromDate(DateTime.utc(2026, 11, 1, 9)),
+          },
+          {
+            'uid': 'sample-0',
+            'amount': 3,
+            'status': 'pending',
+            'createdAt': Timestamp.fromDate(DateTime.utc(2026, 11, 2, 10)),
+          },
+          {
+            'uid': 'sample-1',
+            'amount': 7,
+            'status': 'pending',
+            'createdAt': Timestamp.fromDate(DateTime.utc(2026, 11, 3, 11, 30)),
+          },
+          {'uid': 'sample-1', 'amount': 7, 'status': 'selected'},
+        ])));
+
+    tester.view.physicalSize = const Size(390, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester
+        .pumpWidget(MaterialApp(home: AdminDashboardScreen(firestore: db)));
+    await tester.pumpAndSettle();
+    expect(find.text('Basic · 3 OMR\n1'), findsOneWidget);
+    expect(find.text('Premium · 7 OMR\n1'), findsOneWidget);
+    expect(find.text('13.00 OMR'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+
+    final sort = find.text('Newest first');
+    await tester.ensureVisible(sort);
+    final premiumRow =
+        find.textContaining('Premium Plan · Nov 3, 2026 · 15:30');
+    final basicRow = find.textContaining('Basic Plan · Nov 1, 2026 · 13:00');
+    await tester.scrollUntilVisible(basicRow, 150);
+    expect(tester.getTopLeft(premiumRow).dy,
+        lessThan(tester.getTopLeft(basicRow).dy));
+    await tester.ensureVisible(sort);
+    await tester.tap(sort);
+    await tester.pumpAndSettle();
+    expect(find.text('Oldest first'), findsOneWidget);
+    expect(tester.getTopLeft(basicRow).dy,
+        lessThan(tester.getTopLeft(premiumRow).dy));
+    final basicFilter = find.widgetWithText(ChoiceChip, '3 OMR');
+    await tester.ensureVisible(basicFilter);
+    await tester.tap(basicFilter);
+    await tester.pumpAndSettle();
+    expect(find.text('Sara Ali'), findsNWidgets(2));
+    expect(find.text('Omar Khan'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   final screens = <String, Widget>{
     'welcome': const WelcomeScreen(),
     'login': const LoginScreen(),

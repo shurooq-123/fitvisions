@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "jose": "^6.2.12",
+    "nodemailer": "^10.0.15"
+  }
+}

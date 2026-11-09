@@ -1,3 +1,4 @@
+import 'password_policy.dart';
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,12 +12,18 @@ class AccountSetupException implements Exception {
 /// Authenticate before accessing the private profile. Never infer admin rights
 /// from an email address or treat a profile read failure as a normal user.
 class AuthRepository {
-  AuthRepository({required this.auth, required this.firestore});
+  AuthRepository(
+      {required this.auth,
+      required this.firestore,
+      this.notifyRegistration,
+      this.notifyPasswordChanged});
+  final Future<bool> Function()? notifyRegistration;
+  final Future<bool> Function()? notifyPasswordChanged;
 
   final FirebaseAuth auth;
   final FirebaseFirestore firestore;
 
-  Future<void> registerUser({
+  Future<bool> registerUser({
     required String firstName,
     required String lastName,
     required String phone,
@@ -60,11 +67,10 @@ class AuthRepository {
               'Do not register again. Ask the administrator to check your account setup.');
     }
     try {
-      await user.sendEmailVerification().timeout(const Duration(seconds: 20));
+      return await (notifyRegistration?.call() ?? Future.value(false))
+          .timeout(const Duration(seconds: 35));
     } catch (_) {
-      throw const AccountSetupException(
-          'Your account was created, but the verification email could not be sent. '
-          'Do not register again. Log in and use Send verification email in Profile.');
+      return false;
     } finally {
       // Email delivery failure must not delete a successfully created account.
       await _signOutQuietly();
@@ -104,8 +110,11 @@ class AuthRepository {
     }
   }
 
-  Future<void> changePassword(
+  Future<bool> changePassword(
       {required String currentPassword, required String newPassword}) async {
+    if (!PasswordPolicy.isValid(newPassword)) {
+      throw const AccountSetupException(PasswordPolicy.description);
+    }
     final user = auth.currentUser;
     if (user == null || user.email == null) {
       throw const AccountSetupException(
@@ -118,7 +127,14 @@ class AuthRepository {
     await user.reauthenticateWithCredential(EmailAuthProvider.credential(
         email: user.email!, password: currentPassword));
     await user.updatePassword(newPassword);
-    await auth.signOut();
+    try {
+      return await (notifyPasswordChanged?.call() ?? Future.value(false))
+          .timeout(const Duration(seconds: 35));
+    } catch (_) {
+      return false;
+    } finally {
+      await _signOutQuietly();
+    }
   }
 
   Future<void> _signOutQuietly() async {

@@ -31,7 +31,7 @@ class PrototypeButton extends StatelessWidget {
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6))),
+                  borderRadius: BorderRadius.circular(14))),
           child: Text(label,
               textAlign: TextAlign.center,
               style:
@@ -46,8 +46,8 @@ class PrototypeNav extends StatelessWidget {
           currentIndex: index,
           backgroundColor: Colors.white,
           elevation: 0,
-          selectedItemColor: Colors.black,
-          unselectedItemColor: Colors.black,
+          selectedItemColor: prototypeBrown,
+          unselectedItemColor: prototypeBrown,
           selectedLabelStyle:
               const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
           unselectedLabelStyle:
@@ -61,14 +61,11 @@ class PrototypeNav extends StatelessWidget {
           },
           items: const [
             BottomNavigationBarItem(
-                icon: Text('🏠', style: TextStyle(fontSize: 25)),
-                label: 'Home'),
+                icon: Icon(Icons.home_outlined, size: 26), label: 'Home'),
             BottomNavigationBarItem(
-                icon: Text('👤', style: TextStyle(fontSize: 25)),
-                label: 'Profile'),
+                icon: Icon(Icons.person_outline, size: 26), label: 'Profile'),
             BottomNavigationBarItem(
-                icon: Text('🕘', style: TextStyle(fontSize: 25)),
-                label: 'History'),
+                icon: Icon(Icons.history, size: 26), label: 'History'),
           ]);
 }
 
@@ -122,6 +119,12 @@ class PrototypePanel extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
-          color: prototypeCard, borderRadius: BorderRadius.circular(radius)),
+          color: prototypeCard,
+          borderRadius: BorderRadius.circular(radius),
+          border: Border.all(color: Colors.white70),
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0x12574543), blurRadius: 18, offset: Offset(0, 6))
+          ]),
       child: Material(type: MaterialType.transparency, child: child));
 }

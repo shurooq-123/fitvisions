@@ -104,7 +104,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
                             onPressed: downloading ? null : download))
                   ]),
                   const SizedBox(height: 18),
-                  PrototypeButton('Continue',
+                  PrototypeButton('Subscription',
                       onPressed: () =>
                           Navigator.pushNamed(context, '/subscription')),
                 ]);
