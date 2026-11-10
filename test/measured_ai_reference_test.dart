@@ -33,6 +33,7 @@ void main() {
           prompt: '',
           avatar: true,
           measuredBodyReference: true,
+          measurementsInInches: true,
           clothingPhoto: 'images/bridal_satin.png',
           personalPhoto: 'images/bridal_satin.png',
           avatarGender: AvatarGender.female,
@@ -76,7 +77,7 @@ void main() {
     expect(find.byType(Image), findsOneWidget);
     expect(find.text('Your measurements'), findsOneWidget);
     expect(find.text('Waist'), findsOneWidget);
-    expect(find.text('114 cm'), findsOneWidget);
+    expect(find.text('44.88 in'), findsOneWidget);
     final next = find.widgetWithIcon(IconButton, Icons.chevron_right);
     final previous = find.widgetWithIcon(IconButton, Icons.chevron_left);
     tester.widget<IconButton>(next).onPressed!();
@@ -122,6 +123,19 @@ void main() {
     final height = tester.widget<TextField>(find.byType(TextField).first);
     expect(height.decoration?.suffixText, 'in');
     expect(height.controller?.text, '66.93');
+    final unit = find.byType(DropdownButton<bool>);
+    tester.widget<DropdownButton<bool>>(unit).onChanged!(false);
+    await tester.pumpAndSettle();
+    expect(
+        tester
+            .widget<TextField>(find.byType(TextField).first)
+            .decoration
+            ?.suffixText,
+        'cm');
+    expect(height.controller?.text, '170');
+    tester.widget<DropdownButton<bool>>(unit).onChanged!(true);
+    await tester.pumpAndSettle();
+    expect(height.controller?.text, '66.93');
     await tester.enterText(find.byType(TextField).first, '68');
     await tester.runAsync(() async {
       tester
@@ -155,6 +169,36 @@ void main() {
       expect(prompt, contains('Hip circumference ${values['Hips']} cm'));
       expect(prompt,
           contains('Shoulder width across the back ${values['Shoulders']} cm'));
+    }
+  });
+
+  test(
+      'L through 5XL have distinct build guidance and height keeps camera scale',
+      () {
+    const fullness = [
+      'slightly full',
+      'moderately full',
+      'A full build',
+      'visibly full',
+      'very full build with a prominent abdomen',
+      'distinctly very full'
+    ];
+    for (final (index, row) in avatarSizeRows.skip(3).indexed) {
+      final values = {
+        'Height': '120',
+        ...bodySizeMidpoints(row).map((key, value) => MapEntry(key, '$value')),
+      };
+      String prompt(double height, bool body) =>
+          cloudMeasuredAvatarPrompt({...values, 'Height': '$height'},
+              garment: null,
+              hasClothing: !body,
+              hasPortrait: false,
+              bodyReference: body,
+              size: row.first);
+      expect(prompt(120, true), contains(fullness[index]));
+      expect(prompt(120, true), contains('occupy about 41%'));
+      expect(prompt(200, false), contains('occupy about 69%'));
+      expect(prompt(200, false), contains('very tall adult'));
     }
   });
 

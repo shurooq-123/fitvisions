@@ -108,6 +108,8 @@ class MeasurementAvatar {
         chest = dimensions['Chest']!,
         waist = dimensions['Waist']!,
         hips = dimensions['Hips']!;
+    final fullness = ((waist - 75) / 47).clamp(0.0, 1.0);
+    final abdomenDepth = h * .035 * fullness;
     final neck = math.min(chest * .36, h * .22);
     final torso = <List<AvatarPoint>>[];
     for (final station in <List<double>>[
@@ -124,15 +126,14 @@ class MeasurementAvatar {
       [.88, neck * .94]
     ]) {
       final y = station[0];
-      final belly = (waist / h - .42).clamp(0.0, .42) * h;
       var r = ring(y * h, station[1],
           z: y == .59
-              ? belly * .12
+              ? abdomenDepth
               : y == .55 || y == .66
-                  ? belly * .06
+                  ? abdomenDepth * .5
                   : 0,
           ratio: y == .59
-              ? (depthRatio + .06).clamp(.45, 1).toDouble()
+              ? (depthRatio + .06 + .12 * fullness).clamp(.45, 1).toDouble()
               : depthRatio);
       final shoulders = dimensions['Shoulders'];
       if (station[0] == .80 && shoulders != null) {
@@ -184,7 +185,7 @@ class MeasurementAvatar {
           [.37, .37],
           [.46, .47]
         ])
-          ring(h * s[0], hips * s[1],
+          ring(h * s[0], hips * s[1] * (s[0] >= .12 ? 1 + .17 * fullness : 1),
               x: sign * hipWidth * .48,
               z: s[0] < .045 ? h * .024 : 0,
               ratio: s[0] < .045 ? 1.65 : .88)

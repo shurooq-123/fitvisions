@@ -60,17 +60,34 @@ String cloudMeasuredAvatarPrompt(
   final hips = double.parse(measurements['Hips']!);
   final shoulder = measurements['Shoulders'];
   final build = switch (waist) {
-    >= 118 =>
+    >= 122 =>
       'A distinctly very full build with a large abdomen, broad chest and shoulders, full hips, upper arms and thighs, matching the reference silhouette.',
-    >= 110 =>
-      'A clearly very full build with a prominent abdomen, broad chest and full hips.',
-    >= 102 =>
-      'A noticeably full build with a rounded abdomen and wider torso and hips.',
-    >= 86 =>
-      'A broad, fuller build with visible width through the chest, waist and hips.',
+    >= 114 =>
+      'A very full build with a prominent abdomen in profile, a broad chest, wide rounded hips and thick thighs and calves.',
+    >= 106 =>
+      'A visibly full build with a strongly rounded abdomen, full chest, broad hips and thick legs.',
+    >= 98 =>
+      'A full build with a clearly projecting abdomen, a full chest, rounded hips and substantial upper legs.',
+    >= 90 =>
+      'A moderately full build with a visibly rounded abdomen, fuller chest and hips, and broader thighs.',
+    >= 82 =>
+      'A slightly full build with a gently rounded abdomen and subtle fullness through the chest, hips and thighs.',
     >= 72 => 'A medium build with the given torso proportions.',
     _ => 'A slimmer build with the given torso proportions.',
   };
+  final stature = switch (height) {
+    < 145 => 'A very short adult with visibly short stature and shorter limbs.',
+    < 160 => 'A short adult with proportionately shorter limbs.',
+    < 180 => 'An adult of medium stature.',
+    < 195 => 'A tall adult with visibly longer limbs.',
+    _ =>
+      'A very tall adult with long legs and an elongated full-body silhouette.',
+  };
+  // The shape guide uses a fixed 250 cm frame with an 86% vertical drawing area.
+  final framePercent = (height * .86 / 250 * 100).round();
+  final framing = 'Use a consistent full-body camera scale and ground line. '
+      'From crown to soles the subject should occupy about $framePercent% of the image height. '
+      'Keep the surrounding blank space and do not crop or enlarge short subjects to fill the frame. ';
   final outfit = switch (garment) {
     AvatarGarment.separates =>
       'A separate shirt and trousers, with two distinct trouser legs.',
@@ -93,8 +110,8 @@ String cloudMeasuredAvatarPrompt(
   String relative(double value) => (100 * value / height).toStringAsFixed(1);
   if (bodyReference) {
     return 'Generate ONE realistic full-body adult ${gender?.subject ?? 'human'} for a fashion fitting. '
-        '${hasMeasurementGuide ? 'Reference image ${hasPortrait ? 1 : 0} is the measured body-shape guide. Match its head-to-foot scale, shoulder width and outer silhouette at the chest, waist, hips, arms and legs. Render it as a natural human, using the guide only for geometry. ' : ''}'
-        'Wide shot from a distance, with the entire head, both shoes, and extra empty space above and below the person. '
+        '${hasMeasurementGuide ? 'Reference image ${hasPortrait ? 1 : 0} is the measured body-shape guide with front and side views of the same body. Use both as geometry references, particularly the abdomen depth in profile. Output one front-facing person only. ' : ''}'
+        '$stature $framing'
         '$build The large body proportions must be immediately visible when the measurements call for them. '
         'Show the natural abdomen shape and waist width in a straight front pose, '
         'with both arms relaxed away from the sides. Wear a plain fitted charcoal T-shirt and trousers. '
@@ -118,9 +135,10 @@ String cloudMeasuredAvatarPrompt(
           'Do not merely recolour or redraw the fitting clothes. '
       : '';
   return '${garmentReplacement}Edit reference image 0 in place. It shows the complete person to dress. '
-      'Preserve the person’s face, pose, body proportions, visible abdomen, shoulder width and silhouette. '
+      'Preserve the person’s face, pose, shoulder width, chest volume, abdominal depth, hip width and leg fullness. '
       'Change only the clothes, leaving the same body underneath. '
-      'Zoom out enough to show the whole outfit, including the hem, both feet and empty space below them. '
+      '$stature $framing'
+      'Retain the complete outfit and both feet in frame. '
       'Return one realistic full-body adult fashion avatar wearing the outfit, '
       'seen from head to toe straight from the front, arms relaxed '
       'and away from the waist. Plain background, consistent lighting and no text. '

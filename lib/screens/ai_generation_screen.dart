@@ -26,6 +26,7 @@ class AiGenerationScreen extends StatefulWidget {
       this.dressReference,
       this.avatar = false,
       this.measurements = const {},
+      this.measurementsInInches = false,
       this.clothingPhoto,
       this.garmentType,
       this.avatarGender,
@@ -51,6 +52,7 @@ class AiGenerationScreen extends StatefulWidget {
   final DressReference? dressReference;
   final bool avatar;
   final Map<String, String> measurements;
+  final bool measurementsInInches;
   final String? clothingPhoto, personalPhoto, preferredColour, size;
   final AvatarGarment? garmentType;
   final AvatarGender? avatarGender;
@@ -75,6 +77,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   late final AvatarGarment? garmentCut;
   late final int avatarSeed = Random().nextInt(1 << 31);
   final editedCentimetres = <String, String>{};
+  late bool inches = widget.measurementsInInches;
   Map<String, String> bodyReferenceMeasurements = const {};
   Uint8List? generatedBodyReference;
   bool busy = false;
@@ -100,6 +103,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   String get editInstructions =>
       designEditInstructions(changes.text, colourChanges);
   bool get hasMeasuredPreview => widget.avatar && widget.measuredBodyReference;
+  bool get showEditDescription =>
+      !hasMeasuredPreview && !widget.compactDesignResult;
+  String get measurementUnit => inches ? 'in' : 'cm';
   Future<bool> get activeSubscription =>
       (widget.subscriptionCheck ?? AppDataService.hasActiveSubscription)();
   @override
@@ -114,7 +120,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
       for (final entry in widget.measurements.entries)
         if (!hasMeasuredPreview || entry.key != 'Weight')
           entry.key: TextEditingController(
-            text: hasMeasuredPreview ? inchesText(entry.value) : entry.value,
+            text: hasMeasuredPreview
+                ? displayMeasurement(entry.value)
+                : entry.value,
           ),
       if (hasMeasuredPreview && !widget.measurements.containsKey('Shoulders'))
         'Shoulders': TextEditingController(),
@@ -140,9 +148,20 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
     }
   }
 
-  String inchesText(String centimetres) {
+  String displayMeasurement(String centimetres) {
+    if (!inches) return centimetres;
     final value = double.tryParse(centimetres);
     return value == null ? centimetres : (value / 2.54).toStringAsFixed(2);
+  }
+
+  void changeMeasurementUnit(bool? useInches) {
+    if (useInches == null || useInches == inches) return;
+    update(() {
+      inches = useInches;
+      for (final entry in measures.entries) {
+        entry.value.text = displayMeasurement(measurementValue(entry));
+      }
+    });
   }
 
   String measurementValue(MapEntry<String, TextEditingController> entry) =>
@@ -162,9 +181,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   void editMeasurement(String key, String text) {
     update(() {
       if (hasMeasuredPreview) {
-        final inches = double.tryParse(text);
+        final value = double.tryParse(text);
         editedCentimetres[key] =
-            inches == null ? text : (inches * 2.54).toStringAsFixed(3);
+            inches && value != null ? (value * 2.54).toStringAsFixed(3) : text;
       }
       structureChanged = true;
     });
@@ -215,6 +234,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
     if (action == 'download') {
       await download();
     } else {
+      final startingUnit = inches;
       final applied =
           await Navigator.of(actionsContext).push(MaterialPageRoute<bool>(
         builder: (editorContext) => ListenableBuilder(
@@ -229,6 +249,13 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                   onPressed: busy || checkingOut
                       ? null
                       : () async {
+                          if (hasMeasuredPreview &&
+                              inches != startingUnit &&
+                              !structureChanged &&
+                              editInstructions.isEmpty) {
+                            Navigator.pop(editorContext, true);
+                            return;
+                          }
                           final previous = output;
                           await applyChanges();
                           if (!editorContext.mounted ||
@@ -317,7 +344,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
       return;
     }
     if (edit && !structureChanged && editInstructions.isEmpty) {
-      update(() => error = 'Describe the changes you want.');
+      update(() => error = showEditDescription
+          ? 'Describe the changes you want.'
+          : 'Choose a colour or change a measurement first.');
       return;
     }
     update(() {
@@ -402,9 +431,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
           portrait == null ? null : await imageReference(portrait);
       final guide = gender == null
           ? null
-          : await renderMeasurementAvatar(
+          : await renderBodyReferenceSheet(
               MeasurementAvatar(measurements, garment: AvatarGarment.separates),
-              frameHeight: 250);
+              includeLabels: false);
       body = await generator(
         cloudMeasuredAvatarPrompt(
           measurements,
@@ -561,7 +590,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                         style: const TextStyle(
                             fontSize: 12, color: prototypeBrown)),
                     const SizedBox(height: 4),
-                    Text('$value cm',
+                    Text('${displayMeasurement(value)} $measurementUnit',
                         style: const TextStyle(
                             fontSize: 17, fontWeight: FontWeight.bold)),
                   ]),
@@ -689,6 +718,17 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
               title: const Text('Edit measurements / clothing'),
               initiallyExpanded: hasMeasuredPreview,
               children: [
+                if (hasMeasuredPreview)
+                  DropdownButton<bool>(
+                    isExpanded: true,
+                    value: inches,
+                    items: const [
+                      DropdownMenuItem(
+                          value: false, child: Text('Centimetres (cm)')),
+                      DropdownMenuItem(value: true, child: Text('Inches (in)')),
+                    ],
+                    onChanged: busy ? null : changeMeasurementUnit,
+                  ),
                 for (final entry in measures.entries)
                   Padding(
                       padding: const EdgeInsets.only(bottom: 12),
@@ -706,7 +746,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                                     editMeasurement(entry.key, text),
                                 decoration: InputDecoration(
                                     suffixText: hasMeasuredPreview
-                                        ? 'in'
+                                        ? measurementUnit
                                         : entry.key == 'Weight'
                                             ? 'kg'
                                             : 'cm'))),
@@ -728,9 +768,10 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
         const SizedBox(height: 12),
         const Text('Change clothing colour',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        const Text(
-            'Choose a colour, then tap Apply changes. AI colour matching is approximate.',
-            textAlign: TextAlign.center),
+        if (showEditDescription)
+          const Text(
+              'Choose a colour, then tap Apply changes. AI colour matching is approximate.',
+              textAlign: TextAlign.center),
         Wrap(
             spacing: 8,
             children: palette.entries
@@ -760,7 +801,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
               child: const Text('Clear colour choices')),
         ],
         const SizedBox(height: 16),
-        if (!hasMeasuredPreview)
+        if (showEditDescription)
           TextField(
               controller: changes,
               enabled: !busy,

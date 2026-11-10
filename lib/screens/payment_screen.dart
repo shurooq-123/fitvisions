@@ -92,6 +92,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final subscriptionId = args?['subscriptionId'] as String?;
     final plan = args?['plan'] as String?;
     final price = args?['price'] as num?;
+    final expiryField = demoField('Expiry Date', 'MM/YY', expiry);
+    final securityField = demoField('CVV', '123', cvv, digits: 3);
     return PrototypePage(
         title: 'Payment',
         child: Column(children: [
@@ -111,18 +113,27 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         const SizedBox(height: 12),
                         const Center(
                             child: Text('Demo payment • No real charge',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(fontSize: 12))),
-                        const SizedBox(height: 22),
+                        const SizedBox(height: 16),
                         demoField('Card Holder Name', 'Test User', holder),
                         demoField('Card Number', '4242 4242 4242 4242', number,
                             digits: 16),
-                        Row(children: [
-                          Expanded(
-                              child: demoField('Expiry Date', 'MM/YY', expiry)),
-                          const SizedBox(width: 24),
-                          Expanded(
-                              child: demoField('CVV', '123', cvv, digits: 3))
-                        ]),
+                        LayoutBuilder(builder: (context, constraints) {
+                          if (constraints.maxWidth < 220 ||
+                              MediaQuery.textScalerOf(context).scale(14) > 18) {
+                            return Column(
+                                children: [expiryField, securityField]);
+                          }
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: expiryField),
+                              const SizedBox(width: 12),
+                              Expanded(child: securityField),
+                            ],
+                          );
+                        }),
                       ]))),
           const SizedBox(height: 24),
           const Text(

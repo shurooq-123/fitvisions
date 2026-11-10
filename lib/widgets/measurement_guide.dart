@@ -94,12 +94,11 @@ class MeasurementGuide extends StatelessWidget {
       Text('Size guide (${inches ? 'in' : 'cm'})',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
       const SizedBox(height: 8),
-      Text(
-          avatarSizing
-              ? 'Fixed FitVisions avatar presets. Enter your own height.'
-              : 'Illustrative adult chart only. Sizes vary by brand, gender and garment. XS means extra small; XL means extra large.',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12)),
+      if (!avatarSizing)
+        const Text(
+            'Illustrative adult chart only. Sizes vary by brand, gender and garment. XS means extra small; XL means extra large.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12)),
       const SizedBox(height: 8),
       Table(
           border: TableBorder.all(
@@ -217,10 +216,12 @@ class BodyMeasurements extends StatefulWidget {
       {super.key,
       required this.onChanged,
       this.onSize,
+      this.onUnitChanged,
       this.afterFields,
       this.avatarSizing = false});
   final ValueChanged<Map<String, String>> onChanged;
   final ValueChanged<String>? onSize;
+  final ValueChanged<bool>? onUnitChanged;
   final Widget? afterFields;
   final bool avatarSizing;
   @override
@@ -280,6 +281,7 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
                   if (cm != null) setCentimetres(key, cm);
                 }
               });
+              widget.onUnitChanged?.call(inches);
               emit();
             }),
         for (final e in fields.entries)

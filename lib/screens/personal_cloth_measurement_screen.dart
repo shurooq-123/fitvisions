@@ -32,6 +32,7 @@ class _PersonalClothMeasurementScreenState
 
   Map<String, String> bodyMeasurements = {};
   String? selectedSize;
+  bool inches = false;
 
   File? clothImage;
   File? personalImage;
@@ -139,6 +140,7 @@ class _PersonalClothMeasurementScreenState
                     if (personalImage != null) personalImage!.path
                   ],
                   measurements: measurements,
+                  measurementsInInches: inches,
                   clothingPhoto: clothImage?.path,
                   avatarGender: gender,
                   size: selectedSize,
@@ -179,6 +181,7 @@ class _PersonalClothMeasurementScreenState
             avatarSizing: true,
             onChanged: (values) => bodyMeasurements = values,
             onSize: (size) => selectedSize = size,
+            onUnitChanged: (value) => inches = value,
             afterFields: widget.readyMade
                 ? null
                 : Padding(
@@ -208,11 +211,6 @@ class _PersonalClothMeasurementScreenState
           photoBox(
               'Personal photo (optional)', personalImage, pickPersonalImage),
           const SizedBox(height: 22),
-          const Text(
-              'Generate sends your selected images and measurements to Cloudflare AI.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12)),
-          const SizedBox(height: 8),
           PrototypeButton(loading ? 'Saving...' : 'Generate',
               onPressed: loading ? null : saveData),
         ])),

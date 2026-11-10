@@ -136,6 +136,7 @@ void main() {
     await tapVisible(tester, 'Pay');
     await tapVisible(tester, 'Continue');
     expect(find.text('Edit avatar'), findsOneWidget);
+    expect(find.text('Describe your changes'), findsNothing);
     expect(generated, 1);
     expect(payments, 1);
     await tester.tap(find.byIcon(Icons.arrow_back_ios).last);
@@ -237,8 +238,11 @@ void main() {
     expect(find.byKey(const ValueKey('Outfit preference')), findsNothing);
     final photo = find.text('Personal photo (optional)');
     await tester.ensureVisible(photo);
-    expect(tester.getTopLeft(photo).dy,
-        greaterThan(tester.getTopLeft(find.byType(TextFormField).last).dy));
+    expect(
+        tester.getTopLeft(photo).dy,
+        greaterThan(
+            tester.getTopLeft(find.byKey(const ValueKey('Fabric'))).dy));
+    expect(find.textContaining('Additional wishes'), findsNothing);
   });
 
   test('Omani generation keeps the required pieces and optional layers', () {

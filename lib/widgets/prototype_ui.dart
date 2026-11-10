@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 const prototypeBackground = Color(0xFFCED1C6);
 const prototypeBrown = Color(0xFF574543);
 const prototypeCard = Color(0xFFEFEFEF);
+const prototypeFieldBorder =
+    OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(14)));
+const prototypeFieldPadding =
+    EdgeInsets.symmetric(horizontal: 14, vertical: 12);
 
 class PrototypeLogo extends StatelessWidget {
   const PrototypeLogo({super.key, this.width = 190, this.symbolOnly = false});
@@ -23,13 +27,14 @@ class PrototypeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox(
       width: 145,
-      height: 44,
       child: ElevatedButton(
           onPressed: onPressed,
           style: ElevatedButton.styleFrom(
               backgroundColor: prototypeBrown,
               foregroundColor: Colors.white,
               elevation: 0,
+              minimumSize: const Size(0, 44),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14))),
           child: Text(label,
@@ -89,7 +94,11 @@ class PrototypePage extends StatelessWidget {
               child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 390),
                   child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(22, 8, 22, 24),
+                      padding: EdgeInsets.fromLTRB(
+                          MediaQuery.sizeOf(context).width <= 340 ? 16 : 20,
+                          8,
+                          MediaQuery.sizeOf(context).width <= 340 ? 16 : 20,
+                          24),
                       child: Column(children: [
                         Align(
                             alignment: Alignment.centerLeft,
@@ -98,11 +107,12 @@ class PrototypePage extends StatelessWidget {
                                 icon: const Icon(Icons.arrow_back_ios,
                                     size: 30))),
                         if (title != null) ...[
-                          const SizedBox(height: 25),
+                          const SizedBox(height: 16),
                           Text(title!,
+                              textAlign: TextAlign.center,
                               style: const TextStyle(
                                   fontSize: 22, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 28)
+                          const SizedBox(height: 20)
                         ],
                         child,
                       ]))))),
@@ -117,14 +127,17 @@ class PrototypePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
       width: double.infinity,
-      padding: EdgeInsets.all(padding),
+      padding: EdgeInsets.all(
+          padding > 18 && MediaQuery.sizeOf(context).width <= 340
+              ? 18
+              : padding),
       decoration: BoxDecoration(
           color: prototypeCard,
           borderRadius: BorderRadius.circular(radius),
           border: Border.all(color: Colors.white70),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x12574543), blurRadius: 18, offset: Offset(0, 6))
+                color: Color(0x12574543), blurRadius: 14, offset: Offset(0, 4))
           ]),
       child: Material(type: MaterialType.transparency, child: child));
 }

@@ -58,6 +58,10 @@ void main() {
     expect(find.text('Height examples'), findsNothing);
     expect(find.byIcon(Icons.camera_alt), findsNothing);
     expect(find.text('5XL'), findsOneWidget);
+    expect(
+        find.textContaining('Fixed FitVisions avatar presets'), findsNothing);
+    expect(find.textContaining('Generate sends your selected images'),
+        findsNothing);
     final gender = find.byType(DropdownButtonFormField<AvatarGender>);
     expect(tester.getTopLeft(gender).dy,
         greaterThan(tester.getTopLeft(find.text('Shoulders').first).dy));

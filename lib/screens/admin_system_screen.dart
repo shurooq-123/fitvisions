@@ -86,8 +86,8 @@ class AdminSystemScreen extends StatelessWidget {
       },
       child: Container(
         width: double.infinity,
-        height: 90,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        constraints: const BoxConstraints(minHeight: 90),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
           color: const Color(0xFFF4F4F4),
           borderRadius: BorderRadius.circular(25),

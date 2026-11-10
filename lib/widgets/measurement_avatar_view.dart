@@ -241,7 +241,8 @@ Future<Uint8List> renderMeasurementAvatar(MeasurementAvatar model,
 }
 
 /// Two views on a fixed 250 cm frame retain height differences between presets.
-Future<Uint8List> renderBodyReferenceSheet(MeasurementAvatar model) async {
+Future<Uint8List> renderBodyReferenceSheet(MeasurementAvatar model,
+    {bool includeLabels = true}) async {
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder);
   for (var i = 0; i < 2; i++) {
@@ -249,20 +250,24 @@ Future<Uint8List> renderBodyReferenceSheet(MeasurementAvatar model) async {
     canvas.translate(i * 480.0, 0);
     MeasurementAvatarPainter(model,
             angle: i == 0 ? 0 : math.pi / 2, frameHeight: 250)
-        .paint(canvas, const Size(480, 880));
+        .paint(canvas, Size(480, includeLabels ? 880 : 960));
     canvas.restore();
   }
-  canvas.drawRect(const Rect.fromLTWH(0, 880, 960, 80),
-      Paint()..color = const Color(0xFFF3F2EF));
-  final label = TextPainter(
-      text: TextSpan(
-          text:
-              'FRONT                         SIDE\nHeight ${model.height.toStringAsFixed(1)} cm | Chest ${model.dimensions['Chest']} | Waist ${model.dimensions['Waist']} | Hips ${model.dimensions['Hips']} cm',
-          style: const TextStyle(
-              fontFamily: 'TimesNewRoman', fontSize: 23, color: Colors.black)),
-      textDirection: TextDirection.ltr)
-    ..layout(maxWidth: 940);
-  label.paint(canvas, const Offset(10, 884));
+  if (includeLabels) {
+    canvas.drawRect(const Rect.fromLTWH(0, 880, 960, 80),
+        Paint()..color = const Color(0xFFF3F2EF));
+    final label = TextPainter(
+        text: TextSpan(
+            text:
+                'FRONT                         SIDE\nHeight ${model.height.toStringAsFixed(1)} cm | Chest ${model.dimensions['Chest']} | Waist ${model.dimensions['Waist']} | Hips ${model.dimensions['Hips']} cm',
+            style: const TextStyle(
+                fontFamily: 'TimesNewRoman',
+                fontSize: 23,
+                color: Colors.black)),
+        textDirection: TextDirection.ltr)
+      ..layout(maxWidth: 940);
+    label.paint(canvas, const Offset(10, 884));
+  }
   final picture = recorder.endRecording();
   final image = await picture.toImage(960, 960);
   final bytes = await image.toByteData(format: ui.ImageByteFormat.png);

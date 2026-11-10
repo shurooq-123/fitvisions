@@ -1,5 +1,6 @@
 import '../services/password_policy.dart';
 import 'package:flutter/material.dart';
+import '../widgets/prototype_ui.dart';
 import '../services/auth_service.dart';
 import '../widgets/custom_back_button.dart';
 
@@ -83,6 +84,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       backgroundColor: bg,
       body: SafeArea(
           child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
         child: Center(
           child: SizedBox(
             width: 320,
@@ -93,7 +95,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 const SizedBox(height: 25),
                 Container(
                   width: 295,
-                  padding: const EdgeInsets.fromLTRB(26, 24, 26, 28),
+                  padding: const EdgeInsets.fromLTRB(22, 20, 22, 24),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEFEFEF),
                     borderRadius: BorderRadius.circular(58),
@@ -102,6 +104,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     children: [
                       const Text(
                         'CHANGE PASSWORD',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -153,10 +156,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       const SizedBox(height: 22),
                       SizedBox(
                         width: 135,
-                        height: 42,
                         child: ElevatedButton(
                           onPressed: loading ? null : changePassword,
                           style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(0, 44),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 8),
                             backgroundColor: brown,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(7),
@@ -173,6 +178,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                 )
                               : const Text(
                                   'Change password',
+                                  textAlign: TextAlign.center,
                                   style: TextStyle(color: Colors.white),
                                 ),
                         ),
@@ -193,23 +199,21 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     required bool hide,
     required VoidCallback onTap,
   }) {
-    return SizedBox(
-      height: 34,
-      child: TextField(
-        controller: controller,
-        obscureText: hide,
-        decoration: InputDecoration(
-          hintText: 'Aa@12345',
-          filled: true,
-          fillColor: Colors.white,
-          border: const OutlineInputBorder(),
-          suffixIcon: IconButton(
-            icon: Icon(
-              hide ? Icons.visibility_off : Icons.visibility,
-              size: 18,
-            ),
-            onPressed: onTap,
+    return TextField(
+      controller: controller,
+      obscureText: hide,
+      decoration: InputDecoration(
+        hintText: 'Aa@12345',
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: prototypeFieldPadding,
+        border: prototypeFieldBorder,
+        suffixIcon: IconButton(
+          icon: Icon(
+            hide ? Icons.visibility_off : Icons.visibility,
+            size: 18,
           ),
+          onPressed: onTap,
         ),
       ),
     );

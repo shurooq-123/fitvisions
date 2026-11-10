@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/prototype_ui.dart';
 import 'package:country_picker/country_picker.dart';
 import '../services/phone_validation.dart';
 import 'package:flutter/services.dart';
@@ -94,6 +95,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: SizedBox(
             width: 320,
             child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
               child: Form(
                 key: formKey,
                 child: Column(
@@ -106,7 +108,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 18),
                     Container(
                       width: 295,
-                      padding: const EdgeInsets.fromLTRB(26, 18, 26, 26),
+                      padding: const EdgeInsets.fromLTRB(22, 20, 22, 24),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEFEFEF),
                         borderRadius: BorderRadius.circular(58),
@@ -241,10 +243,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           Center(
                             child: SizedBox(
                               width: 135,
-                              height: 42,
                               child: ElevatedButton(
                                 onPressed: loading ? null : register,
                                 style: ElevatedButton.styleFrom(
+                                  minimumSize: const Size(0, 44),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 8),
                                   backgroundColor: brown,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
@@ -309,14 +313,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         hintText: hint,
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 6,
-        ),
-        border: const OutlineInputBorder(borderRadius: BorderRadius.zero),
+        contentPadding: prototypeFieldPadding,
+        border: prototypeFieldBorder,
         errorStyle: const TextStyle(
           fontSize: 10,
-          height: 0.9,
+          height: 1.2,
         ),
       ),
     );
@@ -364,9 +365,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             errorMaxLines: 3,
             filled: true,
             fillColor: Colors.white,
-            border: const OutlineInputBorder(borderRadius: BorderRadius.zero),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            border: prototypeFieldBorder,
+            contentPadding: prototypeFieldPadding,
           ),
         ),
       ]);
@@ -387,14 +387,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         hintText: '',
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 6,
-        ),
-        border: const OutlineInputBorder(borderRadius: BorderRadius.zero),
+        contentPadding: prototypeFieldPadding,
+        border: prototypeFieldBorder,
         errorStyle: const TextStyle(
           fontSize: 10,
-          height: 0.9,
+          height: 1.2,
         ),
         suffixIconConstraints:
             const BoxConstraints(minWidth: 32, minHeight: 32),

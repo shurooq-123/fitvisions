@@ -15,7 +15,6 @@ class CreateClothesScreen extends StatefulWidget {
 
 class _CreateClothesScreenState extends State<CreateClothesScreen> {
   final formKey = GlobalKey<FormState>();
-  final notes = TextEditingController();
   final answers = <String, String>{};
   bool reviewing = false;
   String? facePhoto;
@@ -346,12 +345,6 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    notes.dispose();
-    super.dispose();
-  }
-
   void review() {
     if (!formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
@@ -413,7 +406,7 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                             prompt:
                                 '${selectedDress == null ? '' : 'The first image is the single selected garment reference: ${selectedDress.description}. Match its cut and details closely while applying the user preferences; output only one outfit. '} '
                                 '${templates.isEmpty ? '' : 'Reference image 0 shows the Omani garment cut and embroidery. Use the other Omani clothing references to understand how the pieces are worn. Follow the user’s garment, colour and accessory choices. Ignore the reference models’ faces. '} '
-                                '${facePhoto == null ? 'Create one full-body 3D-style adult avatar wearing the designed outfit. Use a smooth featureless mannequin head without eyes, nose or mouth.' : 'Use reference image $faceIndex only for the face. Show one full-body 3D-style avatar wearing the requested outfit, preserving the reference face. Ignore the clothes in the face photo.'} Output one combined dressed avatar. Apply the selected clothing preferences. Neutral studio background, head to feet visible, realistic fabric, no text. $ageGuidance Keep the outfit within the selected occasion. Design preferences: ${details.entries.map((e) => '${e.key}: ${e.value}').join('; ')}. Additional wishes: ${notes.text.trim()}.',
+                                '${facePhoto == null ? 'Create one full-body 3D-style adult avatar wearing the designed outfit. Use a smooth featureless mannequin head without eyes, nose or mouth.' : 'Use reference image $faceIndex only for the face. Show one full-body 3D-style avatar wearing the requested outfit, preserving the reference face. Ignore the clothes in the face photo.'} Output one combined dressed avatar. Apply the selected clothing preferences. Neutral studio background, head to feet visible, realistic fabric, no text. $ageGuidance Keep the outfit within the selected occasion. Design preferences: ${details.entries.map((e) => '${e.key}: ${e.value}').join('; ')}.',
                           )));
             }),
             const SizedBox(height: 12),
@@ -562,16 +555,6 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                   : 'Below-knee dress, sirwal trousers and lihaf shawl'),
             const SizedBox(height: 18),
           ],
-          TextFormField(
-              controller: notes,
-              maxLines: 3,
-              maxLength: 500,
-              decoration: const InputDecoration(
-                  labelText: 'Additional wishes (optional)',
-                  hintText: 'Preferred colours, coverage or details…',
-                  filled: true,
-                  fillColor: Colors.white)),
-          const SizedBox(height: 18),
           PrototypePanel(
               child: Column(children: [
             const Text('Personal photo (optional)',
@@ -615,10 +598,5 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                     const SizedBox(height: 4),
                     Text(answers[question] ?? 'Not specified'),
                   ])),
-        if (notes.text.trim().isNotEmpty) ...[
-          const Text('Additional wishes',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          Text(notes.text.trim())
-        ],
       ]);
 }

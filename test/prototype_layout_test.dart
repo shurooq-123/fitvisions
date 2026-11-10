@@ -128,7 +128,7 @@ void main() {
       }
     }
   });
-  testWidgets('admin dashboard counts distinct subscribers and sorts records',
+  testWidgets('total users opens a filterable list with the latest plan',
       (tester) async {
     final db = LayoutFirestore();
     final users = LayoutCollection();
@@ -138,6 +138,7 @@ void main() {
     when(() => users.snapshots()).thenAnswer((_) => Stream.value(records([
           {'firstName': 'Sara', 'lastName': 'Ali'},
           {'firstName': 'Omar', 'lastName': 'Khan'},
+          {'firstName': 'Amal', 'lastName': 'Said'},
         ])));
     when(() => payments.snapshots()).thenAnswer((_) => Stream.value(records([
           {
@@ -168,31 +169,26 @@ void main() {
     await tester
         .pumpWidget(MaterialApp(home: AdminDashboardScreen(firestore: db)));
     await tester.pumpAndSettle();
-    expect(find.text('Basic · 3 OMR\n1'), findsOneWidget);
-    expect(find.text('Premium · 7 OMR\n1'), findsOneWidget);
+    expect(find.text('Subscription History'), findsNothing);
+    expect(find.text('Subscribers by plan'), findsNothing);
     expect(find.text('13.00 OMR'), findsOneWidget);
-    expect(find.text('2'), findsOneWidget);
-
-    final sort = find.text('Newest first');
-    await tester.ensureVisible(sort);
-    final premiumRow =
-        find.textContaining('Premium Plan · Nov 3, 2026 · 15:30');
-    final basicRow = find.textContaining('Basic Plan · Nov 1, 2026 · 13:00');
-    await tester.scrollUntilVisible(basicRow, 150);
-    expect(tester.getTopLeft(premiumRow).dy,
-        lessThan(tester.getTopLeft(basicRow).dy));
-    await tester.ensureVisible(sort);
-    await tester.tap(sort);
+    expect(find.text('3'), findsOneWidget);
+    await tester.tap(find.text('Total Users'));
     await tester.pumpAndSettle();
-    expect(find.text('Oldest first'), findsOneWidget);
-    expect(tester.getTopLeft(basicRow).dy,
-        lessThan(tester.getTopLeft(premiumRow).dy));
-    final basicFilter = find.widgetWithText(ChoiceChip, '3 OMR');
-    await tester.ensureVisible(basicFilter);
-    await tester.tap(basicFilter);
+    expect(find.text('Basic Plan · 3 OMR · 1 month'), findsOneWidget);
+    expect(find.text('Premium Plan · 7 OMR · 6 months'), findsOneWidget);
+    expect(find.text('Nov 2, 2026 · 14:00'), findsOneWidget);
+    expect(find.text('Nov 3, 2026 · 15:30'), findsOneWidget);
+    expect(find.text('Nov 1, 2026 · 13:00'), findsNothing);
+    expect(find.text('Amal Said'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, '3 OMR'));
     await tester.pumpAndSettle();
-    expect(find.text('Sara Ali'), findsNWidgets(2));
+    expect(find.text('Sara Ali'), findsOneWidget);
     expect(find.text('Omar Khan'), findsNothing);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'No plan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Amal Said'), findsOneWidget);
+    expect(find.text('Sara Ali'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -234,10 +230,16 @@ void main() {
         AvatarScreen(measurements: SynchronousFuture(avatarRecord())),
   };
   for (final entry in screens.entries) {
-    for (final height in [640.0, 800.0]) {
-      testWidgets('${entry.key} fits a narrow phone at $height',
+    for (final (width, height, scale, suffix) in [
+      (360.0, 640.0, 1.0, '-compact'),
+      (360.0, 800.0, 1.0, ''),
+      (320.0, 640.0, 1.35, '-large-text'),
+      (568.0, 320.0, 1.0, '-landscape'),
+    ]) {
+      testWidgets(
+          '${entry.key} fits ${width.toInt()}×${height.toInt()} at text scale $scale',
           (tester) async {
-        tester.view.physicalSize = Size(360, height);
+        tester.view.physicalSize = Size(width, height);
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
@@ -247,6 +249,10 @@ void main() {
             child: MaterialApp(
                 debugShowCheckedModeBanner: false,
                 theme: ThemeData(useMaterial3: false, fontFamily: 'sans-serif'),
+                builder: (context, child) => MediaQuery(
+                    data: MediaQuery.of(context)
+                        .copyWith(textScaler: TextScaler.linear(scale)),
+                    child: child!),
                 home: entry.value)));
         await tester.pumpAndSettle();
         await tester.runAsync(() async {
@@ -265,8 +271,7 @@ void main() {
             final image = await boundary.toImage();
             final bytes =
                 await image.toByteData(format: ui.ImageByteFormat.png);
-            await File(
-                    '$output/${entry.key}${height == 800 ? '' : '-compact'}.png')
+            await File('$output/${entry.key}$suffix.png')
                 .writeAsBytes(bytes!.buffer.asUint8List());
             image.dispose();
           });

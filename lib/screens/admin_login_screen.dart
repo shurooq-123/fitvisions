@@ -37,7 +37,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       }
       final emailSent = await LoginNotificationService.send();
       if (!mounted) return;
-      if (!emailSent) showMessage('Signed in, but the login email could not be sent.');
+      if (!emailSent)
+        showMessage('Signed in, but the login email could not be sent.');
       Navigator.pushReplacementNamed(context, '/adminDashboard');
     } catch (e) {
       if (mounted) {
@@ -72,45 +73,38 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const Center(
                   child: Text('Admin Login', style: TextStyle(fontSize: 22))),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
               const Text('Email'),
-              const SizedBox(height: 12),
-              SizedBox(
-                  height: 34,
-                  child: TextField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                          hintText: 'admin@example.com',
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.zero)))),
-              const SizedBox(height: 28),
+              const SizedBox(height: 6),
+              TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                      hintText: 'admin@example.com',
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: prototypeFieldPadding,
+                      border: prototypeFieldBorder)),
+              const SizedBox(height: 16),
               const Text('Password'),
-              const SizedBox(height: 12),
-              SizedBox(
-                  height: 34,
-                  child: TextField(
-                      controller: passwordController,
-                      obscureText: hidePassword,
-                      decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding:
-                              const EdgeInsets.symmetric(horizontal: 8),
-                          border: const OutlineInputBorder(
-                              borderRadius: BorderRadius.zero),
-                          suffixIcon: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: Icon(
-                                  hidePassword
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                  size: 18),
-                              onPressed: () => setState(
-                                  () => hidePassword = !hidePassword))))),
+              const SizedBox(height: 6),
+              TextField(
+                  controller: passwordController,
+                  obscureText: hidePassword,
+                  decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: prototypeFieldPadding,
+                      border: prototypeFieldBorder,
+                      suffixIcon: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: Icon(
+                              hidePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              size: 18),
+                          onPressed: () =>
+                              setState(() => hidePassword = !hidePassword)))),
               Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -122,7 +116,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               Center(
                   child: PrototypeButton(loading ? 'Signing in...' : 'LOGIN',
                       onPressed: loading ? null : login)),
-              const SizedBox(height: 70),
+              const SizedBox(height: 12),
             ])),
       ]));
 }
