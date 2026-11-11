@@ -30,11 +30,44 @@ test('owner profile access, no guest access or cross-user listing', async () => 
   await assertFails(getDocs(collection(alice.firestore(),'users')));
   await assertSucceeds(getDocs(collection(admin.firestore(),'users')));
 });
-test('new account can register but cannot grant itself admin', async () => {
+test('email choice requires the matching secret and can only be recorded once', async () => {
+  await env.withSecurityRulesDisabled(async ctx => {
+    const db=ctx.firestore();
+    for (const id of ['approve','decline','expired']) {
+      await setDoc(doc(db,'registrationDecisions',id),{
+        decision:'pending', yesProof:'yes-secret', noProof:'no-secret',
+        expiresAt:new Date(Date.now()+(id==='expired'?-60000:60000)),
+      });
+    }
+  });
+  const db=guest.firestore();
+  const approve=doc(db,'registrationDecisions','approve');
+  await assertFails(getDoc(approve));
+  await assertFails(updateDoc(approve,{decision:'approved',submittedProof:'no-secret'}));
+  await assertFails(updateDoc(approve,{decision:'approved',submittedProof:'yes-secret',extra:true}));
+  await assertSucceeds(updateDoc(approve,{decision:'approved',submittedProof:'yes-secret'}));
+  await assertFails(updateDoc(approve,{decision:'declined',submittedProof:'no-secret'}));
+  await assertSucceeds(updateDoc(doc(db,'registrationDecisions','decline'),{
+    decision:'declined',submittedProof:'no-secret',
+  }));
+  await assertFails(updateDoc(doc(db,'registrationDecisions','expired'),{
+    decision:'approved',submittedProof:'yes-secret',
+  }));
+});
+test('only a verified email can create its own non-admin profile', async () => {
   const ctx=env.authenticatedContext('new',{email:'new@example.com'});
-  await assertFails(setDoc(doc(ctx.firestore(),'users','new'),profile('new','admin')));
-  await assertSucceeds(setDoc(doc(ctx.firestore(),'users','new'),profile('new')));
-  await assertFails(updateDoc(doc(ctx.firestore(),'users','new'),{role:'admin'}));
+  const verified=env.authenticatedContext('new',{email:'new@example.com',email_verified:true});
+  const db=verified.firestore();
+  const user=doc(db,'users','new');
+  await assertFails(setDoc(doc(ctx.firestore(),'users','new'),{...profile('new'),requiresEmailVerification:true}));
+  await assertFails(setDoc(user,profile('new')));
+  await assertFails(setDoc(user,{...profile('new','admin'),requiresEmailVerification:true}));
+  await assertSucceeds(setDoc(user,{...profile('new'),requiresEmailVerification:true}));
+  await assertSucceeds(getDoc(user));
+  await assertFails(updateDoc(user,{role:'admin'}));
+  await assertFails(updateDoc(user,{requiresEmailVerification:false}));
+  await assertFails(getDoc(doc(ctx.firestore(),'plans','basic')));
+  await assertSucceeds(getDoc(doc(db,'plans','basic')));
 });
 test('measurement and history batch saves atomically with owner isolation',async()=>{
   const db=alice.firestore(),batch=writeBatch(db);

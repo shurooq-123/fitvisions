@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/login_notification_service.dart';
@@ -79,10 +80,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               TextField(
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                       hintText: 'admin@example.com',
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: AppColors.field(context),
                       contentPadding: prototypeFieldPadding,
                       border: prototypeFieldBorder)),
               const SizedBox(height: 16),
@@ -93,7 +94,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   obscureText: hidePassword,
                   decoration: InputDecoration(
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: AppColors.field(context),
                       contentPadding: prototypeFieldPadding,
                       border: prototypeFieldBorder,
                       suffixIcon: IconButton(
@@ -110,9 +111,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   child: TextButton(
                       onPressed: () =>
                           Navigator.pushNamed(context, '/adminForgot'),
-                      child: const Text('Forget Password ?',
-                          style:
-                              TextStyle(color: Colors.black87, fontSize: 12)))),
+                      child: Text('Forget Password ?',
+                          style: TextStyle(
+                              color: AppColors.ink(context, Colors.black87),
+                              fontSize: 12)))),
               Center(
                   child: PrototypeButton(loading ? 'Signing in...' : 'LOGIN',
                       onPressed: loading ? null : login)),

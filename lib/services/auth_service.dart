@@ -76,7 +76,7 @@ class AuthService {
   }
 
   static bool isValidEmail(String email) {
-    return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email.trim());
+    return RegExp(r'^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$').hasMatch(email.trim());
   }
 
   static bool isValidPassword(String password) =>
@@ -90,18 +90,48 @@ class AuthService {
     return RegExp(r'^[0-9]{8}$').hasMatch(phone.trim());
   }
 
-  static Future<bool> registerUser({
+  static Future<void> requestRegistrationLink(String email, String requestId) =>
+      _requestMailLink('/register-confirmation',
+          {'email': email.trim(), 'requestId': requestId});
+
+  static Future<({String status, String? link})> registrationStatus(
+      String requestId) async {
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 4);
+    try {
+      final request = await client
+          .postUrl(Uri.parse('http://127.0.0.1:8789/register-status'));
+      request.headers.contentType = ContentType.json;
+      request.write(jsonEncode({'requestId': requestId}));
+      final response =
+          await request.close().timeout(const Duration(seconds: 12));
+      final result = await response
+          .transform(utf8.decoder)
+          .join()
+          .timeout(const Duration(seconds: 4));
+      if (response.statusCode != 200) {
+        throw const AccountSetupException(
+            'Could not check email confirmation.');
+      }
+      final data = jsonDecode(result) as Map<String, dynamic>;
+      return (status: data['status'] as String, link: data['link'] as String?);
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  static Future<void> confirmRegistrationEmail(String email, String link) =>
+      _repository.confirmRegistrationEmail(email, link);
+
+  static Future<void> registerUser({
     required String firstName,
     required String lastName,
     required String phone,
-    required String email,
     required String password,
   }) async {
     return _repository.registerUser(
         firstName: firstName,
         lastName: lastName,
         phone: phone,
-        email: email,
         password: password);
   }
 
@@ -112,31 +142,39 @@ class AuthService {
     return _repository.loginAndGetRole(email: email, password: password);
   }
 
-  static Future<void> sendResetLink(String email) async {
+  static Future<void> sendResetLink(String email) =>
+      _requestMailLink('/forgot-password', {'email': email.trim()});
+
+  static Future<void> _requestMailLink(
+      String path, Map<String, String> payload) async {
     if (!kDebugMode) {
       throw const AccountSetupException(
-          'Password recovery is unavailable in this build.');
+          'The FitVisions email service is unavailable in this build.');
     }
     final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
     try {
-      final request = await client
-          .postUrl(Uri.parse('http://127.0.0.1:8789/forgot-password'));
+      final request =
+          await client.postUrl(Uri.parse('http://127.0.0.1:8789$path'));
       request.headers.contentType = ContentType.json;
-      request.write(jsonEncode({'email': email.trim()}));
+      request.write(jsonEncode(payload));
       final response =
           await request.close().timeout(const Duration(seconds: 30));
       await response.drain<void>().timeout(const Duration(seconds: 5));
       if (response.statusCode == 202) return;
       if (response.statusCode == 429) {
         throw const AccountSetupException(
-            'Too many reset requests. Please wait and try again.');
+            'Please wait before requesting another email link.');
+      }
+      if (response.statusCode == 422) {
+        throw const AccountSetupException(
+            'This email address cannot receive mail. Check it and try again.');
       }
       if (response.statusCode == 503) {
         throw const AccountSetupException(
             'Connect the FitVisions sender email and try again.');
       }
       throw const AccountSetupException(
-          'Could not send the reset link. Please try again.');
+          'Could not send the email link. Please try again.');
     } on SocketException {
       throw const AccountSetupException(
           'Connect the phone to the FitVisions mail service and try again.');

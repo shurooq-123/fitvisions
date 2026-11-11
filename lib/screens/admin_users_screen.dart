@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'admin_dashboard_screen.dart';
@@ -70,7 +71,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
         child: Column(
           children: [
@@ -101,7 +102,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               height: 44,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF4F4F4),
+                color: AppColors.panel(context, const Color(0xFFF4F4F4)),
                 borderRadius: BorderRadius.circular(25),
               ),
               child: TextField(
@@ -199,7 +200,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         vertical: 14,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F4F4),
+        color: AppColors.panel(context, const Color(0xFFF4F4F4)),
         borderRadius: BorderRadius.circular(25),
       ),
       child: Row(
@@ -215,7 +216,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           ),
           IconButton(
               tooltip: 'View user history',
-              icon: const Icon(Icons.history, color: Color(0xFF51227D)),
+              icon: Icon(Icons.history, color: AppColors.accent(context)),
               onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(

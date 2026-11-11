@@ -4,7 +4,9 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function owner(uid) { return signedIn() && request.auth.uid == uid; }
     function member() {
-      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('requiresEmailVerification', false) != true
+          || request.auth.token.email_verified == true);
     }
     function admin() {
       return member() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
@@ -20,15 +22,28 @@ service cloud.firestore {
       return data.plan == plan.name && data.price == plan.price;
     }
 
+    match /registrationDecisions/{id} {
+      allow update: if resource.data.decision == 'pending'
+        && request.time < resource.data.expiresAt
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['decision', 'submittedProof'])
+        && ((request.resource.data.decision == 'approved'
+            && request.resource.data.submittedProof == resource.data.yesProof)
+          || (request.resource.data.decision == 'declined'
+            && request.resource.data.submittedProof == resource.data.noProof));
+    }
+
     match /users/{uid} {
       allow get: if owner(uid) || admin();
       allow list: if admin();
       allow create: if owner(uid)
-        && request.resource.data.keys().hasAll(['uid','email','firstName','lastName','phone','role','createdAt'])
-        && request.resource.data.keys().hasOnly(['uid','email','firstName','lastName','phone','role','createdAt'])
+        && request.resource.data.keys().hasAll(['uid','email','firstName','lastName','phone','role','createdAt','requiresEmailVerification'])
+        && request.resource.data.keys().hasOnly(['uid','email','firstName','lastName','phone','role','createdAt','requiresEmailVerification'])
         && request.resource.data.uid == uid
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.role == 'user'
+        && request.resource.data.requiresEmailVerification == true
+        && request.auth.token.email_verified == true
         && text(request.resource.data.firstName, 50)
         && text(request.resource.data.lastName, 50)
         && request.resource.data.phone is string

@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import '../widgets/subscription_summary.dart';
 import '../widgets/prototype_ui.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -179,7 +180,7 @@ class SubscriptionPlanCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
                 decoration: BoxDecoration(
-                    color: prototypeCard,
+                    color: AppColors.panel(context),
                     borderRadius: BorderRadius.circular(52),
                     border: Border.all(
                         color: selected ? prototypeBrown : Colors.transparent,
@@ -196,16 +197,16 @@ class SubscriptionPlanCard extends StatelessWidget {
                   ...features.where((v) => v.trim().isNotEmpty).map((v) => Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.check,
-                                size: 18, color: Colors.black54),
+                            Icon(Icons.check,
+                                size: 18, color: AppColors.muted(context)),
                             const SizedBox(width: 3),
                             Expanded(
                                 child: Text(
                                     v.replaceFirst(RegExp(r'^\s*[✓✔]\s*'), ''),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.black54))),
+                                        color: AppColors.muted(context)))),
                           ])),
                 ]))));
   }

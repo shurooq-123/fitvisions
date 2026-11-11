@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -23,9 +24,9 @@ class _AdminUserSubscriptionsScreenState
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: background,
+        backgroundColor: AppColors.page(context, background),
         appBar: AppBar(
-          backgroundColor: background,
+          backgroundColor: AppColors.page(context, background),
           title: const Text('Total Users'),
         ),
         body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -66,8 +67,10 @@ class _AdminUserSubscriptionsScreenState
                         ChoiceChip(
                           label: Text(label),
                           selected: filter == value,
-                          selectedColor: purple.withValues(alpha: 0.18),
-                          backgroundColor: const Color(0xFFF4F4F4),
+                          selectedColor: AppColors.accent(context, purple)
+                              .withValues(alpha: 0.18),
+                          backgroundColor:
+                              AppColors.panel(context, const Color(0xFFF4F4F4)),
                           onSelected: (_) => setState(() => filter = value),
                         ),
                     ],
@@ -142,10 +145,11 @@ class _AdminUserSubscriptionsScreenState
             '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(omanTime), alwaysUse24HourFormat: true)}';
     final months = plan == null ? 0 : SubscriptionAccess.months(plan.amount);
     return Card(
-      color: const Color(0xFFF4F4F4),
+      color: AppColors.panel(context, const Color(0xFFF4F4F4)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: ListTile(
-        leading: const Icon(Icons.person_outline, color: purple),
+        leading: Icon(Icons.person_outline,
+            color: AppColors.accent(context, purple)),
         title: Text(name.isEmpty ? contact : name),
         subtitle: Column(
           mainAxisSize: MainAxisSize.min,

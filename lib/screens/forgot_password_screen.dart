@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../widgets/prototype_ui.dart';
@@ -100,7 +101,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
         child: Align(
           alignment: Alignment.topCenter,
@@ -121,7 +122,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     width: 295,
                     padding: const EdgeInsets.fromLTRB(22, 20, 22, 24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFEFEF),
+                      color: AppColors.panel(context),
                       borderRadius: BorderRadius.circular(58),
                     ),
                     child: Column(
@@ -152,10 +153,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         TextField(
                           controller: emailController,
                           keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: 'name@gmail.com',
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: AppColors.field(context),
                             border: prototypeFieldBorder,
                             contentPadding: prototypeFieldPadding,
                           ),

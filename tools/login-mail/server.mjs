@@ -4,6 +4,7 @@ import {writeFile, readFile} from 'node:fs/promises';
 import nodemailer from 'nodemailer';
 import {createRemoteJWKSet, jwtVerify} from 'jose';
 import {recoveryLink} from './recovery.mjs';
+import {acceptsMailDomain, prepareRegistration, registrationStatus} from './registration.mjs';
 
 const project = 'fitvisions-33e6d';
 const firebaseConfig = JSON.parse(await readFile('android/app/google-services.json','utf8'));
@@ -35,7 +36,7 @@ const server = http.createServer(async (req, res) => {
     if (req.headers.host !== '127.0.0.1:8789') return reply(res,403,{error:'Forbidden'});
     if (req.url === setupPath && req.method === 'GET') {
       res.writeHead(200, {'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY'});
-      return res.end(`<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>بريد FitVisions</title><body style="font:18px sans-serif;max-width:600px;margin:50px auto;background:#ced1c6"><h1>ربط بريد إشعارات تسجيل الدخول</h1><p>أدخلي بريد Gmail المُرسل وApp Password المكوّنة من 16 حرفًا. لا تدخلي كلمة مرور حساب Google العادية.</p><p>البيانات تبقى في ذاكرة خادم اللابتوب فقط. يلزم تشغيله واتصال USB لاستقبال طلبات الهاتف.</p><form><input id="email" type="email" required placeholder="Sender Gmail" style="padding:12px;width:90%"><input id="secret" type="password" autocomplete="off" required placeholder="App Password" style="padding:12px;width:90%;margin-top:12px"><button style="padding:12px;margin-top:12px">ربط البريد</button></form><p id="status"></p><script>document.querySelector('form').onsubmit=async e=>{e.preventDefault();const p=document.getElementById('secret');const b=document.querySelector('button');b.disabled=true;document.getElementById('status').textContent='جارٍ التحقق…';try{const r=await fetch(location.pathname,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('email').value,password:p.value})});p.value='';document.getElementById('status').textContent=r.ok?'تم التحقق من بريد المرسل وربطه. جرّبي تسجيل الدخول في التطبيق.':'تعذر الربط. تأكدي من App Password والتحقق بخطوتين.';}catch{document.getElementById('status').textContent='تعذر الاتصال بالخادم.';}finally{b.disabled=false;}};</script></body></html>`);
+      return res.end(`<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>بريد FitVisions</title><body style="font:18px sans-serif;max-width:600px;margin:50px auto;background:#ced1c6"><h1>ربط بريد إشعارات تسجيل الدخول</h1><p>أدخلي بريد Gmail المُرسل وApp Password المكوّنة من 16 حرفًا. لا تدخلي كلمة مرور حساب Google العادية.</p><p>البيانات تبقى في ذاكرة خادم اللابتوب فقط. يلزم تشغيله واتصال USB لاستقبال طلبات الهاتف.</p><form><input id="email" type="email" required placeholder="Sender Gmail" style="padding:12px;width:90%"><input id="secret" type="password" autocomplete="off" required placeholder="App Password" style="padding:12px;width:90%;margin-top:12px"><button style="padding:12px;margin-top:12px">ربط البريد</button></form><p id="status"></p><script>document.querySelector('form').onsubmit=async e=>{e.preventDefault();const p=document.getElementById('secret');const b=document.querySelector('button');b.disabled=true;document.getElementById('status').textContent='جارٍ التحقق…';try{const r=await fetch(location.pathname,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('email').value,password:p.value})});p.value='';document.getElementById('status').textContent=r.ok?'تم التحقق من بريد المرسل وربطه. جرّبي تسجيل الدخول في التطبيق.':({400:'أدخلي عنوان Gmail وApp Password من 16 حرفًا.',401:'Gmail رفض بيانات الدخول. أنشئي App Password لحساب Gmail نفسه.',403:'الصفحة مشغولة أو مفتوحة من عنوان مختلف. افتحي صفحة الربط الجديدة.',404:'هذه صفحة ربط قديمة. افتحي الصفحة الجديدة.',502:'تعذّر الاتصال بخادم Gmail. حاولي مرة ثانية.'}[r.status] || 'تعذّر الربط. افتحي صفحة الإعداد الجديدة.');}catch{document.getElementById('status').textContent='تعذر الاتصال بالخادم.';}finally{b.disabled=false;}};</script></body></html>`);
     }
     if (req.url === setupPath && req.method === 'POST') {
       if (req.headers.origin !== origin || configuring) return reply(res,403,{error:'Forbidden'});
@@ -46,19 +47,37 @@ const server = http.createServer(async (req, res) => {
         const pass = String(data.password || '').replace(/\s/g,'');
         if (!/^[^\s@]+@gmail\.com$/i.test(email) || !/^[a-zA-Z]{16}$/.test(pass)) return reply(res,400,{error:'Invalid settings'});
         const candidate = nodemailer.createTransport({service:'gmail',auth:{user:email,pass},connectionTimeout:10000,socketTimeout:20000});
-        await candidate.verify();
+        try {
+          await candidate.verify();
+        } catch (error) {
+          candidate.close();
+          const rejected = error.code === 'EAUTH';
+          console.log(rejected ? 'Sender SMTP credentials rejected.' : 'Sender SMTP connection failed.');
+          return reply(res,rejected ? 401 : 502,{error:'Could not verify sender.'});
+        }
         transport?.close(); transport = candidate; sender = email;
         console.log('Sender SMTP authentication verified.');
         return reply(res,200,{ready:true});
       } finally { configuring = false; }
     }
     if (req.url === '/status' && req.method === 'GET') return reply(res,200,{ready:!!transport});
-    if (req.url === '/forgot-password' && req.method === 'POST') {
+    if (req.url === '/register-status' && req.method === 'POST') {
+      if (req.headers.origin) return reply(res,403,{error:'Forbidden'});
+      const {requestId} = await body(req);
+      if (typeof requestId !== 'string' || !/^[a-f0-9]{32}$/.test(requestId)) {
+        return reply(res,400,{error:'Invalid request'});
+      }
+      return reply(res,200,await registrationStatus(requestId));
+    }
+    if (['/forgot-password','/register-confirmation'].includes(req.url) && req.method === 'POST') {
       if (req.headers.origin) return reply(res,403,{error:'Forbidden'});
       if (!transport) return reply(res,503,{error:'Sender email is not connected yet.'});
       const input = await body(req);
+      const registration = req.url === '/register-confirmation';
+      const requestId = input?.requestId;
       const email = typeof input?.email === 'string' ? input.email.trim().toLowerCase() : '';
-      if (email.length > 254 || !/^[^\s@,<>]+@[^\s@,<>]+\.[^\s@,<>]+$/.test(email)) {
+      if (email.length > 254 || !/^[^\s@,<>]+@[^\s@,<>]+\.[^\s@,<>]+$/.test(email) ||
+          (registration && (typeof requestId !== 'string' || !/^[a-f0-9]{32}$/.test(requestId)))) {
         return reply(res,400,{error:'Invalid email.'});
       }
       const now = Date.now();
@@ -69,11 +88,32 @@ const server = http.createServer(async (req, res) => {
       for (const [address, expires] of recentRecovery) {
         if (expires <= now) recentRecovery.delete(address);
       }
-      if (recentRecovery.has(email)) return reply(res,202,{accepted:true});
+      const key = registration ? `registration:${email}` : email;
+      if (recentRecovery.has(key)) {
+        return registration ? reply(res,429,{error:'Please wait before requesting another link.'}) : reply(res,202,{accepted:true});
+      }
       if (recoveryRequests >= 20) return reply(res,429,{error:'Too many reset requests.'});
       recoveryRequests++;
-      recentRecovery.set(email, now + 60000);
+      recentRecovery.set(key, now + 60000);
       try {
+        if (registration) {
+          if (!await acceptsMailDomain(email)) {
+            recentRecovery.delete(key);
+            return reply(res,422,{error:'Email domain does not accept mail.'});
+          }
+          const {yes,no} = await prepareRegistration(email, requestId);
+          const href = link => link.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
+          const result = await transport.sendMail({
+            from: {name:'FitVisions', address:sender},
+            to: {address:email},
+            subject: 'FitVisions — Did you register?',
+            text: `Did you request a FitVisions account?\n\nYes, it’s me: ${yes}\n\nNo: ${no}`,
+            html: `<p>Did you request a FitVisions account?</p><p><a href="${href(yes)}">Yes, it’s me</a></p><p><a href="${href(no)}">No</a></p>`,
+          });
+          if (!result.accepted?.length) throw new Error('Registration email not accepted');
+          console.log('Registration confirmation email accepted by SMTP.');
+          return reply(res,202,{accepted:true});
+        }
         const link = await recoveryLink(email);
         if (link) {
           const result = await transport.sendMail({
@@ -87,7 +127,11 @@ const server = http.createServer(async (req, res) => {
         }
         return reply(res,202,{accepted:true});
       } catch (error) {
-        recentRecovery.delete(email);
+        recentRecovery.delete(key);
+        if (registration && error.responseCode === 550 &&
+            /\b5\.1\.1\b/.test(error.response || '')) {
+          return reply(res,422,{error:'Email address does not exist.'});
+        }
         throw error;
       }
     }

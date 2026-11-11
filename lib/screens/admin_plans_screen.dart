@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'admin_dashboard_screen.dart';
@@ -175,7 +176,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
     final showForm = showAddForm || editingId != null;
 
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
@@ -267,7 +268,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
       width: 295,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F4F4),
+        color: AppColors.panel(context, const Color(0xFFF4F4F4)),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(
           color: editingId == null ? Colors.transparent : brown,
@@ -295,11 +296,11 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
           TextField(
             controller: featuresController,
             maxLines: 4,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Unlimited try-ons\nSave your looks\nNo watermark',
               filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(),
+              fillColor: AppColors.field(context),
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 14),
@@ -357,7 +358,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F4F4),
+        color: AppColors.panel(context, const Color(0xFFF4F4F4)),
         borderRadius: BorderRadius.circular(25),
         border: Border.all(
           color: editingId == id ? brown : Colors.transparent,
@@ -369,9 +370,9 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.workspace_premium,
-                color: purple,
+                color: AppColors.accent(context, purple),
                 size: 28,
               ),
               const SizedBox(width: 12),
@@ -431,7 +432,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.field(context),
         border: const OutlineInputBorder(),
       ),
     );

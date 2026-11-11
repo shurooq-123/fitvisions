@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'dart:ui' as ui;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -88,9 +89,9 @@ class _AvatarScreenState extends State<AvatarScreen> {
                       key: previewKey,
                       child: AvatarPreview(personal: personal, cloth: cloth)),
                   const SizedBox(height: 10),
-                  const Text(
-                      'Photo preview • AI generation will be connected later',
-                      style: TextStyle(fontSize: 11, color: Colors.black54)),
+                  Text('Photo preview • AI generation will be connected later',
+                      style: TextStyle(
+                          fontSize: 11, color: AppColors.muted(context))),
                   const SizedBox(height: 22),
                   Row(children: [
                     Expanded(
@@ -118,7 +119,7 @@ class AvatarPreview extends StatelessWidget {
   Widget build(BuildContext context) => Container(
       height: 300,
       width: double.infinity,
-      color: prototypeBackground,
+      color: AppColors.page(context),
       child: Stack(alignment: Alignment.center, children: [
         if (personal != null && personal!.isNotEmpty)
           SavedImage(personal!, height: 300, fit: BoxFit.contain)
@@ -134,10 +135,10 @@ class AvatarPreview extends StatelessWidget {
               top: 4,
               right: 4,
               child: Text('Sample avatar', style: TextStyle(fontSize: 10))),
-        const Positioned(
+        Positioned(
             bottom: 4,
             left: 8,
             child: Icon(Icons.smart_toy_outlined,
-                color: Color(0xFF51227D), size: 44)),
+                color: AppColors.accent(context), size: 44)),
       ]));
 }

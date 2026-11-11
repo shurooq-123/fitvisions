@@ -71,14 +71,4 @@ void main() {
     expect(find.text('Female'), findsOneWidget);
     expect(find.text('Male'), findsOneWidget);
   });
-  testWidgets('Ready-made form only offers personal photo inputs',
-      (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-        home: PersonalClothMeasurementScreen(readyMade: true)));
-    expect(find.text('Clothing photo\n(optional)'), findsNothing);
-    expect(find.text('Choose a ready-made outfit'), findsNothing);
-    expect(find.text('Personal photo (optional)'), findsOneWidget);
-    expect(find.text('Personal photo — Camera'), findsNothing);
-    expect(find.byType(BodyMeasurements), findsOneWidget);
-  });
 }

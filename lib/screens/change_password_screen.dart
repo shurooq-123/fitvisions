@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import '../services/password_policy.dart';
 import 'package:flutter/material.dart';
 import '../widgets/prototype_ui.dart';
@@ -81,7 +82,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
           child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
@@ -97,7 +98,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   width: 295,
                   padding: const EdgeInsets.fromLTRB(22, 20, 22, 24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFEFEF),
+                    color: AppColors.panel(context),
                     borderRadius: BorderRadius.circular(58),
                   ),
                   child: Column(
@@ -148,10 +149,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         },
                       ),
                       const SizedBox(height: 10),
-                      const Text(
+                      Text(
                         PasswordPolicy.description,
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 10, color: Colors.black54),
+                        style: TextStyle(
+                            fontSize: 10, color: AppColors.muted(context)),
                       ),
                       const SizedBox(height: 22),
                       SizedBox(
@@ -205,7 +207,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       decoration: InputDecoration(
         hintText: 'Aa@12345',
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.field(context),
         contentPadding: prototypeFieldPadding,
         border: prototypeFieldBorder,
         suffixIcon: IconButton(

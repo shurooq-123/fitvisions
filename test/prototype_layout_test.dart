@@ -30,6 +30,9 @@ import 'package:fitvisions/screens/personal_cloth_measurement_screen.dart';
 import 'package:fitvisions/screens/payment_screen.dart';
 import 'package:fitvisions/screens/feedback_screen.dart';
 import 'package:fitvisions/screens/about_screen.dart';
+import 'package:fitvisions/main.dart';
+import 'package:fitvisions/services/appearance.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LayoutFirestore extends Mock implements FirebaseFirestore {}
 
@@ -63,6 +66,23 @@ DocumentSnapshot avatarRecord() {
 }
 
 void main() {
+  testWidgets('appearance changes the app theme and persists on the device',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    addTearDown(() => Appearance.setDark(false));
+    await Appearance.load();
+    await tester.pumpWidget(const FitVisionsApp());
+    final welcome = find.byType(WelcomeScreen);
+    expect(Theme.of(tester.element(welcome)).brightness, Brightness.light);
+    await Appearance.setDark(true);
+    await tester.pumpAndSettle();
+    expect(Theme.of(tester.element(welcome)).brightness, Brightness.dark);
+    Appearance.mode.value = ThemeMode.light;
+    await Appearance.load();
+    await tester.pumpAndSettle();
+    expect(Theme.of(tester.element(welcome)).brightness, Brightness.dark);
+  });
+
   final firestore = LayoutFirestore();
   for (final entry in {
     'plans': [
@@ -235,9 +255,10 @@ void main() {
       (360.0, 800.0, 1.0, ''),
       (320.0, 640.0, 1.35, '-large-text'),
       (568.0, 320.0, 1.0, '-landscape'),
+      (360.0, 800.0, 1.0, '-dark'),
     ]) {
       testWidgets(
-          '${entry.key} fits ${width.toInt()}×${height.toInt()} at text scale $scale',
+          '${entry.key} fits ${width.toInt()}×${height.toInt()} at text scale $scale$suffix',
           (tester) async {
         tester.view.physicalSize = Size(width, height);
         tester.view.devicePixelRatio = 1;
@@ -248,7 +269,11 @@ void main() {
             key: key,
             child: MaterialApp(
                 debugShowCheckedModeBanner: false,
-                theme: ThemeData(useMaterial3: false, fontFamily: 'sans-serif'),
+                theme: ThemeData(
+                    useMaterial3: false,
+                    fontFamily: 'sans-serif',
+                    brightness:
+                        suffix == '-dark' ? Brightness.dark : Brightness.light),
                 builder: (context, child) => MediaQuery(
                     data: MediaQuery.of(context)
                         .copyWith(textScaler: TextScaler.linear(scale)),

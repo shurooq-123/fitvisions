@@ -1,6 +1,14 @@
 {
   "firestore": {"rules": "firestore.rules"},
   "storage": {"rules": "storage.rules"},
+  "hosting": {
+    "site": "fitvisions-33e6d-confirm",
+    "public": "tools/login-mail/confirmation",
+    "headers": [{"source": "**", "headers": [
+      {"key": "Cache-Control", "value": "no-store"},
+      {"key": "X-Frame-Options", "value": "DENY"}
+    ]}]
+  },
   "emulators": {
     "firestore": {"port": 8085},
     "storage": {"port": 9195},

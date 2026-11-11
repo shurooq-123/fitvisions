@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'saved_image.dart';
@@ -8,7 +9,7 @@ class HistoryPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (data['kind'] == 'subscription') {
-      return const Icon(Icons.workspace_premium, color: Color(0xFF51227D));
+      return Icon(Icons.workspace_premium, color: AppColors.accent(context));
     }
     final encoded = data['previewBase64'];
     if (encoded is String && encoded.isNotEmpty) {
@@ -22,7 +23,7 @@ class HistoryPreview extends StatelessWidget {
       }
     }
     if (data['imagePath'] is String) return SavedImage(data['imagePath']);
-    return const Icon(Icons.history, color: Color(0xFF51227D));
+    return Icon(Icons.history, color: AppColors.accent(context));
   }
 }
 

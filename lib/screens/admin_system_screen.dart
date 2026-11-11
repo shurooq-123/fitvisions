@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import '../widgets/feedback_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +13,7 @@ class AdminSystemScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
           child: SingleChildScrollView(
               child: Center(
@@ -35,7 +36,7 @@ class AdminSystemScreen extends StatelessWidget {
               const SizedBox(height: 16),
               plansCard(context),
               const SizedBox(height: 30),
-              const Text('Feedback Issues',
+              const Text('Feedback',
                   style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               feedbackList(),
@@ -89,7 +90,7 @@ class AdminSystemScreen extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 90),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF4F4F4),
+          color: AppColors.panel(context, const Color(0xFFF4F4F4)),
           borderRadius: BorderRadius.circular(25),
         ),
         child: const Row(
@@ -149,7 +150,7 @@ class AdminSystemScreen extends StatelessWidget {
             width: 285,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFFF4F4F4),
+              color: AppColors.panel(context, const Color(0xFFF4F4F4)),
               borderRadius: BorderRadius.circular(25),
             ),
             child: const Center(

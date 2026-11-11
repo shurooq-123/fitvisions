@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../widgets/prototype_ui.dart';
 
@@ -89,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
         child: Align(
           alignment: Alignment.topCenter,
@@ -114,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       26,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFEFEF),
+                      color: AppColors.panel(context),
                       borderRadius: BorderRadius.circular(58),
                     ),
                     child: Column(
@@ -148,10 +149,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 '/forgot',
                               );
                             },
-                            child: const Text(
+                            child: Text(
                               'Forget Password ?',
                               style: TextStyle(
-                                color: Colors.black87,
+                                color: AppColors.ink(context, Colors.black87),
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -242,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.field(context),
         contentPadding: prototypeFieldPadding,
         border: prototypeFieldBorder,
       ),
@@ -255,7 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
       obscureText: hidePassword,
       decoration: InputDecoration(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.field(context),
         contentPadding: prototypeFieldPadding,
         border: prototypeFieldBorder,
         suffixIcon: IconButton(

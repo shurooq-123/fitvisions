@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import '../widgets/history_preview.dart';
 import '../widgets/feedback_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,9 +15,9 @@ class AdminUserHistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) => DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: const Color(0xFFD5DBCD),
+        backgroundColor: AppColors.page(context, const Color(0xFFD5DBCD)),
         appBar: AppBar(
-            backgroundColor: const Color(0xFFD5DBCD),
+            backgroundColor: AppColors.page(context, const Color(0xFFD5DBCD)),
             elevation: 0,
             title: const Text('User History'),
             bottom: const TabBar(tabs: [
@@ -71,7 +72,8 @@ class AdminUserHistoryScreen extends StatelessWidget {
                       return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           elevation: 0,
-                          color: const Color(0xFFF4F4F4),
+                          color:
+                              AppColors.panel(context, const Color(0xFFF4F4F4)),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(24)),
                           child: ListTile(

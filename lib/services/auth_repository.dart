@@ -15,64 +15,82 @@ class AuthRepository {
   AuthRepository(
       {required this.auth,
       required this.firestore,
-      this.notifyRegistration,
-      this.notifyPasswordChanged});
+      this.notifyPasswordChanged,
+      this.notifyRegistration});
   final Future<bool> Function()? notifyRegistration;
   final Future<bool> Function()? notifyPasswordChanged;
 
   final FirebaseAuth auth;
   final FirebaseFirestore firestore;
 
-  Future<bool> registerUser({
+  Future<void> confirmRegistrationEmail(String email, String link) async {
+    if (!auth.isSignInWithEmailLink(link)) {
+      throw const AccountSetupException(
+          'Open or copy the registration link sent to your email.');
+    }
+    final credential =
+        await auth.signInWithEmailLink(email: email.trim(), emailLink: link);
+    try {
+      final user = credential.user;
+      if (user == null || !user.emailVerified) {
+        throw const AccountSetupException('Your email could not be verified.');
+      }
+      await _ensureNewProfile(user.uid);
+    } catch (_) {
+      await _signOutQuietly();
+      rethrow;
+    }
+  }
+
+  Future<void> _ensureNewProfile(String uid) async {
+    final profile = await firestore
+        .collection('users')
+        .doc(uid)
+        .get(const GetOptions(source: Source.server))
+        .timeout(const Duration(seconds: 20));
+    if (profile.exists) {
+      throw const AccountSetupException(
+          'This email already has a FitVisions account. Use Login or Forgot Password.');
+    }
+  }
+
+  Future<void> registerUser({
     required String firstName,
     required String lastName,
     required String phone,
-    required String email,
     required String password,
   }) async {
-    final credential = await auth.createUserWithEmailAndPassword(
-      email: email.trim(),
-      password: password.trim(),
-    );
-    final user = credential.user!;
+    final user = auth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null || !user.emailVerified) {
+      throw const AccountSetupException(
+          'Confirm your email before completing registration.');
+    }
+    if (!PasswordPolicy.isValid(password)) {
+      throw const AccountSetupException(PasswordPolicy.description);
+    }
+    await _ensureNewProfile(user.uid);
+    await user.updatePassword(password).timeout(const Duration(seconds: 20));
     try {
       await firestore.collection('users').doc(user.uid).set({
         'uid': user.uid,
         'firstName': firstName.trim(),
         'lastName': lastName.trim(),
         'phone': phone.trim(),
-        'email': user.email ?? email.trim(),
+        'email': email,
         'role': 'user',
+        'requiresEmailVerification': true,
         'createdAt': FieldValue.serverTimestamp(),
       }).timeout(const Duration(seconds: 20));
-    } catch (error) {
-      // Roll back ONLY the account created by this call, and only when the
-      // server definitively rejected the profile write. A timeout is ambiguous.
-      var rolledBack = false;
-      if (error is FirebaseException &&
-          const ['permission-denied', 'unauthenticated', 'invalid-argument']
-              .contains(error.code)) {
-        try {
-          await user.delete();
-          rolledBack = true;
-        } catch (_) {
-          // Tell the user the account remains instead of claiming a rollback.
-        }
-      }
-      await _signOutQuietly();
-      throw AccountSetupException(rolledBack
-          ? 'Registration could not save your profile. The new account was rolled back. '
-              'Ask the administrator to check Firestore permissions before retrying.'
-          : 'Your sign-in account was created, but saving your profile could not be confirmed. '
-              'Do not register again. Ask the administrator to check your account setup.');
+    } catch (_) {
+      throw const AccountSetupException(
+          'Could not confirm that your profile was saved. Try again. If you already have an account, use Login.');
     }
     try {
-      return await (notifyRegistration?.call() ?? Future.value(false))
-          .timeout(const Duration(seconds: 35));
+      await notifyRegistration?.call().timeout(const Duration(seconds: 8));
     } catch (_) {
-      return false;
+      // A confirmation notice is best effort once registration is complete.
     } finally {
-      // Email delivery failure must not delete a successfully created account.
       await _signOutQuietly();
     }
   }
@@ -86,9 +104,10 @@ class AuthRepository {
       password: password.trim(),
     );
     try {
+      final user = credential.user!;
       final doc = await firestore
           .collection('users')
-          .doc(credential.user!.uid)
+          .doc(user.uid)
           .get(const GetOptions(source: Source.server))
           .timeout(const Duration(seconds: 20));
       if (!doc.exists) {
@@ -97,7 +116,15 @@ class AuthRepository {
           'Please contact the administrator to restore or complete your account.',
         );
       }
-      final role = doc.data()?['role'];
+      final profile = doc.data();
+      if (profile?['requiresEmailVerification'] == true &&
+          !user.emailVerified) {
+        final sent = await _sendVerificationEmail(user);
+        throw AccountSetupException(sent
+            ? 'Verify your email before signing in. We sent a new link. Check your inbox or spam folder, open the link, then sign in again.'
+            : 'Verify your email before signing in. Open the link already sent to your inbox or spam folder. If you have no link, wait a few minutes and try signing in again to resend it.');
+      }
+      final role = profile?['role'];
       if (role != 'user' && role != 'admin') {
         throw const AccountSetupException(
           'Your account role is not configured. Please contact the administrator.',
@@ -107,6 +134,15 @@ class AuthRepository {
     } catch (_) {
       await _signOutQuietly();
       rethrow;
+    }
+  }
+
+  Future<bool> _sendVerificationEmail(User user) async {
+    try {
+      await user.sendEmailVerification().timeout(const Duration(seconds: 12));
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 

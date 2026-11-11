@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import '../widgets/prototype_ui.dart';
 import '../widgets/history_preview.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -59,7 +60,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
         child: Column(
           children: [
@@ -86,7 +87,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   hintText: 'Search history or date',
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
-                  fillColor: const Color(0xFFEFEFEF),
+                  fillColor: AppColors.field(context, const Color(0xFFEFEFEF)),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(25),
                       borderSide: BorderSide.none),
@@ -141,7 +142,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           vertical: 12,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFEFEF),
+                          color: AppColors.panel(context),
                           borderRadius: BorderRadius.circular(25),
                         ),
                         child: InkWell(

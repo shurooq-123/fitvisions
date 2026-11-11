@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../services/dress_reference.dart';
@@ -44,7 +45,7 @@ Future<DressReference?> chooseDressReference(
   return showModalBottomSheet<DressReference>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: prototypeBackground,
+      backgroundColor: AppColors.page(context),
       builder: (context) => SafeArea(
           child: SizedBox(
               height: MediaQuery.sizeOf(context).height * .85,
@@ -92,9 +93,11 @@ Future<DressReference?> chooseDressReference(
                                             Text(
                                                 '${ref.length} · ${ref.cut}\n${ref.neckline} · ${ref.sleeves}\n${ref.fabric} appearance · ${ref.style}',
                                                 textAlign: TextAlign.center),
-                                            const Text('Use reference',
+                                            Text('Use reference',
                                                 style: TextStyle(
-                                                    color: prototypeBrown,
+                                                    color: AppColors.ink(
+                                                        context,
+                                                        prototypeBrown),
                                                     fontWeight:
                                                         FontWeight.bold)),
                                           ]))));

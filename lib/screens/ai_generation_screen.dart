@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
@@ -580,15 +581,16 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                   : width,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.panel(context, Colors.white),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(name,
-                        style: const TextStyle(
-                            fontSize: 12, color: prototypeBrown)),
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.ink(context, prototypeBrown))),
                     const SizedBox(height: 4),
                     Text('${displayMeasurement(value)} $measurementUnit',
                         style: const TextStyle(

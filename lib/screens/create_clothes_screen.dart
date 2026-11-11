@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -459,10 +460,12 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                                       style: OutlinedButton.styleFrom(
                                         backgroundColor: selected
                                             ? const Color(0xFF5C4745)
-                                            : const Color(0xFFF5F5F5),
+                                            : AppColors.field(context,
+                                                const Color(0xFFF5F5F5)),
                                         foregroundColor: selected
                                             ? Colors.white
-                                            : const Color(0xFF302B2A),
+                                            : AppColors.ink(context,
+                                                const Color(0xFF302B2A)),
                                         side: BorderSide(
                                             color: selected
                                                 ? const Color(0xFF5C4745)
@@ -503,11 +506,11 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                 key: ValueKey(question.key),
                 initialValue: answers[question.key],
                 isExpanded: true,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: AppColors.field(context),
                     contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
                 hint: const Text('Select an option'),
                 items: question.value
                     .map((value) =>

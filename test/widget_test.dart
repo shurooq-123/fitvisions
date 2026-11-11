@@ -44,9 +44,9 @@ void main() {
         'Aa@12345',
       );
 
-      await tester.ensureVisible(find.text('Sign up'));
+      await tester.ensureVisible(find.text('Register'));
       await tester.tap(
-        find.text('Sign up'),
+        find.text('Register'),
       );
 
       await tester.pumpAndSettle();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
 
 const prototypeBackground = Color(0xFFCED1C6);
 const prototypeBrown = Color(0xFF574543);
@@ -49,10 +50,10 @@ class PrototypeNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) => BottomNavigationBar(
           currentIndex: index,
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.panel(context, Colors.white),
           elevation: 0,
-          selectedItemColor: prototypeBrown,
-          unselectedItemColor: prototypeBrown,
+          selectedItemColor: AppColors.ink(context, prototypeBrown),
+          unselectedItemColor: AppColors.muted(context, prototypeBrown),
           selectedLabelStyle:
               const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
           unselectedLabelStyle:
@@ -87,7 +88,7 @@ class PrototypePage extends StatelessWidget {
   final int index;
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: prototypeBackground,
+      backgroundColor: AppColors.page(context),
       body: SafeArea(
           child: Align(
               alignment: Alignment.topCenter,
@@ -132,9 +133,11 @@ class PrototypePanel extends StatelessWidget {
               ? 18
               : padding),
       decoration: BoxDecoration(
-          color: prototypeCard,
+          color: AppColors.panel(context),
           borderRadius: BorderRadius.circular(radius),
-          border: Border.all(color: Colors.white70),
+          border: Border.all(
+              color: AppColors.adaptive(
+                  context, Colors.white70, const Color(0xFF464B40))),
           boxShadow: const [
             BoxShadow(
                 color: Color(0x12574543), blurRadius: 14, offset: Offset(0, 4))

@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../services/body_size_presets.dart';
 
@@ -29,7 +30,7 @@ class MeasurementLabel extends StatelessWidget {
                     label: measurementHelp[label] ?? label,
                     child: CustomPaint(painter: BodyMeasurePainter(label))))),
         decoration: BoxDecoration(
-            color: const Color(0xFF574543),
+            color: AppColors.ink(context, const Color(0xFF574543)),
             borderRadius: BorderRadius.circular(12)),
         triggerMode: TooltipTriggerMode.tap,
         showDuration: const Duration(seconds: 7),
@@ -98,11 +99,11 @@ class MeasurementGuide extends StatelessWidget {
         const Text(
             'Illustrative adult chart only. Sizes vary by brand, gender and garment. XS means extra small; XL means extra large.',
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12)),
+            style: TextStyle(fontSize: 12)),
       const SizedBox(height: 8),
       Table(
           border: TableBorder.all(
-              color: const Color(0xFFD7D8D0),
+              color: AppColors.muted(context, const Color(0xFFD7D8D0)),
               borderRadius: BorderRadius.circular(12)),
           children: [
             for (final row in [
@@ -114,10 +115,15 @@ class MeasurementGuide extends StatelessWidget {
                       color: row.first == 'Size'
                           ? const Color(0xFF574543)
                           : row.first == selectedSize
-                              ? const Color(0xFFE4D8E8)
+                              ? AppColors.adaptive(
+                                  context,
+                                  const Color(0xFFE4D8E8),
+                                  const Color(0xFF54445E))
                               : rows.indexOf(row).isEven
-                                  ? const Color(0xFFFAF9F6)
-                                  : const Color(0xFFE6E9DF)),
+                                  ? AppColors.field(
+                                      context, const Color(0xFFFAF9F6))
+                                  : AppColors.panel(
+                                      context, const Color(0xFFE6E9DF))),
                   children: [
                     for (final cell in row)
                       Padding(
@@ -129,9 +135,7 @@ class MeasurementGuide extends StatelessWidget {
                                   : () => onSelect!(
                                       row.first, bodySizeMidpoints(row)),
                               child: Text(
-                                  inches &&
-                                          row.first != 'Size' &&
-                                          cell != row.first
+                                  inches && row.first != 'Size' && cell != row.first
                                       ? cell
                                           .split('–')
                                           .map((v) => (double.parse(v) / 2.54)
@@ -143,11 +147,12 @@ class MeasurementGuide extends StatelessWidget {
                                       fontSize: 14,
                                       color: row.first == 'Size'
                                           ? Colors.white
-                                          : const Color(0xFF37352F),
-                                      fontWeight: row.first == 'Size' ||
-                                              row.first == selectedSize
-                                          ? FontWeight.bold
-                                          : FontWeight.normal))))
+                                          : AppColors.ink(
+                                              context, const Color(0xFF37352F)),
+                                      fontWeight:
+                                          row.first == 'Size' || row.first == selectedSize
+                                              ? FontWeight.bold
+                                              : FontWeight.normal))))
                   ])
           ]),
     ]);
@@ -310,7 +315,8 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
                                     : null,
                             suffixText: inches ? 'in' : 'cm',
                             filled: true,
-                            fillColor: const Color(0xFFFFFDFC),
+                            fillColor: AppColors.field(
+                                context, const Color(0xFFFFFDFC)),
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 12),
                             border: OutlineInputBorder(

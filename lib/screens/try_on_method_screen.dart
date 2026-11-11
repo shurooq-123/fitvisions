@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -60,7 +61,7 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: const PrototypeNav(),
-      backgroundColor: bg,
+      backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
         child: Center(
           child: SizedBox(
@@ -135,7 +136,7 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
         padding: const EdgeInsets.all(16),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xFFEFEFEF),
+          color: AppColors.panel(context),
           borderRadius: BorderRadius.circular(40),
           border: isSelected ? Border.all(color: brown, width: 2) : null,
         ),

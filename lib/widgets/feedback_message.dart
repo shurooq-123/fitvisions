@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class FeedbackMessage extends StatelessWidget {
@@ -11,16 +12,16 @@ class FeedbackMessage extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       padding: const EdgeInsets.all(18),
-      decoration: const BoxDecoration(
-          color: Color(0xFFF4F4F4),
-          borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+          color: AppColors.panel(context, const Color(0xFFF4F4F4)),
+          borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
               bottomRight: Radius.circular(24),
               bottomLeft: Radius.circular(5))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const Icon(Icons.chat_bubble_outline, color: Color(0xFF51227D)),
+          Icon(Icons.chat_bubble_outline, color: AppColors.accent(context)),
           const SizedBox(width: 10),
           Expanded(
               child: Text('${data['email'] ?? 'User'}',

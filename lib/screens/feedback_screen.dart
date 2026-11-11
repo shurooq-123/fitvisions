@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import '../widgets/prototype_ui.dart';
 import 'package:flutter/material.dart';
 import '../services/app_data_service.dart';
@@ -101,14 +102,26 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               controller: feedbackController,
               maxLines: 7,
               maxLength: 4000,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color(0xFFE8EBF3),
+                  fillColor: AppColors.field(context, const Color(0xFFE8EBF3)),
                   border: prototypeFieldBorder)),
         ])),
         const SizedBox(height: 14),
         PrototypeButton(loading ? 'Sending...' : 'Submit',
             onPressed: loading ? null : submitFeedback),
+        TextButton(
+            onPressed: loading
+                ? null
+                : () {
+                    if (ModalRoute.of(context)?.settings.arguments ==
+                        'afterPayment') {
+                      Navigator.pushReplacementNamed(context, '/history');
+                    } else {
+                      Navigator.maybePop(context);
+                    }
+                  },
+            child: const Text('Skip feedback')),
         const SizedBox(height: 10),
         const Text('Your feedback helps us improve\nthe app !!',
             textAlign: TextAlign.center,

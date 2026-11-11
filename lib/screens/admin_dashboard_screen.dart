@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -27,7 +28,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: bg,
+        backgroundColor: AppColors.page(context, bg),
         bottomNavigationBar: adminBottomNav(context, 0),
         body: SafeArea(
           child: CustomScrollView(
@@ -101,8 +102,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back_ios,
-                    size: 32, color: Colors.black),
+                icon: Icon(Icons.arrow_back_ios,
+                    size: 32, color: AppColors.ink(context)),
               ),
               PopupMenuButton<String>(
                 tooltip: 'Account settings',
@@ -127,7 +128,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       SizedBox(
         width: 250,
         child: Material(
-          color: panel,
+          color: AppColors.panel(context, panel),
           borderRadius: BorderRadius.circular(22),
           child: InkWell(
             onTap: onTap,
@@ -136,7 +137,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               child: Row(
                 children: [
-                  Icon(icon, color: purple, size: 28),
+                  Icon(icon,
+                      color: AppColors.accent(context, purple), size: 28),
                   const SizedBox(width: 12),
                   Expanded(
                       child: Text(label,
@@ -153,7 +155,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       )),
                   if (onTap != null) ...[
                     const SizedBox(width: 6),
-                    const Icon(Icons.chevron_right, size: 18, color: purple),
+                    Icon(Icons.chevron_right,
+                        size: 18, color: AppColors.accent(context, purple)),
                   ],
                 ],
               ),
@@ -166,7 +169,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         width: 250,
         padding: const EdgeInsets.fromLTRB(24, 18, 24, 20),
         decoration: BoxDecoration(
-            color: panel, borderRadius: BorderRadius.circular(25)),
+            color: AppColors.panel(context, panel),
+            borderRadius: BorderRadius.circular(25)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -184,7 +188,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(0, 40),
-          side: const BorderSide(color: Colors.black),
+          side: BorderSide(color: AppColors.ink(context)),
           shape: const StadiumBorder(),
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
         ),
@@ -194,8 +198,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Flexible(
                 child: Text(label,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.black,
+                    style: TextStyle(
+                      color: AppColors.ink(context),
                       fontSize: 16,
                       fontFamily: 'serif',
                       fontWeight: FontWeight.bold,
@@ -239,10 +243,10 @@ Widget adminBottomNav(BuildContext context, int index) {
 
   return BottomNavigationBar(
     currentIndex: index,
-    selectedItemColor: Colors.black,
-    unselectedItemColor: Colors.black,
+    selectedItemColor: AppColors.ink(context),
+    unselectedItemColor: AppColors.ink(context),
     type: BottomNavigationBarType.fixed,
-    backgroundColor: Colors.white,
+    backgroundColor: AppColors.panel(context, Colors.white),
     onTap: (i) {
       if (i == 0) {
         Navigator.pushReplacement(
@@ -267,17 +271,18 @@ Widget adminBottomNav(BuildContext context, int index) {
         );
       }
     },
-    items: const [
+    items: [
       BottomNavigationBarItem(
-        icon: Icon(Icons.stacked_line_chart, color: purple),
+        icon: Icon(Icons.stacked_line_chart,
+            color: AppColors.accent(context, purple)),
         label: 'Dashboard',
       ),
       BottomNavigationBarItem(
-        icon: Icon(Icons.groups, color: purple),
+        icon: Icon(Icons.groups, color: AppColors.accent(context, purple)),
         label: 'Users',
       ),
       BottomNavigationBarItem(
-        icon: Icon(Icons.settings, color: purple),
+        icon: Icon(Icons.settings, color: AppColors.accent(context, purple)),
         label: 'System',
       ),
     ],

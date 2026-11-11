@@ -1,8 +1,13 @@
+import '../constants/app_colors.dart';
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import '../widgets/prototype_ui.dart';
 import 'package:country_picker/country_picker.dart';
 import '../services/phone_validation.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../widgets/custom_back_button.dart';
 
@@ -29,10 +34,140 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool hidePassword = true;
   bool hideConfirmPassword = true;
   bool loading = false;
+  bool emailConfirmed = false;
+  bool linkSent = false;
+  bool checkingConfirmation = false;
+  Timer? confirmationTimer;
+  static const pendingEmailKey = 'fitvisions.registrationEmail';
+  static const pendingRequestKey = 'fitvisions.registrationRequest';
+  static ({
+    String id,
+    String firstName,
+    String lastName,
+    String phone,
+    String password
+  })? pendingForm;
   Country phoneCountry = Country.parse('OM');
 
+  @override
+  void initState() {
+    super.initState();
+    _restorePendingRequest();
+  }
+
+  Future<void> _restorePendingRequest() async {
+    final SharedPreferences preferences;
+    try {
+      preferences = await SharedPreferences.getInstance();
+    } catch (_) {
+      return;
+    }
+    final email = preferences.getString(pendingEmailKey);
+    final id = preferences.getString(pendingRequestKey);
+    if (!mounted || email == null || id == null || loading) return;
+    emailController.text = email;
+    _waitForConfirmation(id, email, preferences);
+  }
+
+  Future<void> _clearPendingRequest(SharedPreferences preferences) async {
+    confirmationTimer?.cancel();
+    pendingForm = null;
+    await preferences.remove(pendingRequestKey);
+    await preferences.remove(pendingEmailKey);
+    if (mounted) setState(() => linkSent = false);
+  }
+
+  Future<void> _cancelWaiting() async {
+    final preferences = await SharedPreferences.getInstance();
+    if (!mounted || loading) return;
+    await _clearPendingRequest(preferences);
+  }
+
+  void _waitForConfirmation(
+      String id, String email, SharedPreferences preferences) {
+    confirmationTimer?.cancel();
+    setState(() => linkSent = true);
+    confirmationTimer = Timer.periodic(const Duration(seconds: 5),
+        (_) => _checkConfirmation(id, email, preferences));
+  }
+
+  Future<void> _checkConfirmation(
+      String id, String email, SharedPreferences preferences) async {
+    if (!mounted || loading || checkingConfirmation) return;
+    checkingConfirmation = true;
+    try {
+      final result = await AuthService.registrationStatus(id);
+      if (!mounted || id != preferences.getString(pendingRequestKey)) return;
+      if (result.status == 'pending') return;
+      if (result.status == 'declined' || result.status == 'expired') {
+        await _clearPendingRequest(preferences);
+        if (mounted) {
+          _showMessage(result.status == 'declined'
+              ? 'Registration cancelled.'
+              : 'The confirmation request expired. Press Register to request a new link.');
+        }
+      } else if (result.status == 'approved' && result.link != null) {
+        await _finishConfirmedRegistration(
+            id, email, result.link!, preferences);
+      }
+    } catch (_) {
+      // Keep checking if the connection is briefly unavailable.
+    } finally {
+      checkingConfirmation = false;
+    }
+  }
+
+  Future<void> _finishConfirmedRegistration(String id, String email,
+      String link, SharedPreferences preferences) async {
+    confirmationTimer?.cancel();
+    setState(() => loading = true);
+    try {
+      await AuthService.confirmRegistrationEmail(email, link);
+      if (!mounted) return;
+      emailController.text = email;
+      setState(() => emailConfirmed = true);
+      final form = pendingForm;
+      if (form == null || form.id != id) {
+        _showMessage(
+            'Email confirmed. Re-enter your details to complete registration.');
+        return;
+      }
+      await _completeRegistration(form.firstName, form.lastName, form.phone,
+          form.password, preferences);
+    } catch (error) {
+      if (mounted) {
+        setState(() => linkSent = false);
+        _showMessage(AuthService.errorMessage(error));
+      }
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: brown),
+    );
+  }
+
+  Future<void> _completeRegistration(String firstName, String lastName,
+      String phone, String password, SharedPreferences preferences) async {
+    await AuthService.registerUser(
+        firstName: firstName,
+        lastName: lastName,
+        phone: phone,
+        password: password);
+    pendingForm = null;
+    await preferences.remove(pendingRequestKey);
+    await preferences.remove(pendingEmailKey);
+    if (!mounted) return;
+    _showMessage('Registered successfully.');
+    Navigator.pushNamedAndRemoveUntil(
+        context, '/login', (route) => route.settings.name == '/');
+  }
+
   Future<void> register() async {
-    if (loading) return;
+    if (loading || (linkSent && !emailConfirmed)) return;
     if (!formKey.currentState!.validate()) {
       return;
     }
@@ -40,35 +175,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       setState(() => loading = true);
 
-      final emailSent = await AuthService.registerUser(
-        firstName: firstNameController.text.trim(),
-        lastName: lastNameController.text.trim(),
-        phone: internationalMobile(
-            mobileController.text.trim(), phoneCountry.countryCode)!,
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+      final firstName = firstNameController.text.trim();
+      final lastName = lastNameController.text.trim();
+      final phone = internationalMobile(
+          mobileController.text.trim(), phoneCountry.countryCode)!;
+      final password = passwordController.text.trim();
+      final preferences = await SharedPreferences.getInstance();
+      if (emailConfirmed) {
+        await _completeRegistration(
+            firstName, lastName, phone, password, preferences);
+        return;
+      }
+      final random = Random.secure();
+      final id = List.generate(
+              16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'))
+          .join();
+      final email = emailController.text.trim();
+      await AuthService.requestRegistrationLink(email, id);
+      await preferences.setString(pendingEmailKey, email);
+      await preferences.setString(pendingRequestKey, id);
+      pendingForm = (
+        id: id,
+        firstName: firstName,
+        lastName: lastName,
+        phone: phone,
+        password: password
       );
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(emailSent
-              ? 'Account created successfully. A confirmation email has been sent.'
-              : 'Account created successfully. The confirmation email could not be sent. You can log in.'),
-          backgroundColor: brown,
-        ),
-      );
-
-      Navigator.pushReplacementNamed(context, '/login');
+      if (mounted) {
+        _waitForConfirmation(id, email, preferences);
+        _showMessage('Check your email and confirm the request.');
+      }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AuthService.errorMessage(e)),
-          backgroundColor: brown,
-        ),
-      );
+      _showMessage(AuthService.errorMessage(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -76,6 +215,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
+    confirmationTimer?.cancel();
     firstNameController.dispose();
     lastNameController.dispose();
     mobileController.dispose();
@@ -88,7 +228,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
         child: Align(
           alignment: Alignment.topCenter,
@@ -110,7 +250,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       width: 295,
                       padding: const EdgeInsets.fromLTRB(22, 20, 22, 24),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFEFEF),
+                        color: AppColors.panel(context),
                         borderRadius: BorderRadius.circular(58),
                       ),
                       child: Column(
@@ -123,6 +263,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                           const SizedBox(height: 18),
+                          if (emailConfirmed)
+                            const Text(
+                                'Email confirmed. Enter your details to finish.'),
                           label('First Name'),
                           normalField(
                             controller: firstNameController,
@@ -168,6 +311,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           label('Email'),
                           normalField(
                             controller: emailController,
+                            readOnly: emailConfirmed,
                             hint: 'name@gmail.com',
                             keyboard: TextInputType.emailAddress,
                             validator: (value) {
@@ -232,11 +376,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             },
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             'Password: At least 8 chars, uppercase, lowercase, number, special character',
                             style: TextStyle(
                               fontSize: 10,
-                              color: Colors.black54,
+                              color: AppColors.muted(context),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -244,7 +388,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: SizedBox(
                               width: 135,
                               child: ElevatedButton(
-                                onPressed: loading ? null : register,
+                                onPressed:
+                                    loading || (linkSent && !emailConfirmed)
+                                        ? null
+                                        : register,
                                 style: ElevatedButton.styleFrom(
                                   minimumSize: const Size(0, 44),
                                   padding: const EdgeInsets.symmetric(
@@ -265,7 +412,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         ),
                                       )
                                     : const Text(
-                                        'Sign up',
+                                        'Register',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
@@ -274,6 +421,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             ),
                           ),
+                          if (linkSent && !emailConfirmed) ...[
+                            const Text(
+                                'Waiting for your email confirmation. You can open it on another device.'),
+                            TextButton(
+                              onPressed: loading ? null : _cancelWaiting,
+                              child: const Text('Cancel request'),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -302,17 +457,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required String hint,
     required String? Function(String?) validator,
     TextInputType keyboard = TextInputType.text,
+    bool readOnly = false,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboard,
+      readOnly: readOnly,
       validator: validator,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         isDense: true,
         hintText: hint,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.field(context),
         contentPadding: prototypeFieldPadding,
         border: prototypeFieldBorder,
         errorStyle: const TextStyle(
@@ -364,7 +521,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             helperMaxLines: 2,
             errorMaxLines: 3,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.field(context),
             border: prototypeFieldBorder,
             contentPadding: prototypeFieldPadding,
           ),
@@ -386,7 +543,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         isDense: true,
         hintText: '',
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.field(context),
         contentPadding: prototypeFieldPadding,
         border: prototypeFieldBorder,
         errorStyle: const TextStyle(

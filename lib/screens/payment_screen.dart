@@ -73,7 +73,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
           args?['returnToDesign'] == true) {
         Navigator.pop(context, true);
       } else {
-        Navigator.pushReplacementNamed(context, '/feedback');
+        Navigator.pushReplacementNamed(context, '/feedback',
+            arguments: 'afterPayment');
       }
     } catch (_) {
       if (mounted) {

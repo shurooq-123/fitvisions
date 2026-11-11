@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -9,17 +10,9 @@ import 'ai_generation_screen.dart';
 import '../services/avatar_prompt.dart';
 import '../services/body_size_presets.dart';
 import '../widgets/measurement_guide.dart';
-import '../widgets/clothing_library.dart';
 
 class PersonalClothMeasurementScreen extends StatefulWidget {
-  const PersonalClothMeasurementScreen(
-      {super.key,
-      this.initialClothing,
-      this.outfitDetails = '',
-      this.readyMade = false});
-  final String? initialClothing;
-  final bool readyMade;
-  final String outfitDetails;
+  const PersonalClothMeasurementScreen({super.key});
 
   @override
   State<PersonalClothMeasurementScreen> createState() =>
@@ -41,15 +34,6 @@ class _PersonalClothMeasurementScreenState
   String? savedPersonalPath;
 
   bool loading = false;
-  @override
-  void initState() {
-    super.initState();
-    if (widget.initialClothing != null) {
-      clothImage = File(widget.initialClothing!);
-      savedClothPath = widget.initialClothing;
-    }
-  }
-
   Future<void> pickClothImage() => pickImage('cloth');
   Future<void> pickPersonalImage() => pickImage('personal');
 
@@ -95,7 +79,7 @@ class _PersonalClothMeasurementScreenState
       showMessage('Choose a clothing image from your album.');
       return;
     }
-    if (!widget.readyMade && gender == null) {
+    if (gender == null) {
       showMessage('Select Female or Male.');
       return;
     }
@@ -128,13 +112,10 @@ class _PersonalClothMeasurementScreenState
           context,
           MaterialPageRoute(
               builder: (_) => AiGenerationScreen(
-                  title: widget.readyMade
-                      ? 'Try Ready-made Outfits'
-                      : 'Generate Avatar',
+                  title: 'Generate Avatar',
                   measuredBodyReference: true,
                   avatar: true,
                   autoGenerate: true,
-                  outfitDetails: widget.outfitDetails,
                   photos: [
                     if (clothImage != null) clothImage!.path,
                     if (personalImage != null) personalImage!.path
@@ -171,9 +152,9 @@ class _PersonalClothMeasurementScreenState
           child: Column(children: [
         const PrototypeLogo(width: 225),
         const SizedBox(height: 12),
-        Text(widget.readyMade ? 'Ready-made Avatar' : 'Generate Avatar',
+        const Text('Generate Avatar',
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         PrototypePanel(
             child: Column(children: [
@@ -182,31 +163,27 @@ class _PersonalClothMeasurementScreenState
             onChanged: (values) => bodyMeasurements = values,
             onSize: (size) => selectedSize = size,
             onUnitChanged: (value) => inches = value,
-            afterFields: widget.readyMade
-                ? null
-                : Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: DropdownButtonFormField<AvatarGender>(
-                      initialValue: gender,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Gender',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                            value: AvatarGender.female, child: Text('Female')),
-                        DropdownMenuItem(
-                            value: AvatarGender.male, child: Text('Male')),
-                      ],
-                      onChanged: loading
-                          ? null
-                          : (value) => setState(() => gender = value),
-                    ),
-                  ),
+            afterFields: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: DropdownButtonFormField<AvatarGender>(
+                initialValue: gender,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Gender',
+                  border: OutlineInputBorder(),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                      value: AvatarGender.female, child: Text('Female')),
+                  DropdownMenuItem(
+                      value: AvatarGender.male, child: Text('Male')),
+                ],
+                onChanged:
+                    loading ? null : (value) => setState(() => gender = value),
+              ),
+            ),
           ),
-          if (!widget.readyMade && widget.initialClothing == null)
-            photoBox('Clothing image', clothImage, pickClothImage),
+          photoBox('Clothing image', clothImage, pickClothImage),
           const SizedBox(height: 10),
           photoBox(
               'Personal photo (optional)', personalImage, pickPersonalImage),
@@ -216,9 +193,9 @@ class _PersonalClothMeasurementScreenState
         ])),
       ]));
   Widget photoBox(String label, File? file, VoidCallback pick) => Material(
-        color: Colors.white,
+        color: AppColors.panel(context, Colors.white),
         shape: RoundedRectangleBorder(
-          side: const BorderSide(color: Colors.black26),
+          side: BorderSide(color: AppColors.muted(context, Colors.black26)),
           borderRadius: BorderRadius.circular(10),
         ),
         clipBehavior: Clip.antiAlias,
@@ -230,17 +207,14 @@ class _PersonalClothMeasurementScreenState
               padding: const EdgeInsets.all(12),
               child: Column(children: [
                 Row(children: [
-                  const Icon(Icons.photo_library_outlined,
-                      color: prototypeBrown),
+                  Icon(Icons.photo_library_outlined,
+                      color: AppColors.ink(context, prototypeBrown)),
                   const SizedBox(width: 8),
                   Expanded(child: Text(label)),
                 ]),
                 if (file != null) ...[
                   const SizedBox(height: 8),
-                  if (clothingTemplates.containsKey(file.path))
-                    Image.asset(file.path, height: 110)
-                  else
-                    Image.file(file, height: 110),
+                  Image.file(file, height: 110),
                 ],
               ]),
             ),
