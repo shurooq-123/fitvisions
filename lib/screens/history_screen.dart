@@ -31,6 +31,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   String search = '';
+  bool newestFirst = true;
   String dateLabel(dynamic value) {
     final date = value is Timestamp
         ? value.toDate().toLocal()
@@ -93,6 +94,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
               ),
             ),
+            DropdownButton<bool>(
+                value: newestFirst,
+                items: const [
+                  DropdownMenuItem(
+                      value: true, child: Text('Newest to oldest')),
+                  DropdownMenuItem(
+                      value: false, child: Text('Oldest to newest'))
+                ],
+                onChanged: (v) => setState(() => newestFirst = v ?? true)),
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
                 stream: feed,
@@ -115,6 +125,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               .contains(search))
                       .toList();
 
+                  if (!newestFirst) {
+                    final reversed = items.reversed.toList();
+                    items
+                      ..clear()
+                      ..addAll(reversed);
+                  }
                   if (items.isEmpty) {
                     return Center(
                       child: Text(

@@ -26,7 +26,8 @@ class AdminPaymentsScreen extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
             final rows = snapshot.data!.docs
-                .where((d) => d.data()['status'] == 'pending')
+                .where((d) => ['pending', 'demo_active', 'paid']
+                    .contains(d.data()['status']))
                 .toList()
               ..sort((a, b) => ((b.data()['createdAt'] as Timestamp?)
                           ?.millisecondsSinceEpoch ??

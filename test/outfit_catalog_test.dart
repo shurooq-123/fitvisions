@@ -48,7 +48,7 @@ void main() {
   testWidgets('Clothes design offers optional face instead of colour palette',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: CreateClothesScreen()));
-    expect(find.text('Face photo (optional)'), findsOneWidget);
+    expect(find.text('Personal photo (optional)'), findsOneWidget);
     expect(find.text('Gallery'), findsOneWidget);
     expect(find.text('Camera'), findsOneWidget);
     expect(find.byKey(const ValueKey('Colour palette')), findsNothing);

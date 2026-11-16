@@ -48,3 +48,14 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local review artifacts and credentials
+review-*.log
+.env*
+*.pem
+*service-account*.json
+*serviceAccount*.json
+functions/.runtimeconfig.json
+
+*.log
+functions/audit.json

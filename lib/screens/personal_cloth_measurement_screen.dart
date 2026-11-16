@@ -56,16 +56,31 @@ class _PersonalClothMeasurementScreenState
     if (loading) return;
     setState(() => loading = true);
     try {
-      final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+      final source = await showModalBottomSheet<ImageSource>(
+          context: context,
+          builder: (context) => SafeArea(
+                  child: Wrap(children: [
+                ListTile(
+                    leading: const Icon(Icons.camera_alt),
+                    title: const Text('Camera'),
+                    onTap: () => Navigator.pop(context, ImageSource.camera)),
+                ListTile(
+                    leading: const Icon(Icons.photo_library),
+                    title: const Text('Album'),
+                    onTap: () => Navigator.pop(context, ImageSource.gallery)),
+              ])));
+      if (source == null) return;
+      final image = await ImagePicker().pickImage(
+          source: source, maxWidth: 2048, maxHeight: 2048, imageQuality: 90);
       if (image == null || !mounted) return;
       final path = await AppDataService.saveImage(image.path, kind);
       if (!mounted) return;
       setState(() {
         if (kind == 'cloth') {
-          clothImage = File(image.path);
+          clothImage = File(path.startsWith('gs://') ? image.path : path);
           savedClothPath = path;
         } else {
-          personalImage = File(image.path);
+          personalImage = File(path.startsWith('gs://') ? image.path : path);
           savedPersonalPath = path;
         }
       });
@@ -112,6 +127,7 @@ class _PersonalClothMeasurementScreenState
           'chest': measurements['Chest'],
           'waist': measurements['Waist'],
           'hip': measurements['Hips'],
+          'shoulders': measurements['Shoulders'],
           'clothImagePath': savedClothPath,
           'personalImagePath': savedPersonalPath,
         },
@@ -243,6 +259,47 @@ class _PersonalClothMeasurementScreenState
                     Image.asset(file.path, height: 110)
                   else
                     Image.file(file, height: 110),
+                  Wrap(children: [
+                    TextButton.icon(
+                        icon: const Icon(Icons.zoom_in),
+                        label: const Text('Zoom preview'),
+                        onPressed: () => showDialog(
+                            context: context,
+                            builder: (context) => Dialog(
+                                    child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                      SizedBox(
+                                          height: MediaQuery.sizeOf(context)
+                                                  .height *
+                                              .6,
+                                          child: InteractiveViewer(
+                                              minScale: .5,
+                                              maxScale: 5,
+                                              child: clothingTemplates
+                                                      .containsKey(file.path)
+                                                  ? Image.asset(file.path)
+                                                  : Image.file(file))),
+                                      TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text('Close'))
+                                    ])))),
+                    TextButton.icon(
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('Remove'),
+                        onPressed: loading
+                            ? null
+                            : () => setState(() {
+                                  if (label.startsWith('Clothing')) {
+                                    clothImage = null;
+                                    savedClothPath = null;
+                                  } else {
+                                    personalImage = null;
+                                    savedPersonalPath = null;
+                                  }
+                                })),
+                  ]),
                 ],
               ]),
             ),

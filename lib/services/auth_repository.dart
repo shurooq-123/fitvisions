@@ -97,6 +97,9 @@ class AuthRepository {
           'Please contact the administrator to restore or complete your account.',
         );
       }
+      if (doc.data()?['archived'] == true)
+        throw const AccountSetupException(
+            'This account is archived. Contact the administrator.');
       final role = doc.data()?['role'];
       if (role != 'user' && role != 'admin') {
         throw const AccountSetupException(

@@ -79,6 +79,29 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   Uint8List? generatedBodyReference;
   bool busy = false;
   String? error;
+  String? pendingHistoryId, pendingHistoryTitle;
+  Uint8List? pendingHistoryImage;
+  Future<void> retryHistory() async {
+    if (pendingHistoryImage == null || busy) return;
+    update(() => busy = true);
+    try {
+      await AppDataService.saveGeneration(pendingHistoryTitle!,
+          pendingHistoryImage!, widget.avatar ? 'avatar' : 'clothes',
+          recordId: pendingHistoryId);
+      if (mounted)
+        update(() {
+          pendingHistoryImage = null;
+          error = null;
+        });
+    } catch (_) {
+      if (mounted)
+        update(() => error =
+            'History is not saved yet. Check your connection, then retry.');
+    } finally {
+      if (mounted) update(() => busy = false);
+    }
+  }
+
   static const colourTarget = 'Main garment';
   final colourChanges = <String, String>{};
   static const palette = <String, Color>{
@@ -286,7 +309,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   }
 
   Future<void> replaceClothing() async {
-    if (!unlocked || busy) return;
+    if (busy) return;
+    if (widget.generator == null &&
+        (!await checkout(avatarAction: 'edit') || !mounted)) return;
     final selected = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (selected != null && mounted) {
       update(() {
@@ -298,7 +323,14 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
 
   Future<void> generate({bool edit = false}) async {
     if (busy) return;
-    if (output != null && !unlocked) return;
+    if (output != null && widget.generator == null) {
+      if (!await checkout(avatarAction: 'edit') || !mounted) return;
+    }
+    if (pendingHistoryImage != null) {
+      update(() => error =
+          'Save the current result to History before generating another.');
+      return;
+    }
     final measurements = currentMeasurements;
     if (hasMeasuredPreview
         ? !validAvatarMeasurements(measurements)
@@ -315,6 +347,11 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
         !validMeasurements(measurements)) {
       update(() => error = 'Enter valid positive measurements in cm and kg.');
       return;
+    }
+    if (edit &&
+        !structureChanged &&
+        !mapEquals(currentMeasurements, resultMeasurements)) {
+      structureChanged = true;
     }
     if (edit && !structureChanged && editInstructions.isEmpty) {
       update(() => error = 'Describe the changes you want.');
@@ -343,8 +380,14 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
               : '';
           final description =
               '${edit ? 'Edited' : 'Generated'} ${widget.title}: ${widget.outfitDetails} ${clothingTemplates[clothingPhoto] ?? widget.photos.map((p) => clothingTemplates[p] ?? 'uploaded clothing photo').join(', ')} ${edit ? editInstructions : preferences}';
+          pendingHistoryId =
+              '${AppDataService.requireUser().uid}_${AppDataService.firestore.collection('history').doc().id}';
+          pendingHistoryTitle = description;
+          pendingHistoryImage = result;
           await AppDataService.saveGeneration(
-              description, result, widget.avatar ? 'avatar' : 'clothes');
+              description, result, widget.avatar ? 'avatar' : 'clothes',
+              recordId: pendingHistoryId);
+          pendingHistoryImage = null;
         } catch (_) {
           if (mounted) {
             update(() => error =
@@ -462,8 +505,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
     try {
       final image = await (widget.generator ?? AiGenerationService.generate)(
         cloudAvatarAnglePrompt(angle,
-            hasPortrait:
-                widget.personalPhoto != null || widget.avatarGender != null),
+            hasPortrait: widget.personalPhoto != null),
         [front],
       );
       if (!mounted) return;
@@ -624,7 +666,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   }
 
   Future<void> download() async {
-    if (!unlocked || busy || output == null) return;
+    if (busy || output == null) return;
+    if (widget.generator == null &&
+        (!await checkout(avatarAction: 'download') || !mounted)) return;
     update(() => busy = true);
     try {
       final codec = await ui.instantiateImageCodec(output!);
@@ -666,6 +710,11 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   }
 
   List<Widget> operationStatus() => [
+        if (pendingHistoryImage != null)
+          TextButton.icon(
+              onPressed: busy ? null : retryHistory,
+              icon: const Icon(Icons.cloud_upload),
+              label: const Text('Retry saving history')),
         if (busy)
           Padding(
               padding: const EdgeInsets.all(16),

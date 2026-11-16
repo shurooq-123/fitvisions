@@ -73,12 +73,30 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
       return;
     }
 
+    final price = double.tryParse(priceController.text.trim());
+    final duration = RegExp(r'^(\d+)\s*months?$', caseSensitive: false)
+        .firstMatch(durationController.text.trim());
+    if (price == null ||
+        !price.isFinite ||
+        price <= 0 ||
+        !RegExp(r'^\d+(\.\d{1,3})?$').hasMatch(priceController.text.trim())) {
+      showMessage('Enter a positive price, with at most 3 decimal places.');
+      return;
+    }
+    if (duration == null ||
+        int.parse(duration[1]!) < 1 ||
+        int.parse(duration[1]!) > 120) {
+      showMessage(
+          'Enter a duration from 1 month to 120 months, for example 6 Months.');
+      return;
+    }
     try {
       setState(() => loading = true);
 
       final data = {
         'name': nameController.text.trim(),
-        'price': double.tryParse(priceController.text.trim()) ?? 0,
+        'price': price,
+        'durationMonths': int.parse(duration[1]!),
         'duration': durationController.text.trim(),
         'features': featuresController.text.trim(),
         'updatedAt': FieldValue.serverTimestamp(),

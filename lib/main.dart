@@ -1,3 +1,8 @@
+import 'dart:async';
+import 'services/notification_service.dart';
+import 'widgets/account_header.dart';
+import 'screens/notifications_screen.dart';
+import 'screens/reports_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -33,6 +38,10 @@ void main() async {
   await Firebase.initializeApp();
 
   runApp(const FitVisionsApp());
+  unawaited(NotificationService.start().catchError((_) {
+    NotificationService.status.value =
+        'Push notifications unavailable. Retry in Notifications.';
+  }));
 }
 
 class FitVisionsApp extends StatelessWidget {
@@ -41,6 +50,8 @@ class FitVisionsApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: NotificationService.navigator,
+      scaffoldMessengerKey: NotificationService.messenger,
       title: 'FitVisions',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -78,7 +89,9 @@ class FitVisionsApp extends StatelessWidget {
         }
         return null;
       },
-      routes: {
+      routes: <String, WidgetBuilder>{
+        '/notifications': (context) => const NotificationsScreen(),
+        '/reports': (context) => const ReportsScreen(),
         '/': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
@@ -107,6 +120,10 @@ class FitVisionsApp extends StatelessWidget {
         '/adminSystem': (context) => const AdminSystemScreen(),
         '/adminPlans': (context) => const AdminPlansScreen(),
       },
+      builder: (context, child) => Column(children: [
+        const AccountHeader(),
+        Expanded(child: child ?? const SizedBox.shrink())
+      ]),
     );
   }
 }

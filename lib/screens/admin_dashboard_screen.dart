@@ -40,7 +40,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           builder: (context, userSnapshot) {
             final profiles = {
               for (final doc in userSnapshot.data?.docs ?? [])
-                doc.id: doc.data(),
+                if (doc.data()['archived'] != true) doc.id: doc.data(),
             };
             return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: payments,
@@ -61,8 +61,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     .map((entry) => entry.uid)
                     .toSet()
                     .length;
-                final total =
-                    entries.fold(0, (sum, entry) => sum + entry.amount);
+                final total = entries.fold<num>(
+                    0, (total, entry) => total + entry.amount);
                 final visible = entries
                     .where((entry) =>
                         selectedAmount == null ||
@@ -431,18 +431,18 @@ class _SubscriptionEntry {
 
   final String uid;
   final String email;
-  final int amount;
+  final num amount;
   final String plan;
   final DateTime? createdAt;
 
   static _SubscriptionEntry? fromRecord(Map<String, dynamic> data) {
     final amount = data['amount'];
     final uid = data['uid'];
-    if (data['status'] != 'pending' ||
+    if (!['pending', 'demo_active', 'paid'].contains(data['status']) ||
         uid is! String ||
         uid.isEmpty ||
         amount is! num ||
-        SubscriptionAccess.months(amount) == 0) {
+        SubscriptionAccess.planMonths(data) == 0) {
       return null;
     }
     final stamp = data['createdAt'];
@@ -450,7 +450,7 @@ class _SubscriptionEntry {
     return _SubscriptionEntry(
       uid,
       data['email']?.toString() ?? '',
-      amount.toInt(),
+      amount,
       plan is String && plan.trim().isNotEmpty
           ? plan
           : amount == 3

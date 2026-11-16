@@ -6,7 +6,7 @@ void main() {
   await tester.pumpWidget(const MaterialApp(home: CreateClothesScreen()));
   await tester.pumpAndSettle();
   expect(find.text('Browse dress references (50)'), findsNothing);
-  for (final e in {'Gender / clothing style':'Female','Age group':'Adult (18–29)','Size':'Medium','Occasion':'Eid'}.entries) {
+  for (final e in {'Gender / clothing style':'Female','Age group':'Adult (18–29)','Occasion':'Eid','Outfit type':'Other outfits'}.entries) {
    final field=find.byKey(ValueKey(e.key));
    await tester.ensureVisible(field); await tester.tap(field); await tester.pumpAndSettle();
    await tester.tap(find.text(e.value).last); await tester.pumpAndSettle();

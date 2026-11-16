@@ -19,7 +19,7 @@ void main() {
     when(() => snapshot.docs).thenReturn(docs);
     await tester.pumpWidget(MaterialApp(home: HistoryScreen(history: Stream.value(snapshot))));
     await tester.pumpAndSettle();
-    expect(find.text('View Details'), findsOneWidget);
+    expect(find.text('View Details'), findsNothing);
     expect(find.text('My Library & History'), findsNothing);
     expect(find.byType(DropdownButton<String>), findsNothing);
     expect(find.byType(ListTile), findsNothing);

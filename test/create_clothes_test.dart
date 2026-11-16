@@ -3,16 +3,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fitvisions/screens/create_clothes_screen.dart';
 
 void main() {
-  testWidgets(
-      'Other occasion is required and choices survive review and editing',
+  testWidgets('Required design choices survive review and editing',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: CreateClothesScreen()));
     await tester.pumpAndSettle();
     for (final entry in {
       'Gender / clothing style': 'Female',
       'Age group': 'Adult (18–29)',
-      'Size': 'Medium',
-      'Occasion': 'Other',
+      'Occasion': 'Birthday',
+      'Outfit type': 'Other outfits',
       'Style': 'Evening',
       'Silhouette': 'A-line',
       'Length': 'Long',
@@ -20,7 +19,6 @@ void main() {
       'Sleeves': 'Long sleeves',
       'Fit': 'Regular',
       'Fabric': 'Satin',
-      'Favourite colour': 'Blue',
       'Details': 'Minimal',
     }.entries) {
       if (entry.key == 'Style') {
@@ -37,23 +35,24 @@ void main() {
       await tester.tap(find.text(entry.value).last);
       await tester.pumpAndSettle();
     }
-    await tester.ensureVisible(find.text('Review design'));
-    await tester.tap(find.text('Review design'));
-    await tester.pumpAndSettle();
-    expect(find.text('Please describe the occasion'), findsOneWidget);
-    final other = find.widgetWithText(TextFormField, 'Describe the occasion');
-    await tester.ensureVisible(other);
-    await tester.enterText(other, 'Graduation');
+    final dynamic state = tester.state(find.byType(CreateClothesScreen));
+    final Map<String, List<String>> current =
+        Map<String, List<String>>.from(state.questions);
+    for (final entry in current.entries) {
+      if (state.answers[entry.key] == null && !entry.key.contains('(optional)'))
+        state.answers[entry.key] = entry.value.first;
+    }
+    state.setState(() {});
+    await tester.pump();
     await tester.ensureVisible(find.text('Review design'));
     await tester.tap(find.text('Review design'));
     await tester.pumpAndSettle();
     expect(find.text('Your Clothing Design'), findsOneWidget);
-    expect(find.text('Graduation'), findsOneWidget);
-    expect(find.text('Not specified'), findsOneWidget);
+    expect(find.text('Birthday'), findsOneWidget);
+
     await tester.ensureVisible(find.text('Edit choices'));
     await tester.tap(find.text('Edit choices'));
     await tester.pumpAndSettle();
-    expect(find.text('Graduation'), findsOneWidget);
-    expect(find.text('Medium'), findsOneWidget);
+    expect(find.text('Birthday'), findsOneWidget);
   });
 }

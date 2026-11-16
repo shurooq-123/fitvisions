@@ -25,7 +25,7 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
   bool get traditional => answers['Outfit type'] == traditionalOmaniClothes;
 
   static const baseQuestions = <String, List<String>>{
-    'Gender / clothing style': ['Female', 'Male', 'Unisex'],
+    'Gender / clothing style': ['Female', 'Male'],
     'Age group': [
       'Adult (18–29)',
       'Adult (30–49)',
@@ -523,7 +523,8 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                 onChanged: (value) => setState(() {
                   if (question.key == 'Gender / clothing style' &&
                       value != answers[question.key]) {
-                    answers.remove('Outfit type');
+                    answers.removeWhere((key, _) => key != 'Age group');
+                    dressReference = null;
                   }
                   if (value != null) answers[question.key] = value;
                   if (!outfitTypes.contains(answers['Outfit type'])) {
