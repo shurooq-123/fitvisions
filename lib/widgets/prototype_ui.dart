@@ -26,8 +26,8 @@ class PrototypeButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   @override
-  Widget build(BuildContext context) => SizedBox(
-      width: 145,
+  Widget build(BuildContext context) => ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 145, minHeight: 48),
       child: ElevatedButton(
           onPressed: onPressed,
           style: ElevatedButton.styleFrom(
@@ -62,7 +62,12 @@ class PrototypeNav extends StatelessWidget {
           onTap: (i) {
             final route = ['/home', '/profile', '/history'][i];
             if (ModalRoute.of(context)?.settings.name != route) {
-              Navigator.pushNamed(context, route);
+              if (route == '/home') {
+                Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
+              } else {
+                Navigator.pushNamedAndRemoveUntil(
+                    context, route, (r) => r.settings.name == '/home');
+              }
             }
           },
           items: const [

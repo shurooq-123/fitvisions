@@ -45,7 +45,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       builder: (context, snapshot) => _statBox(
                         Icons.groups,
                         'Total Users',
-                        snapshot.data?.docs.length.toString() ??
+                        snapshot.data?.docs
+                                .where((doc) => doc.data()['archived'] != true)
+                                .length
+                                .toString() ??
                             (snapshot.hasError ? 'Unavailable' : '…'),
                         onTap: () => Navigator.push(
                           context,
@@ -63,7 +66,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         final total =
                             snapshot.data?.docs.fold<num>(0, (sum, doc) {
                           final data = doc.data();
-                          return data['status'] == 'pending' &&
+                          return const ['pending', 'demo_active', 'paid']
+                                      .contains(data['status']) &&
                                   data['amount'] is num
                               ? sum + (data['amount'] as num)
                               : sum;

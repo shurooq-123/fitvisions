@@ -101,7 +101,7 @@ String cloudMeasuredAvatarPrompt(
       'Read the garment type and length from the outfit photo. Match the construction and hem. Keep a dress or robe as one continuous skirt or panel; reproduce shorts or trousers only when the outfit includes them.',
   };
   final syntheticIdentity = gender != null
-      ? 'Use a realistic fictional adult ${gender.subject} with natural visible facial features.'
+      ? 'Use a realistic fictional adult ${gender.subject} with a smooth, blank face without eyes, nose or mouth.'
       : !hasPortrait &&
               (garment == AvatarGarment.dress ||
                   garment == AvatarGarment.longDress)
@@ -153,6 +153,6 @@ String cloudMeasuredAvatarPrompt(
       'Do not slim the body, pull in the abdomen, narrow the shoulders, or hide the torso in a baggy garment. '
       '$outfit '
       '${hasClothing ? 'Reference image 1 is the outfit only. Preserve its color, pattern, neckline, sleeves, and hem. Ignore any person or body in that reference.' : 'Use a simple neutral outfit.'} '
-      '${hasPortrait || gender != null ? 'Preserve the facial features already present on reference image 0.' : _blankAvatarFace} '
+      '${hasPortrait ? 'Preserve the facial features already present on reference image 0.' : _blankAvatarFace} '
       '${changes.isEmpty ? '' : 'Requested garment changes: $changes.'}';
 }

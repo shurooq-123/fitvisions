@@ -44,6 +44,7 @@ class _AdminUserSubscriptionsScreenState
               }
               final plans = _latestPlans(paymentSnapshot.data!.docs);
               final visible = userSnapshot.data!.docs
+                  .where((user) => user.data()['archived'] != true)
                   .where((user) =>
                       filter == null || (plans[user.id]?.amount ?? 0) == filter)
                   .toList();
@@ -103,7 +104,7 @@ class _AdminUserSubscriptionsScreenState
       final data = record.data();
       final uid = data['uid'];
       final amount = data['amount'];
-      if (data['status'] != 'pending' ||
+      if (!const ['pending', 'demo_active', 'paid'].contains(data['status']) ||
           uid is! String ||
           amount is! num ||
           SubscriptionAccess.months(amount) == 0) {

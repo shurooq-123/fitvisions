@@ -13,7 +13,7 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> {
   static final nameCharacters = RegExp(r'^[\p{L}\p{M} ]*$', unicode: true);
   static final hasLetter = RegExp(r'\p{L}', unicode: true);
-  static final positiveDigits = RegExp(r'^[1-9]*$');
+  static final positiveDigits = RegExp(r'^[0-9]*$');
 
   bool loading = false;
   final form = GlobalKey<FormState>();
@@ -26,7 +26,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Future<void> pickExpiry() async {
     if (loading) return;
     final now = DateTime.now();
-    final first = DateTime(now.year, now.month + 1);
+    final first = DateTime(now.year, now.month);
     final previous = selectedExpiry;
     final date = await showDatePicker(
       context: context,
@@ -195,7 +195,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
           }
           if (digits != null &&
               (text.length != digits || !positiveDigits.hasMatch(text))) {
-            return 'Enter $digits digits from 1 to 9';
+            return 'Enter $digits digits';
+          }
+          if (digits == 16 && RegExp(r'^0+$').hasMatch(text)) {
+            return 'Enter a valid card number';
           }
           if (isExpiry) {
             final match = RegExp(r'^(0[1-9]|1[0-2])/(\d{2})$').firstMatch(text);
@@ -203,8 +206,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
             final month =
                 DateTime(2000 + int.parse(match[2]!), int.parse(match[1]!));
             final now = DateTime.now();
-            if (!month.isAfter(DateTime(now.year, now.month))) {
-              return 'Use a future month';
+            if (month.isBefore(DateTime(now.year, now.month))) {
+              return 'This card has expired';
             }
           }
           return null;

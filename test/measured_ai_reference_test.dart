@@ -226,7 +226,7 @@ void main() {
     }
   });
 
-  test('Gender-selected avatars use natural faces and infer the garment cut',
+  test('Gender-selected avatars keep a featureless face without a portrait',
       () {
     final values = {
       'Height': '170',
@@ -242,7 +242,7 @@ void main() {
           bodyReference: true,
           hasMeasurementGuide: true);
       expect(body, contains('fictional adult ${gender.subject}'));
-      expect(body, contains('natural visible facial features'));
+      expect(body, contains('smooth, blank face'));
       expect(
           body, contains('Reference image 0 is the measured body-shape guide'));
       expect(body, contains('full hips, upper arms and thighs'));
@@ -251,7 +251,7 @@ void main() {
       expect(outfit,
           contains('Read the garment type and length from the outfit photo'));
       expect(outfit, contains('Waist and abdomen circumference 122.0 cm'));
-      expect(outfit, contains('Preserve the facial features'));
+      expect(outfit, contains('smooth, blank face'));
     }
   });
 

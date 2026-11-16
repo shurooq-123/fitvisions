@@ -21,6 +21,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   String selectedPlanId = '';
   bool saving = false;
   bool activated = false;
+  bool renewalRequested = false;
   late final plansStream = (widget.firestore ?? FirebaseFirestore.instance)
       .collection('plans')
       .orderBy('price', descending: true)
@@ -38,7 +39,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     }
     setState(() => saving = true);
     try {
-      if (widget.savePlan == null &&
+      if (!renewalRequested &&
+          widget.savePlan == null &&
           await AppDataService.hasActiveSubscription()) {
         if (!mounted) return;
         final returnToDesign = checkoutArguments?['returnToDesign'] == true;
@@ -84,6 +86,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       title: 'Subscription',
       child: Column(children: [
         if (widget.firestore == null) const SubscriptionSummary(),
+        TextButton(
+            onPressed: () => setState(() => renewalRequested = true),
+            child: Text(renewalRequested
+                ? 'Choose a plan to renew'
+                : 'Renew subscription')),
         const SizedBox(height: 18),
         if (activated && checkoutArguments?['returnToDesign'] == true)
           PrototypeButton('Continue',
@@ -96,19 +103,19 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   return const Text('Could not load plans. Please try again.');
                 }
                 if (!snapshot.hasData) return const CircularProgressIndicator();
-                final plans = <num, QueryDocumentSnapshot>{};
+                final plans = <QueryDocumentSnapshot>[];
                 for (final doc in snapshot.data!.docs) {
                   final data = doc.data() as Map<String, dynamic>;
                   final price = data['price'];
-                  if (price is num && SubscriptionAccess.months(price) > 0) {
-                    plans.putIfAbsent(price, () => doc);
+                  if (price is num && SubscriptionAccess.planMonths(data) > 0) {
+                    plans.add(doc);
                   }
                 }
                 if (plans.isEmpty) {
                   return const Text('No subscription plans available');
                 }
                 return Column(
-                    children: plans.values.map((doc) {
+                    children: plans.map((doc) {
                   final data = doc.data() as Map<String, dynamic>;
                   return Padding(
                       padding: const EdgeInsets.only(bottom: 24),
@@ -150,26 +157,11 @@ class SubscriptionPlanCard extends StatelessWidget {
         ? price.toInt().toString()
         : price.toString();
     final raw = data['features'];
-    final standard = price == 3 || price == 7;
-    final features = standard
-        ? [
-            'Generate Avatar and Design Clothes',
-            'Edit your results and download images',
-            'One subscription covers both options',
-            price == 7
-                ? '6 months of access • about 1.17 OMR/month'
-                : '1 month of access • 3 OMR/month',
-            'No automatic renewal',
-            'AI generation subject to service availability',
-          ]
-        : raw is List
-            ? raw.map((v) => v.toString()).toList()
-            : '$raw'.split('\n');
-    final duration = price == 7
-        ? '6 Months'
-        : price == 3
-            ? '1 Month'
-            : data['duration'] ?? '';
+    final features = raw is List
+        ? raw.map((v) => v.toString()).toList()
+        : '${raw ?? ''}'.split('\n');
+    final count = SubscriptionAccess.planMonths(data);
+    final duration = '$count ${count == 1 ? 'Month' : 'Months'}';
     return Semantics(
         selected: selected,
         button: true,

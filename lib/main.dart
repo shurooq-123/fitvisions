@@ -1,3 +1,8 @@
+import 'dart:async';
+import 'services/notification_service.dart';
+import 'widgets/account_header.dart';
+import 'screens/notifications_screen.dart';
+import 'screens/reports_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -37,6 +42,10 @@ void main() async {
   await Appearance.load();
 
   runApp(const FitVisionsApp());
+  unawaited(NotificationService.start().catchError((_) {
+    NotificationService.status.value =
+        'Push notifications unavailable. Retry in Notifications.';
+  }));
 }
 
 class FitVisionsApp extends StatelessWidget {
@@ -50,6 +59,8 @@ class FitVisionsApp extends StatelessWidget {
 
   Widget _buildApp(ThemeMode mode) {
     return MaterialApp(
+      navigatorKey: NotificationService.navigator,
+      scaffoldMessengerKey: NotificationService.messenger,
       title: 'FitVisions',
       debugShowCheckedModeBanner: false,
       themeMode: mode,
@@ -57,7 +68,10 @@ class FitVisionsApp extends StatelessWidget {
         value: Theme.of(context).brightness == Brightness.dark
             ? SystemUiOverlayStyle.light
             : SystemUiOverlayStyle.dark,
-        child: child!,
+        child: Column(children: [
+          const AccountHeader(),
+          Expanded(child: child ?? const SizedBox.shrink())
+        ]),
       ),
       darkTheme: ThemeData(
         useMaterial3: false,
@@ -118,7 +132,9 @@ class FitVisionsApp extends StatelessWidget {
         }
         return null;
       },
-      routes: {
+      routes: <String, WidgetBuilder>{
+        '/notifications': (context) => const NotificationsScreen(),
+        '/reports': (context) => const ReportsScreen(),
         '/': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),

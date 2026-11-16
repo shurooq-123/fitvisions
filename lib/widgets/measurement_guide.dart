@@ -18,7 +18,8 @@ const measurementHelp = <String, String>{
 };
 
 class MeasurementLabel extends StatelessWidget {
-  const MeasurementLabel(this.label, {super.key});
+  const MeasurementLabel(this.label, {super.key, this.value, this.previous});
+  final double? value, previous;
   final String label;
   @override
   Widget build(BuildContext context) => Tooltip(
@@ -28,7 +29,9 @@ class MeasurementLabel extends StatelessWidget {
                 height: 180,
                 child: Semantics(
                     label: measurementHelp[label] ?? label,
-                    child: CustomPaint(painter: BodyMeasurePainter(label))))),
+                    child: CustomPaint(
+                        painter: BodyMeasurePainter(label,
+                            value: value, previous: previous))))),
         decoration: BoxDecoration(
             color: AppColors.ink(context, const Color(0xFF574543)),
             borderRadius: BorderRadius.circular(12)),
@@ -160,10 +163,19 @@ class MeasurementGuide extends StatelessWidget {
 }
 
 class BodyMeasurePainter extends CustomPainter {
-  BodyMeasurePainter(this.label);
+  BodyMeasurePainter(this.label, {this.value, this.previous});
+  final double? value, previous;
   final String label;
   @override
   void paint(Canvas canvas, Size size) {
+    final verticalMeasure = label == 'Height' || label == 'Length';
+    final factor = verticalMeasure
+        ? ((value ?? 170) / 250).clamp(.2, 1.0)
+        : ((value ?? 90) / 90).clamp(.6, 1.35);
+    canvas.save();
+    canvas.translate(65, 90);
+    canvas.scale(verticalMeasure ? 1 : factor, verticalMeasure ? factor : 1);
+    canvas.translate(-65, -90);
     final body = Paint()
       ..color = const Color(0xFFCED1C6)
       ..strokeWidth = 12
@@ -179,6 +191,7 @@ class BodyMeasurePainter extends CustomPainter {
       canvas.drawLine(
           Offset(points[0], points[1]), Offset(points[2], points[3]), body);
     }
+    canvas.restore();
     final arrow = Paint()
       ..color = const Color(0xFFB84E66)
       ..strokeWidth = 2.5;
@@ -194,8 +207,10 @@ class BodyMeasurePainter extends CustomPainter {
             : label == 'Waist'
                 ? 79.0
                 : 100.0;
-    final a = vertical ? const Offset(112, 8) : Offset(42, y);
-    final b = vertical ? const Offset(112, 160) : Offset(88, y);
+    final a = vertical
+        ? Offset(112, 160 - 152 * factor)
+        : Offset(65 - 23 * factor, y);
+    final b = vertical ? const Offset(112, 160) : Offset(65 + 23 * factor, y);
     canvas.drawLine(a, b, arrow);
     for (final sign in [-1.0, 1.0]) {
       canvas.drawLine(
@@ -205,7 +220,8 @@ class BodyMeasurePainter extends CustomPainter {
     }
     final text = TextPainter(
         text: TextSpan(
-            text: label,
+            text:
+                '$label${value == null ? '' : ' ${value!.toStringAsFixed(1)} cm'}${value != null && previous != null && value != previous ? (value! > previous! ? ' ↑' : ' ↓') : ''}',
             style: const TextStyle(color: Colors.white, fontSize: 12)),
         textDirection: TextDirection.ltr)
       ..layout();
@@ -213,7 +229,8 @@ class BodyMeasurePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(BodyMeasurePainter old) => old.label != label;
+  bool shouldRepaint(BodyMeasurePainter old) =>
+      old.label != label || old.value != value || old.previous != previous;
 }
 
 class BodyMeasurements extends StatefulWidget {
@@ -245,6 +262,7 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
       name: TextEditingController()
   };
   final centimetres = <String, double?>{};
+  final previousValues = <String, double?>{};
   bool inches = false;
   String? selectedSize;
   void emit() {
@@ -255,6 +273,7 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
   }
 
   void setCentimetres(String key, double value) {
+    previousValues[key] = centimetres[key];
     centimetres[key] = value;
     fields[key]!.text =
         inches ? (value / 2.54).toStringAsFixed(2) : value.toString();
@@ -293,7 +312,11 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
           Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(children: [
-                SizedBox(width: 90, child: MeasurementLabel(e.key)),
+                SizedBox(
+                    width: 90,
+                    child: MeasurementLabel(e.key,
+                        value: centimetres[e.key],
+                        previous: previousValues[e.key])),
                 Expanded(
                     child: TextField(
                         controller: e.value,
@@ -301,6 +324,7 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
                             decimal: true),
                         onChanged: (text) {
                           final value = double.tryParse(text);
+                          previousValues[e.key] = centimetres[e.key];
                           centimetres[e.key] = value == null
                               ? null
                               : value * (inches ? 2.54 : 1);

@@ -4,12 +4,31 @@ import '../widgets/feedback_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class AdminUserHistoryScreen extends StatelessWidget {
+class AdminUserHistoryScreen extends StatefulWidget {
   const AdminUserHistoryScreen(
       {super.key, required this.uid, required this.name, this.firestore});
   final String uid;
   final String name;
   final FirebaseFirestore? firestore;
+
+  @override
+  State<AdminUserHistoryScreen> createState() => _AdminUserHistoryScreenState();
+}
+
+class _AdminUserHistoryScreenState extends State<AdminUserHistoryScreen> {
+  bool newestFirst = true;
+  String get uid => widget.uid;
+  String get name => widget.name;
+  FirebaseFirestore? get firestore => widget.firestore;
+
+  int compareRecords(QueryDocumentSnapshot<Map<String, dynamic>> a,
+      QueryDocumentSnapshot<Map<String, dynamic>> b) {
+    final at = a.data()['createdAt'];
+    final bt = b.data()['createdAt'];
+    final order = (at is Timestamp ? at.millisecondsSinceEpoch : 0)
+        .compareTo(bt is Timestamp ? bt.millisecondsSinceEpoch : 0);
+    return newestFirst ? -order : order;
+  }
 
   @override
   Widget build(BuildContext context) => DefaultTabController(
@@ -26,6 +45,18 @@ class AdminUserHistoryScreen extends StatelessWidget {
               Tab(text: 'Payments')
             ])),
         body: Column(children: [
+          Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: DropdownButton<bool>(
+                  isExpanded: true,
+                  value: newestFirst,
+                  items: const [
+                    DropdownMenuItem(
+                        value: true, child: Text('Newest to oldest')),
+                    DropdownMenuItem(
+                        value: false, child: Text('Oldest to newest')),
+                  ],
+                  onChanged: (v) => setState(() => newestFirst = v ?? true))),
           Padding(
               padding: const EdgeInsets.all(16),
               child: Text(name,
@@ -49,13 +80,7 @@ class AdminUserHistoryScreen extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
                 final records = snapshot.data!.docs.toList()
-                  ..sort((a, b) {
-                    final at = a.data()['createdAt'];
-                    final bt = b.data()['createdAt'];
-                    return (bt is Timestamp ? bt.millisecondsSinceEpoch : 0)
-                        .compareTo(
-                            at is Timestamp ? at.millisecondsSinceEpoch : 0);
-                  });
+                  ..sort(compareRecords);
                 if (records.isEmpty) {
                   return const Center(
                       child: Text('No history for this user yet'));
@@ -103,13 +128,7 @@ class AdminUserHistoryScreen extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
                 final records = snapshot.data!.docs.toList()
-                  ..sort((a, b) {
-                    final at = a.data()['createdAt'];
-                    final bt = b.data()['createdAt'];
-                    return (bt is Timestamp ? bt.millisecondsSinceEpoch : 0)
-                        .compareTo(
-                            at is Timestamp ? at.millisecondsSinceEpoch : 0);
-                  });
+                  ..sort(compareRecords);
                 if (records.isEmpty) {
                   return const Center(
                       child: Text('No feedback for this user yet'));
@@ -134,12 +153,7 @@ class AdminUserHistoryScreen extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
                 final records = snapshot.data!.docs.toList()
-                  ..sort((a, b) => ((b.data()['createdAt'] as Timestamp?)
-                              ?.millisecondsSinceEpoch ??
-                          0)
-                      .compareTo((a.data()['createdAt'] as Timestamp?)
-                              ?.millisecondsSinceEpoch ??
-                          0));
+                  ..sort(compareRecords);
                 if (records.isEmpty) {
                   return const Center(child: Text('No payments yet'));
                 }

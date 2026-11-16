@@ -6,7 +6,8 @@ service cloud.firestore {
     function member() {
       return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('requiresEmailVerification', false) != true
-          || request.auth.token.email_verified == true);
+          || request.auth.token.email_verified == true)
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('archived', false) == false;
     }
     function admin() {
       return member() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
@@ -53,15 +54,16 @@ service cloud.firestore {
         && text(request.resource.data.firstName, 50)
         && text(request.resource.data.lastName, 50)
         && request.resource.data.phone is string;
-      allow delete: if admin() && !owner(uid);
+      allow delete: if false; // Archive only through the trusted backend.
     }
 
     match /plans/{id} {
       allow read: if member();
       allow create, update: if admin()
-        && request.resource.data.keys().hasOnly(['name','price','duration','features','createdAt','updatedAt'])
+        && request.resource.data.keys().hasOnly(['name','price','duration','durationMonths','features','createdAt','updatedAt'])
         && text(request.resource.data.name, 100)
-        && request.resource.data.price is number && request.resource.data.price >= 0
+        && request.resource.data.price is number && request.resource.data.price > 0
+        && request.resource.data.durationMonths is int && request.resource.data.durationMonths >= 1 && request.resource.data.durationMonths <= 120
         && text(request.resource.data.duration, 100)
         && text(request.resource.data.features, 4000);
       allow delete: if admin();
@@ -70,7 +72,7 @@ service cloud.firestore {
     match /measurements/{uid} {
       allow read: if member() && owner(uid);
       allow create, update: if owner(uid) && newOwner()
-        && request.resource.data.keys().hasOnly(['uid','email','measurementType','height','weight','chest','waist','hip','clothChest','clothWaist','clothShoulder','clothSleeve','clothLength','clothImagePath','personalImagePath','imageStorage','updatedAt'])
+        && request.resource.data.keys().hasOnly(['uid','email','measurementType','height','weight','chest','waist','hip','shoulders','clothChest','clothWaist','clothShoulder','clothSleeve','clothLength','clothImagePath','personalImagePath','imageStorage','updatedAt'])
         && request.resource.data.measurementType in ['bodyOnly','clothOnly','personalAndCloth']
         && request.resource.data.updatedAt == request.time;
       allow delete: if member() && owner(uid);
@@ -86,6 +88,7 @@ service cloud.firestore {
     }
 
     match /history/{id} {
+      allow get: if member() && !exists(/databases/$(database)/documents/history/$(id)) && id.matches(request.auth.uid + "_.*");
       allow read: if ownRecord() || admin();
       allow create: if newOwner()
         && request.resource.data.keys().hasOnly(['uid','email','title','createdAt','kind','previewBase64'])
@@ -110,10 +113,12 @@ service cloud.firestore {
     match /subscriptions/{id} {
       allow read: if ownRecord() || admin();
       allow create: if newOwner()
-        && request.resource.data.keys().hasOnly(['uid','email','planId','plan','price','status','createdAt'])
+        && request.resource.data.keys().hasOnly(['uid','email','planId','plan','price','features','durationMonths','status','createdAt'])
         && request.resource.data.status == 'selected'
         && request.resource.data.planId is string
         && planMatches(request.resource.data)
+        && request.resource.data.durationMonths == get(/databases/$(database)/documents/plans/$(request.resource.data.planId)).data.get('durationMonths', request.resource.data.price == 7 ? 6 : 1)
+        && request.resource.data.features == get(/databases/$(database)/documents/plans/$(request.resource.data.planId)).data.features
         && request.resource.data.createdAt == request.time;
       // Activation must come from a trusted payment backend.
     }
@@ -123,15 +128,33 @@ service cloud.firestore {
       allow get: if member()
         && get(/databases/$(database)/documents/subscriptions/$(id)).data.uid == request.auth.uid;
       allow create: if newOwner()
-        && request.resource.data.keys().hasOnly(['uid','email','subscriptionId','planId','plan','amount','status','createdAt'])
+        && request.resource.data.keys().hasOnly(['uid','email','subscriptionId','planId','plan','amount','features','durationMonths','status','createdAt'])
         && request.resource.data.status == 'pending'
+        && request.resource.data.subscriptionId == id
+        && request.resource.data.durationMonths == get(/databases/$(database)/documents/subscriptions/$(id)).data.durationMonths
+        && request.resource.data.features == get(/databases/$(database)/documents/subscriptions/$(id)).data.features
         && request.resource.data.subscriptionId is string
         && get(/databases/$(database)/documents/subscriptions/$(request.resource.data.subscriptionId)).data.uid == request.auth.uid
         && get(/databases/$(database)/documents/subscriptions/$(request.resource.data.subscriptionId)).data.planId == request.resource.data.planId
-        && request.resource.data.plan == get(/databases/$(database)/documents/plans/$(request.resource.data.planId)).data.name
-        && request.resource.data.amount == get(/databases/$(database)/documents/plans/$(request.resource.data.planId)).data.price
+        && request.resource.data.plan == get(/databases/$(database)/documents/subscriptions/$(request.resource.data.subscriptionId)).data.plan
+        && request.resource.data.amount == get(/databases/$(database)/documents/subscriptions/$(request.resource.data.subscriptionId)).data.price
         && request.resource.data.createdAt == request.time;
       // Clients cannot mark a payment as paid or write card information.
+    }
+
+    match /users/{uid}/devices/{token} {
+      allow read, delete: if owner(uid) && member();
+      allow create, update: if owner(uid) && member()
+        && request.resource.data.keys().hasOnly(['token','updatedAt'])
+        && request.resource.data.token == token && token.size() <= 4096
+        && request.resource.data.updatedAt == request.time;
+    }
+    match /notifications/{id} {
+      allow read: if ownRecord();
+      allow update: if ownRecord()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+        && request.resource.data.read is bool;
+      allow create, delete: if false;
     }
   }
 }

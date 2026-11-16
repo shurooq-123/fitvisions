@@ -124,6 +124,9 @@ class AuthRepository {
             ? 'Verify your email before signing in. We sent a new link. Check your inbox or spam folder, open the link, then sign in again.'
             : 'Verify your email before signing in. Open the link already sent to your inbox or spam folder. If you have no link, wait a few minutes and try signing in again to resend it.');
       }
+      if (doc.data()?['archived'] == true)
+        throw const AccountSetupException(
+            'This account is archived. Contact the administrator.');
       final role = profile?['role'];
       if (role != 'user' && role != 'admin') {
         throw const AccountSetupException(

@@ -53,10 +53,10 @@ void main() {
     String inputAt(int index) =>
         tester.widget<TextFormField>(fields.at(index)).controller!.text;
     expect(inputAt(1), '4242424242424242');
-    expect(inputAt(3), '123');
+    expect(inputAt(3), '103');
     await tester.ensureVisible(fields.at(1));
     await tester.enterText(fields.at(1), '4242424242424240');
-    expect(inputAt(1), '4242424242424242');
+    expect(inputAt(1), '4242424242424240');
     await tester.ensureVisible(fields.first);
     await tester.enterText(fields.first, 'Test User');
     await tester.ensureVisible(find.text('Pay'));
@@ -67,13 +67,20 @@ void main() {
     await tester.ensureVisible(fields.at(2));
     expect(
         tester.widget<TextFormField>(fields.at(2)).controller!.text, isEmpty);
+    tester.widget<TextFormField>(fields.at(2)).controller!.text = '01/20';
+    await tester.ensureVisible(find.text('Pay'));
+    await tester.tap(find.text('Pay'));
+    await tester.pumpAndSettle();
+    expect(find.text('This card has expired'), findsOneWidget);
+    expect(saved, isNull);
+    await tester.ensureVisible(fields.at(2));
     await tester.tap(fields.at(2));
     await tester.pumpAndSettle();
     expect(find.byType(DatePickerDialog), findsOneWidget);
     final picker =
         tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
     final now = DateTime.now();
-    final first = DateTime(now.year, now.month + 1);
+    final first = DateTime(now.year, now.month);
     expect(picker.firstDate, first);
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
