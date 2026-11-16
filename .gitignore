@@ -49,13 +49,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Local review artifacts and credentials
-review-*.log
-.env*
+# Local credentials and generated review artifacts
+.env
+.env.*
 *.pem
 *service-account*.json
-*serviceAccount*.json
-functions/.runtimeconfig.json
-
-*.log
 functions/audit.json

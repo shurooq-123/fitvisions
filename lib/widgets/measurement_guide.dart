@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../services/body_size_presets.dart';
 
@@ -17,8 +18,7 @@ const measurementHelp = <String, String>{
 };
 
 class MeasurementLabel extends StatelessWidget {
-  const MeasurementLabel(this.label, {super.key, this.value, this.previous});
-  final double? value, previous;
+  const MeasurementLabel(this.label, {super.key});
   final String label;
   @override
   Widget build(BuildContext context) => Tooltip(
@@ -28,11 +28,9 @@ class MeasurementLabel extends StatelessWidget {
                 height: 180,
                 child: Semantics(
                     label: measurementHelp[label] ?? label,
-                    child: CustomPaint(
-                        painter: BodyMeasurePainter(label,
-                            value: value, previous: previous))))),
+                    child: CustomPaint(painter: BodyMeasurePainter(label))))),
         decoration: BoxDecoration(
-            color: const Color(0xFF574543),
+            color: AppColors.ink(context, const Color(0xFF574543)),
             borderRadius: BorderRadius.circular(12)),
         triggerMode: TooltipTriggerMode.tap,
         showDuration: const Duration(seconds: 7),
@@ -97,16 +95,15 @@ class MeasurementGuide extends StatelessWidget {
       Text('Size guide (${inches ? 'in' : 'cm'})',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
       const SizedBox(height: 8),
-      Text(
-          avatarSizing
-              ? 'Fixed FitVisions avatar presets. Enter your own height.'
-              : 'Illustrative adult chart only. Sizes vary by brand, gender and garment. XS means extra small; XL means extra large.',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12)),
+      if (!avatarSizing)
+        const Text(
+            'Illustrative adult chart only. Sizes vary by brand, gender and garment. XS means extra small; XL means extra large.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12)),
       const SizedBox(height: 8),
       Table(
           border: TableBorder.all(
-              color: const Color(0xFFD7D8D0),
+              color: AppColors.muted(context, const Color(0xFFD7D8D0)),
               borderRadius: BorderRadius.circular(12)),
           children: [
             for (final row in [
@@ -118,10 +115,15 @@ class MeasurementGuide extends StatelessWidget {
                       color: row.first == 'Size'
                           ? const Color(0xFF574543)
                           : row.first == selectedSize
-                              ? const Color(0xFFE4D8E8)
+                              ? AppColors.adaptive(
+                                  context,
+                                  const Color(0xFFE4D8E8),
+                                  const Color(0xFF54445E))
                               : rows.indexOf(row).isEven
-                                  ? const Color(0xFFFAF9F6)
-                                  : const Color(0xFFE6E9DF)),
+                                  ? AppColors.field(
+                                      context, const Color(0xFFFAF9F6))
+                                  : AppColors.panel(
+                                      context, const Color(0xFFE6E9DF))),
                   children: [
                     for (final cell in row)
                       Padding(
@@ -133,9 +135,7 @@ class MeasurementGuide extends StatelessWidget {
                                   : () => onSelect!(
                                       row.first, bodySizeMidpoints(row)),
                               child: Text(
-                                  inches &&
-                                          row.first != 'Size' &&
-                                          cell != row.first
+                                  inches && row.first != 'Size' && cell != row.first
                                       ? cell
                                           .split('–')
                                           .map((v) => (double.parse(v) / 2.54)
@@ -147,11 +147,12 @@ class MeasurementGuide extends StatelessWidget {
                                       fontSize: 14,
                                       color: row.first == 'Size'
                                           ? Colors.white
-                                          : const Color(0xFF37352F),
-                                      fontWeight: row.first == 'Size' ||
-                                              row.first == selectedSize
-                                          ? FontWeight.bold
-                                          : FontWeight.normal))))
+                                          : AppColors.ink(
+                                              context, const Color(0xFF37352F)),
+                                      fontWeight:
+                                          row.first == 'Size' || row.first == selectedSize
+                                              ? FontWeight.bold
+                                              : FontWeight.normal))))
                   ])
           ]),
     ]);
@@ -159,19 +160,10 @@ class MeasurementGuide extends StatelessWidget {
 }
 
 class BodyMeasurePainter extends CustomPainter {
-  BodyMeasurePainter(this.label, {this.value, this.previous});
-  final double? value, previous;
+  BodyMeasurePainter(this.label);
   final String label;
   @override
   void paint(Canvas canvas, Size size) {
-    final verticalMeasure = label == 'Height' || label == 'Length';
-    final factor = verticalMeasure
-        ? ((value ?? 170) / 250).clamp(.2, 1.0)
-        : ((value ?? 90) / 90).clamp(.6, 1.35);
-    canvas.save();
-    canvas.translate(65, 90);
-    canvas.scale(verticalMeasure ? 1 : factor, verticalMeasure ? factor : 1);
-    canvas.translate(-65, -90);
     final body = Paint()
       ..color = const Color(0xFFCED1C6)
       ..strokeWidth = 12
@@ -187,7 +179,6 @@ class BodyMeasurePainter extends CustomPainter {
       canvas.drawLine(
           Offset(points[0], points[1]), Offset(points[2], points[3]), body);
     }
-    canvas.restore();
     final arrow = Paint()
       ..color = const Color(0xFFB84E66)
       ..strokeWidth = 2.5;
@@ -203,10 +194,8 @@ class BodyMeasurePainter extends CustomPainter {
             : label == 'Waist'
                 ? 79.0
                 : 100.0;
-    final a = vertical
-        ? Offset(112, 160 - 152 * factor)
-        : Offset(65 - 23 * factor, y);
-    final b = vertical ? const Offset(112, 160) : Offset(65 + 23 * factor, y);
+    final a = vertical ? const Offset(112, 8) : Offset(42, y);
+    final b = vertical ? const Offset(112, 160) : Offset(88, y);
     canvas.drawLine(a, b, arrow);
     for (final sign in [-1.0, 1.0]) {
       canvas.drawLine(
@@ -216,8 +205,7 @@ class BodyMeasurePainter extends CustomPainter {
     }
     final text = TextPainter(
         text: TextSpan(
-            text:
-                '$label${value == null ? '' : ' ${value!.toStringAsFixed(1)} cm'}${value != null && previous != null && value != previous ? (value! > previous! ? ' ↑' : ' ↓') : ''}',
+            text: label,
             style: const TextStyle(color: Colors.white, fontSize: 12)),
         textDirection: TextDirection.ltr)
       ..layout();
@@ -225,8 +213,7 @@ class BodyMeasurePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(BodyMeasurePainter old) =>
-      old.label != label || old.value != value || old.previous != previous;
+  bool shouldRepaint(BodyMeasurePainter old) => old.label != label;
 }
 
 class BodyMeasurements extends StatefulWidget {
@@ -234,10 +221,12 @@ class BodyMeasurements extends StatefulWidget {
       {super.key,
       required this.onChanged,
       this.onSize,
+      this.onUnitChanged,
       this.afterFields,
       this.avatarSizing = false});
   final ValueChanged<Map<String, String>> onChanged;
   final ValueChanged<String>? onSize;
+  final ValueChanged<bool>? onUnitChanged;
   final Widget? afterFields;
   final bool avatarSizing;
   @override
@@ -256,7 +245,6 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
       name: TextEditingController()
   };
   final centimetres = <String, double?>{};
-  final previousValues = <String, double?>{};
   bool inches = false;
   String? selectedSize;
   void emit() {
@@ -267,7 +255,6 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
   }
 
   void setCentimetres(String key, double value) {
-    previousValues[key] = centimetres[key];
     centimetres[key] = value;
     fields[key]!.text =
         inches ? (value / 2.54).toStringAsFixed(2) : value.toString();
@@ -299,17 +286,14 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
                   if (cm != null) setCentimetres(key, cm);
                 }
               });
+              widget.onUnitChanged?.call(inches);
               emit();
             }),
         for (final e in fields.entries)
           Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(children: [
-                SizedBox(
-                    width: 90,
-                    child: MeasurementLabel(e.key,
-                        value: centimetres[e.key],
-                        previous: previousValues[e.key])),
+                SizedBox(width: 90, child: MeasurementLabel(e.key)),
                 Expanded(
                     child: TextField(
                         controller: e.value,
@@ -317,7 +301,6 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
                             decimal: true),
                         onChanged: (text) {
                           final value = double.tryParse(text);
-                          previousValues[e.key] = centimetres[e.key];
                           centimetres[e.key] = value == null
                               ? null
                               : value * (inches ? 2.54 : 1);
@@ -332,7 +315,8 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
                                     : null,
                             suffixText: inches ? 'in' : 'cm',
                             filled: true,
-                            fillColor: const Color(0xFFFFFDFC),
+                            fillColor: AppColors.field(
+                                context, const Color(0xFFFFFDFC)),
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 12),
                             border: OutlineInputBorder(

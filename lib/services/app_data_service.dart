@@ -1,5 +1,3 @@
-import 'dart:async';
-import 'package:path_provider/path_provider.dart';
 import 'subscription_access.dart';
 import 'dart:io';
 import 'dart:convert';
@@ -43,8 +41,8 @@ class AppDataService {
     await batch.commit();
   }
 
-  static Future<void> saveGeneration(String title, Uint8List bytes, String kind,
-      {String? recordId}) async {
+  static Future<void> saveGeneration(
+      String title, Uint8List bytes, String kind) async {
     final user = requireUser();
     final codec = await ui.instantiateImageCodec(bytes, targetWidth: 320);
     final frame = await codec.getNextFrame();
@@ -54,11 +52,7 @@ class AppDataService {
     if (png == null) throw StateError('Preview unavailable');
     final preview = base64Encode(png.buffer.asUint8List());
     if (preview.length > 700000) throw StateError('Preview too large');
-    final record = firestore.collection('history').doc(recordId);
-    if (recordId != null &&
-        (await record.get(const GetOptions(source: Source.server))).exists)
-      return;
-    await record.set({
+    await firestore.collection('history').add({
       ..._identity(user),
       'title': title.length > 500 ? title.substring(0, 500) : title,
       'kind': kind,
@@ -94,15 +88,6 @@ class AppDataService {
       throw ArgumentError('Unknown image type');
     }
     var savedPath = imagePath;
-    if (!cloudImagesEnabled) {
-      final directory = await getApplicationDocumentsDirectory();
-      final target = Directory('${directory.path}/uploads/${user.uid}');
-      await target.create(recursive: true);
-      final suffix = imagePath.split('.').last.toLowerCase();
-      savedPath = (await File(imagePath).copy(
-              '${target.path}/${kind}_${DateTime.now().microsecondsSinceEpoch}.$suffix'))
-          .path;
-    }
     if (cloudImagesEnabled) {
       final file = File(imagePath);
       if (await file.length() >= 5 * 1024 * 1024) {
@@ -143,28 +128,11 @@ class AppDataService {
     return savedPath;
   }
 
-  static Stream<Map<String, dynamic>?> subscriptionStream() {
-    late StreamController<Map<String, dynamic>?> controller;
-    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? listener;
-    Timer? timer;
-    List<Map<String, dynamic>> records = [];
-    void emit() => controller.add(SubscriptionAccess.active(records));
-    controller = StreamController(onListen: () {
-      listener = firestore
-          .collection('payments')
-          .where('uid', isEqualTo: requireUser().uid)
-          .snapshots()
-          .listen((snapshot) {
-        records = snapshot.docs.map((d) => d.data()).toList();
-        emit();
-      }, onError: controller.addError);
-      timer = Timer.periodic(const Duration(seconds: 1), (_) => emit());
-    }, onCancel: () async {
-      timer?.cancel();
-      await listener?.cancel();
-    });
-    return controller.stream;
-  }
+  static Stream<Map<String, dynamic>?> subscriptionStream() => firestore
+      .collection('payments')
+      .where('uid', isEqualTo: requireUser().uid)
+      .snapshots()
+      .map((s) => SubscriptionAccess.active(s.docs.map((d) => d.data())));
 
   static Future<bool> hasActiveSubscription() async {
     final records = await firestore
@@ -181,7 +149,8 @@ class AppDataService {
             .doc(planId)
             .get(const GetOptions(source: Source.server)))
         .data();
-    if (plan == null || SubscriptionAccess.planMonths(plan) == 0) {
+    if (plan == null ||
+        SubscriptionAccess.months((plan['price'] as num?) ?? 0) == 0) {
       throw Exception('This plan is no longer available.');
     }
     final ref = firestore.collection('subscriptions').doc();
@@ -191,8 +160,6 @@ class AppDataService {
       'planId': planId,
       'plan': plan['name'],
       'price': plan['price'],
-      'durationMonths': SubscriptionAccess.planMonths(plan),
-      'features': plan['features'] ?? '',
       'status': 'selected',
       'createdAt': FieldValue.serverTimestamp()
     });
@@ -211,6 +178,16 @@ class AppDataService {
     if (sub == null || sub['uid'] != user.uid) {
       throw Exception('Choose a subscription first.');
     }
+    final plan = (await firestore
+            .collection('plans')
+            .doc(sub['planId'] as String)
+            .get(const GetOptions(source: Source.server)))
+        .data();
+    if (plan == null ||
+        plan['price'] != sub['price'] ||
+        SubscriptionAccess.months((plan['price'] as num?) ?? 0) == 0) {
+      throw Exception('This plan has changed. Choose your plan again.');
+    }
     final payment = firestore.collection('payments').doc(subscriptionId);
     // One request per subscription; an interrupted retry does not duplicate it.
     if ((await payment.get(const GetOptions(source: Source.server))).exists) {
@@ -221,10 +198,8 @@ class AppDataService {
       ..._identity(user),
       'subscriptionId': subscriptionId,
       'planId': sub['planId'],
-      'plan': sub['plan'],
-      'amount': sub['price'],
-      'durationMonths': SubscriptionAccess.planMonths(sub),
-      'features': sub['features'] ?? '',
+      'plan': plan['name'],
+      'amount': plan['price'],
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp()
     });

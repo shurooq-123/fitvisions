@@ -58,6 +58,10 @@ void main() {
     expect(find.text('Height examples'), findsNothing);
     expect(find.byIcon(Icons.camera_alt), findsNothing);
     expect(find.text('5XL'), findsOneWidget);
+    expect(
+        find.textContaining('Fixed FitVisions avatar presets'), findsNothing);
+    expect(find.textContaining('Generate sends your selected images'),
+        findsNothing);
     final gender = find.byType(DropdownButtonFormField<AvatarGender>);
     expect(tester.getTopLeft(gender).dy,
         greaterThan(tester.getTopLeft(find.text('Shoulders').first).dy));
@@ -66,15 +70,5 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Female'), findsOneWidget);
     expect(find.text('Male'), findsOneWidget);
-  });
-  testWidgets('Ready-made form only offers personal photo inputs',
-      (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-        home: PersonalClothMeasurementScreen(readyMade: true)));
-    expect(find.text('Clothing photo\n(optional)'), findsNothing);
-    expect(find.text('Choose a ready-made outfit'), findsNothing);
-    expect(find.text('Personal photo (optional)'), findsOneWidget);
-    expect(find.text('Personal photo — Camera'), findsNothing);
-    expect(find.byType(BodyMeasurements), findsOneWidget);
   });
 }

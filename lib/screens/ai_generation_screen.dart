@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
@@ -26,6 +27,7 @@ class AiGenerationScreen extends StatefulWidget {
       this.dressReference,
       this.avatar = false,
       this.measurements = const {},
+      this.measurementsInInches = false,
       this.clothingPhoto,
       this.garmentType,
       this.avatarGender,
@@ -51,6 +53,7 @@ class AiGenerationScreen extends StatefulWidget {
   final DressReference? dressReference;
   final bool avatar;
   final Map<String, String> measurements;
+  final bool measurementsInInches;
   final String? clothingPhoto, personalPhoto, preferredColour, size;
   final AvatarGarment? garmentType;
   final AvatarGender? avatarGender;
@@ -75,33 +78,11 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   late final AvatarGarment? garmentCut;
   late final int avatarSeed = Random().nextInt(1 << 31);
   final editedCentimetres = <String, String>{};
+  late bool inches = widget.measurementsInInches;
   Map<String, String> bodyReferenceMeasurements = const {};
   Uint8List? generatedBodyReference;
   bool busy = false;
   String? error;
-  String? pendingHistoryId, pendingHistoryTitle;
-  Uint8List? pendingHistoryImage;
-  Future<void> retryHistory() async {
-    if (pendingHistoryImage == null || busy) return;
-    update(() => busy = true);
-    try {
-      await AppDataService.saveGeneration(pendingHistoryTitle!,
-          pendingHistoryImage!, widget.avatar ? 'avatar' : 'clothes',
-          recordId: pendingHistoryId);
-      if (mounted)
-        update(() {
-          pendingHistoryImage = null;
-          error = null;
-        });
-    } catch (_) {
-      if (mounted)
-        update(() => error =
-            'History is not saved yet. Check your connection, then retry.');
-    } finally {
-      if (mounted) update(() => busy = false);
-    }
-  }
-
   static const colourTarget = 'Main garment';
   final colourChanges = <String, String>{};
   static const palette = <String, Color>{
@@ -123,6 +104,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   String get editInstructions =>
       designEditInstructions(changes.text, colourChanges);
   bool get hasMeasuredPreview => widget.avatar && widget.measuredBodyReference;
+  bool get showEditDescription =>
+      !hasMeasuredPreview && !widget.compactDesignResult;
+  String get measurementUnit => inches ? 'in' : 'cm';
   Future<bool> get activeSubscription =>
       (widget.subscriptionCheck ?? AppDataService.hasActiveSubscription)();
   @override
@@ -137,7 +121,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
       for (final entry in widget.measurements.entries)
         if (!hasMeasuredPreview || entry.key != 'Weight')
           entry.key: TextEditingController(
-            text: hasMeasuredPreview ? inchesText(entry.value) : entry.value,
+            text: hasMeasuredPreview
+                ? displayMeasurement(entry.value)
+                : entry.value,
           ),
       if (hasMeasuredPreview && !widget.measurements.containsKey('Shoulders'))
         'Shoulders': TextEditingController(),
@@ -163,9 +149,20 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
     }
   }
 
-  String inchesText(String centimetres) {
+  String displayMeasurement(String centimetres) {
+    if (!inches) return centimetres;
     final value = double.tryParse(centimetres);
     return value == null ? centimetres : (value / 2.54).toStringAsFixed(2);
+  }
+
+  void changeMeasurementUnit(bool? useInches) {
+    if (useInches == null || useInches == inches) return;
+    update(() {
+      inches = useInches;
+      for (final entry in measures.entries) {
+        entry.value.text = displayMeasurement(measurementValue(entry));
+      }
+    });
   }
 
   String measurementValue(MapEntry<String, TextEditingController> entry) =>
@@ -185,9 +182,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   void editMeasurement(String key, String text) {
     update(() {
       if (hasMeasuredPreview) {
-        final inches = double.tryParse(text);
+        final value = double.tryParse(text);
         editedCentimetres[key] =
-            inches == null ? text : (inches * 2.54).toStringAsFixed(3);
+            inches && value != null ? (value * 2.54).toStringAsFixed(3) : text;
       }
       structureChanged = true;
     });
@@ -238,6 +235,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
     if (action == 'download') {
       await download();
     } else {
+      final startingUnit = inches;
       final applied =
           await Navigator.of(actionsContext).push(MaterialPageRoute<bool>(
         builder: (editorContext) => ListenableBuilder(
@@ -252,6 +250,13 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                   onPressed: busy || checkingOut
                       ? null
                       : () async {
+                          if (hasMeasuredPreview &&
+                              inches != startingUnit &&
+                              !structureChanged &&
+                              editInstructions.isEmpty) {
+                            Navigator.pop(editorContext, true);
+                            return;
+                          }
                           final previous = output;
                           await applyChanges();
                           if (!editorContext.mounted ||
@@ -309,9 +314,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   }
 
   Future<void> replaceClothing() async {
-    if (busy) return;
-    if (widget.generator == null &&
-        (!await checkout(avatarAction: 'edit') || !mounted)) return;
+    if (!unlocked || busy) return;
     final selected = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (selected != null && mounted) {
       update(() {
@@ -323,14 +326,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
 
   Future<void> generate({bool edit = false}) async {
     if (busy) return;
-    if (output != null && widget.generator == null) {
-      if (!await checkout(avatarAction: 'edit') || !mounted) return;
-    }
-    if (pendingHistoryImage != null) {
-      update(() => error =
-          'Save the current result to History before generating another.');
-      return;
-    }
+    if (output != null && !unlocked) return;
     final measurements = currentMeasurements;
     if (hasMeasuredPreview
         ? !validAvatarMeasurements(measurements)
@@ -348,13 +344,10 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
       update(() => error = 'Enter valid positive measurements in cm and kg.');
       return;
     }
-    if (edit &&
-        !structureChanged &&
-        !mapEquals(currentMeasurements, resultMeasurements)) {
-      structureChanged = true;
-    }
     if (edit && !structureChanged && editInstructions.isEmpty) {
-      update(() => error = 'Describe the changes you want.');
+      update(() => error = showEditDescription
+          ? 'Describe the changes you want.'
+          : 'Choose a colour or change a measurement first.');
       return;
     }
     update(() {
@@ -380,14 +373,8 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
               : '';
           final description =
               '${edit ? 'Edited' : 'Generated'} ${widget.title}: ${widget.outfitDetails} ${clothingTemplates[clothingPhoto] ?? widget.photos.map((p) => clothingTemplates[p] ?? 'uploaded clothing photo').join(', ')} ${edit ? editInstructions : preferences}';
-          pendingHistoryId =
-              '${AppDataService.requireUser().uid}_${AppDataService.firestore.collection('history').doc().id}';
-          pendingHistoryTitle = description;
-          pendingHistoryImage = result;
           await AppDataService.saveGeneration(
-              description, result, widget.avatar ? 'avatar' : 'clothes',
-              recordId: pendingHistoryId);
-          pendingHistoryImage = null;
+              description, result, widget.avatar ? 'avatar' : 'clothes');
         } catch (_) {
           if (mounted) {
             update(() => error =
@@ -445,9 +432,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
           portrait == null ? null : await imageReference(portrait);
       final guide = gender == null
           ? null
-          : await renderMeasurementAvatar(
+          : await renderBodyReferenceSheet(
               MeasurementAvatar(measurements, garment: AvatarGarment.separates),
-              frameHeight: 250);
+              includeLabels: false);
       body = await generator(
         cloudMeasuredAvatarPrompt(
           measurements,
@@ -505,7 +492,8 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
     try {
       final image = await (widget.generator ?? AiGenerationService.generate)(
         cloudAvatarAnglePrompt(angle,
-            hasPortrait: widget.personalPhoto != null),
+            hasPortrait:
+                widget.personalPhoto != null || widget.avatarGender != null),
         [front],
       );
       if (!mounted) return;
@@ -593,17 +581,18 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                   : width,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.panel(context, Colors.white),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(name,
-                        style: const TextStyle(
-                            fontSize: 12, color: prototypeBrown)),
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.ink(context, prototypeBrown))),
                     const SizedBox(height: 4),
-                    Text('$value cm',
+                    Text('${displayMeasurement(value)} $measurementUnit',
                         style: const TextStyle(
                             fontSize: 17, fontWeight: FontWeight.bold)),
                   ]),
@@ -666,9 +655,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   }
 
   Future<void> download() async {
-    if (busy || output == null) return;
-    if (widget.generator == null &&
-        (!await checkout(avatarAction: 'download') || !mounted)) return;
+    if (!unlocked || busy || output == null) return;
     update(() => busy = true);
     try {
       final codec = await ui.instantiateImageCodec(output!);
@@ -710,11 +697,6 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   }
 
   List<Widget> operationStatus() => [
-        if (pendingHistoryImage != null)
-          TextButton.icon(
-              onPressed: busy ? null : retryHistory,
-              icon: const Icon(Icons.cloud_upload),
-              label: const Text('Retry saving history')),
         if (busy)
           Padding(
               padding: const EdgeInsets.all(16),
@@ -738,6 +720,17 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
               title: const Text('Edit measurements / clothing'),
               initiallyExpanded: hasMeasuredPreview,
               children: [
+                if (hasMeasuredPreview)
+                  DropdownButton<bool>(
+                    isExpanded: true,
+                    value: inches,
+                    items: const [
+                      DropdownMenuItem(
+                          value: false, child: Text('Centimetres (cm)')),
+                      DropdownMenuItem(value: true, child: Text('Inches (in)')),
+                    ],
+                    onChanged: busy ? null : changeMeasurementUnit,
+                  ),
                 for (final entry in measures.entries)
                   Padding(
                       padding: const EdgeInsets.only(bottom: 12),
@@ -755,7 +748,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                                     editMeasurement(entry.key, text),
                                 decoration: InputDecoration(
                                     suffixText: hasMeasuredPreview
-                                        ? 'in'
+                                        ? measurementUnit
                                         : entry.key == 'Weight'
                                             ? 'kg'
                                             : 'cm'))),
@@ -777,9 +770,10 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
         const SizedBox(height: 12),
         const Text('Change clothing colour',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        const Text(
-            'Choose a colour, then tap Apply changes. AI colour matching is approximate.',
-            textAlign: TextAlign.center),
+        if (showEditDescription)
+          const Text(
+              'Choose a colour, then tap Apply changes. AI colour matching is approximate.',
+              textAlign: TextAlign.center),
         Wrap(
             spacing: 8,
             children: palette.entries
@@ -809,7 +803,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
               child: const Text('Clear colour choices')),
         ],
         const SizedBox(height: 16),
-        if (!hasMeasuredPreview)
+        if (showEditDescription)
           TextField(
               controller: changes,
               enabled: !busy,

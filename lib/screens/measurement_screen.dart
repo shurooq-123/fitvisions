@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../services/app_data_service.dart';
 import '../widgets/custom_back_button.dart';
@@ -81,7 +82,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
         child: Center(
           child: SizedBox(
@@ -100,7 +101,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
                     width: 295,
                     padding: const EdgeInsets.fromLTRB(24, 22, 24, 26),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFEFEF),
+                      color: AppColors.panel(context),
                       borderRadius: BorderRadius.circular(45),
                     ),
                     child: Column(
@@ -189,7 +190,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
         decoration: InputDecoration(
           hintText: hint,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.field(context),
           contentPadding: const EdgeInsets.symmetric(horizontal: 10),
           border: const OutlineInputBorder(),
         ),

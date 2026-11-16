@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'admin_dashboard_screen.dart';
@@ -7,10 +8,10 @@ class AdminPaymentsScreen extends StatelessWidget {
   final FirebaseFirestore? firestore;
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: const Color(0xFFD5DBCD),
+        backgroundColor: AppColors.page(context, const Color(0xFFD5DBCD)),
         appBar: AppBar(
             title: const Text('Subscriptions / Payments'),
-            backgroundColor: const Color(0xFFD5DBCD)),
+            backgroundColor: AppColors.page(context, const Color(0xFFD5DBCD))),
         bottomNavigationBar: adminBottomNav(context, 0),
         body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: (firestore ?? FirebaseFirestore.instance)
@@ -26,8 +27,7 @@ class AdminPaymentsScreen extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
             final rows = snapshot.data!.docs
-                .where((d) => ['pending', 'demo_active', 'paid']
-                    .contains(d.data()['status']))
+                .where((d) => d.data()['status'] == 'pending')
                 .toList()
               ..sort((a, b) => ((b.data()['createdAt'] as Timestamp?)
                           ?.millisecondsSinceEpoch ??

@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -15,7 +16,6 @@ class CreateClothesScreen extends StatefulWidget {
 
 class _CreateClothesScreenState extends State<CreateClothesScreen> {
   final formKey = GlobalKey<FormState>();
-  final notes = TextEditingController();
   final answers = <String, String>{};
   bool reviewing = false;
   String? facePhoto;
@@ -25,7 +25,7 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
   bool get traditional => answers['Outfit type'] == traditionalOmaniClothes;
 
   static const baseQuestions = <String, List<String>>{
-    'Gender / clothing style': ['Female', 'Male'],
+    'Gender / clothing style': ['Female', 'Male', 'Unisex'],
     'Age group': [
       'Adult (18–29)',
       'Adult (30–49)',
@@ -346,12 +346,6 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    notes.dispose();
-    super.dispose();
-  }
-
   void review() {
     if (!formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
@@ -413,7 +407,7 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                             prompt:
                                 '${selectedDress == null ? '' : 'The first image is the single selected garment reference: ${selectedDress.description}. Match its cut and details closely while applying the user preferences; output only one outfit. '} '
                                 '${templates.isEmpty ? '' : 'Reference image 0 shows the Omani garment cut and embroidery. Use the other Omani clothing references to understand how the pieces are worn. Follow the user’s garment, colour and accessory choices. Ignore the reference models’ faces. '} '
-                                '${facePhoto == null ? 'Create one full-body 3D-style adult avatar wearing the designed outfit. Use a smooth featureless mannequin head without eyes, nose or mouth.' : 'Use reference image $faceIndex only for the face. Show one full-body 3D-style avatar wearing the requested outfit, preserving the reference face. Ignore the clothes in the face photo.'} Output one combined dressed avatar. Apply the selected clothing preferences. Neutral studio background, head to feet visible, realistic fabric, no text. $ageGuidance Keep the outfit within the selected occasion. Design preferences: ${details.entries.map((e) => '${e.key}: ${e.value}').join('; ')}. Additional wishes: ${notes.text.trim()}.',
+                                '${facePhoto == null ? 'Create one full-body 3D-style adult avatar wearing the designed outfit. Use a smooth featureless mannequin head without eyes, nose or mouth.' : 'Use reference image $faceIndex only for the face. Show one full-body 3D-style avatar wearing the requested outfit, preserving the reference face. Ignore the clothes in the face photo.'} Output one combined dressed avatar. Apply the selected clothing preferences. Neutral studio background, head to feet visible, realistic fabric, no text. $ageGuidance Keep the outfit within the selected occasion. Design preferences: ${details.entries.map((e) => '${e.key}: ${e.value}').join('; ')}.',
                           )));
             }),
             const SizedBox(height: 12),
@@ -466,10 +460,12 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                                       style: OutlinedButton.styleFrom(
                                         backgroundColor: selected
                                             ? const Color(0xFF5C4745)
-                                            : const Color(0xFFF5F5F5),
+                                            : AppColors.field(context,
+                                                const Color(0xFFF5F5F5)),
                                         foregroundColor: selected
                                             ? Colors.white
-                                            : const Color(0xFF302B2A),
+                                            : AppColors.ink(context,
+                                                const Color(0xFF302B2A)),
                                         side: BorderSide(
                                             color: selected
                                                 ? const Color(0xFF5C4745)
@@ -510,11 +506,11 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                 key: ValueKey(question.key),
                 initialValue: answers[question.key],
                 isExpanded: true,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: AppColors.field(context),
                     contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
                 hint: const Text('Select an option'),
                 items: question.value
                     .map((value) =>
@@ -523,8 +519,7 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                 onChanged: (value) => setState(() {
                   if (question.key == 'Gender / clothing style' &&
                       value != answers[question.key]) {
-                    answers.removeWhere((key, _) => key != 'Age group');
-                    dressReference = null;
+                    answers.remove('Outfit type');
                   }
                   if (value != null) answers[question.key] = value;
                   if (!outfitTypes.contains(answers['Outfit type'])) {
@@ -563,16 +558,6 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                   : 'Below-knee dress, sirwal trousers and lihaf shawl'),
             const SizedBox(height: 18),
           ],
-          TextFormField(
-              controller: notes,
-              maxLines: 3,
-              maxLength: 500,
-              decoration: const InputDecoration(
-                  labelText: 'Additional wishes (optional)',
-                  hintText: 'Preferred colours, coverage or details…',
-                  filled: true,
-                  fillColor: Colors.white)),
-          const SizedBox(height: 18),
           PrototypePanel(
               child: Column(children: [
             const Text('Personal photo (optional)',
@@ -616,10 +601,5 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                     const SizedBox(height: 4),
                     Text(answers[question] ?? 'Not specified'),
                   ])),
-        if (notes.text.trim().isNotEmpty) ...[
-          const Text('Additional wishes',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          Text(notes.text.trim())
-        ],
       ]);
 }

@@ -13,7 +13,7 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> {
   static final nameCharacters = RegExp(r'^[\p{L}\p{M} ]*$', unicode: true);
   static final hasLetter = RegExp(r'\p{L}', unicode: true);
-  static final positiveDigits = RegExp(r'^[0-9]*$');
+  static final positiveDigits = RegExp(r'^[1-9]*$');
 
   bool loading = false;
   final form = GlobalKey<FormState>();
@@ -26,7 +26,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Future<void> pickExpiry() async {
     if (loading) return;
     final now = DateTime.now();
-    final first = DateTime(now.year, now.month);
+    final first = DateTime(now.year, now.month + 1);
     final previous = selectedExpiry;
     final date = await showDatePicker(
       context: context,
@@ -73,7 +73,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
           args?['returnToDesign'] == true) {
         Navigator.pop(context, true);
       } else {
-        Navigator.pushReplacementNamed(context, '/feedback');
+        Navigator.pushReplacementNamed(context, '/feedback',
+            arguments: 'afterPayment');
       }
     } catch (_) {
       if (mounted) {
@@ -92,6 +93,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final subscriptionId = args?['subscriptionId'] as String?;
     final plan = args?['plan'] as String?;
     final price = args?['price'] as num?;
+    final expiryField = demoField('Expiry Date', 'MM/YY', expiry);
+    final securityField = demoField('CVV', '123', cvv, digits: 3);
     return PrototypePage(
         title: 'Payment',
         child: Column(children: [
@@ -111,18 +114,27 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         const SizedBox(height: 12),
                         const Center(
                             child: Text('Demo payment • No real charge',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(fontSize: 12))),
-                        const SizedBox(height: 22),
+                        const SizedBox(height: 16),
                         demoField('Card Holder Name', 'Test User', holder),
                         demoField('Card Number', '4242 4242 4242 4242', number,
                             digits: 16),
-                        Row(children: [
-                          Expanded(
-                              child: demoField('Expiry Date', 'MM/YY', expiry)),
-                          const SizedBox(width: 24),
-                          Expanded(
-                              child: demoField('CVV', '123', cvv, digits: 3))
-                        ]),
+                        LayoutBuilder(builder: (context, constraints) {
+                          if (constraints.maxWidth < 220 ||
+                              MediaQuery.textScalerOf(context).scale(14) > 18) {
+                            return Column(
+                                children: [expiryField, securityField]);
+                          }
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: expiryField),
+                              const SizedBox(width: 12),
+                              Expanded(child: securityField),
+                            ],
+                          );
+                        }),
                       ]))),
           const SizedBox(height: 24),
           const Text(
@@ -183,10 +195,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           }
           if (digits != null &&
               (text.length != digits || !positiveDigits.hasMatch(text))) {
-            return 'Enter $digits digits';
-          }
-          if (digits == 16 && RegExp(r'^0+$').hasMatch(text)) {
-            return 'Enter a valid card number';
+            return 'Enter $digits digits from 1 to 9';
           }
           if (isExpiry) {
             final match = RegExp(r'^(0[1-9]|1[0-2])/(\d{2})$').firstMatch(text);
@@ -194,8 +203,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
             final month =
                 DateTime(2000 + int.parse(match[2]!), int.parse(match[1]!));
             final now = DateTime.now();
-            if (month.isBefore(DateTime(now.year, now.month))) {
-              return 'This card has expired';
+            if (!month.isAfter(DateTime(now.year, now.month))) {
+              return 'Use a future month';
             }
           }
           return null;

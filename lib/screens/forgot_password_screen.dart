@@ -1,5 +1,7 @@
+import '../constants/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../widgets/prototype_ui.dart';
 import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../widgets/custom_back_button.dart';
@@ -99,13 +101,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
         child: Align(
           alignment: Alignment.topCenter,
           child: SizedBox(
             width: 320,
             child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
               child: Column(
                 children: [
                   const CustomBackButton(),
@@ -117,27 +120,28 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   const SizedBox(height: 30),
                   Container(
                     width: 295,
-                    padding: const EdgeInsets.fromLTRB(26, 25, 26, 28),
+                    padding: const EdgeInsets.fromLTRB(22, 20, 22, 24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFEFEF),
+                      color: AppColors.panel(context),
                       borderRadius: BorderRadius.circular(58),
                     ),
                     child: Column(
                       children: [
                         const Text(
                           'FORGET PASSWORD',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.normal,
                           ),
                         ),
-                        const SizedBox(height: 60),
+                        const SizedBox(height: 18),
                         const Text(
                           'Enter your email',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 14),
                         ),
-                        const SizedBox(height: 22),
+                        const SizedBox(height: 16),
                         const Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
@@ -146,30 +150,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                         ),
                         const SizedBox(height: 5),
-                        SizedBox(
-                          height: 34,
-                          child: TextField(
-                            controller: emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: const InputDecoration(
-                              hintText: 'name@gmail.com',
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                            ),
+                        TextField(
+                          controller: emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: InputDecoration(
+                            hintText: 'name@gmail.com',
+                            filled: true,
+                            fillColor: AppColors.field(context),
+                            border: prototypeFieldBorder,
+                            contentPadding: prototypeFieldPadding,
                           ),
                         ),
                         const SizedBox(height: 24),
                         SizedBox(
                           width: 150,
-                          height: 42,
                           child: ElevatedButton(
                             onPressed: loading ? null : sendResetLink,
                             style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(0, 44),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 8),
                               backgroundColor: brown,
                               elevation: 0,
                               shape: RoundedRectangleBorder(

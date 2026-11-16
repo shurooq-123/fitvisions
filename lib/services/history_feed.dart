@@ -13,7 +13,7 @@ List<Map<String, dynamic>> mergeHistory(List<Map<String, dynamic>> history,
           'title': "Subscription: ${s['plan']}"
         }),
   ];
-  items.sort((b, a) =>
+  items.sort((a, b) =>
       ((a['createdAt'] as Timestamp?)?.millisecondsSinceEpoch ?? 0).compareTo(
           (b['createdAt'] as Timestamp?)?.millisecondsSinceEpoch ?? 0));
   return items;
@@ -30,15 +30,11 @@ Stream<List<Map<String, dynamic>>> historyFeed(
 
   controller = StreamController(onListen: () {
     hSub = history.listen((snapshot) {
-      h = snapshot.docs
-          .map((d) => {...d.data() as Map<String, dynamic>, 'id': d.id})
-          .toList();
+      h = snapshot.docs.map((d) => {...d.data() as Map<String, dynamic>, 'id': d.id}).toList();
       emit();
     }, onError: controller.addError);
     sSub = subscriptions.listen((snapshot) {
-      s = snapshot.docs
-          .map((d) => {...d.data() as Map<String, dynamic>, 'id': d.id})
-          .toList();
+      s = snapshot.docs.map((d) => {...d.data() as Map<String, dynamic>, 'id': d.id}).toList();
       emit();
     }, onError: controller.addError);
   }, onCancel: () async {

@@ -1,11 +1,14 @@
+import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
-import '../services/subscription_access.dart';
-import 'admin_payments_screen.dart';
+import '../services/appearance.dart';
+import 'admin_user_subscriptions_screen.dart';
 import 'admin_system_screen.dart';
 import 'admin_users_screen.dart';
+
+enum _AdminSetting { lightMode, darkMode, changePassword }
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key, this.firestore});
@@ -26,166 +29,73 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   late final users = db.collection('users').snapshots();
   late final payments = db.collection('payments').snapshots();
 
-  int? selectedAmount;
-  bool newestFirst = true;
-
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bg,
-      bottomNavigationBar: adminBottomNav(context, 0),
-      body: SafeArea(
-        child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: users,
-          builder: (context, userSnapshot) {
-            final profiles = {
-              for (final doc in userSnapshot.data?.docs ?? [])
-                if (doc.data()['archived'] != true) doc.id: doc.data(),
-            };
-            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: payments,
-              builder: (context, paymentSnapshot) {
-                final entries = [
-                  for (final doc in paymentSnapshot.data?.docs ?? [])
-                    if (_SubscriptionEntry.fromRecord(doc.data())
-                        case final entry?)
-                      entry,
-                ];
-                final basicCount = entries
-                    .where((entry) => entry.amount == 3)
-                    .map((entry) => entry.uid)
-                    .toSet()
-                    .length;
-                final premiumCount = entries
-                    .where((entry) => entry.amount == 7)
-                    .map((entry) => entry.uid)
-                    .toSet()
-                    .length;
-                final total = entries.fold<num>(
-                    0, (total, entry) => total + entry.amount);
-                final visible = entries
-                    .where((entry) =>
-                        selectedAmount == null ||
-                        entry.amount == selectedAmount)
-                    .toList()
-                  ..sort((a, b) {
-                    final first = a.createdAt;
-                    final second = b.createdAt;
-                    if (first == null) return second == null ? 0 : 1;
-                    if (second == null) return -1;
-                    return newestFirst
-                        ? second.compareTo(first)
-                        : first.compareTo(second);
-                  });
-                final paymentReady =
-                    paymentSnapshot.hasData && !paymentSnapshot.hasError;
-                final userCount = userSnapshot.hasData && !userSnapshot.hasError
-                    ? profiles.length
-                    : null;
-
-                return CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(child: _dashboardHeader(context)),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      sliver: SliverToBoxAdapter(
-                        child: Column(
-                          children: [
-                            _statBox(
-                              Icons.groups,
-                              'Total Users',
-                              userCount?.toString() ??
-                                  (userSnapshot.hasError ? 'Unavailable' : '…'),
-                            ),
-                            if (paymentReady) ...[
-                              const SizedBox(height: 10),
-                              _comparison(context, basicCount, premiumCount),
-                            ],
-                            const SizedBox(height: 10),
-                            _statBox(
-                              Icons.stacked_line_chart,
-                              'Demo Revenue',
-                              paymentReady
-                                  ? '${total.toStringAsFixed(2)} OMR'
-                                  : paymentSnapshot.hasError
-                                      ? 'Unavailable'
-                                      : '…',
-                            ),
-                            const SizedBox(height: 10),
-                            _managementButtons(context),
-                            const SizedBox(height: 14),
-                            Text('Subscription History',
-                                style: Theme.of(context).textTheme.titleLarge),
-                            const Text('Demo payments · Date and time in Oman'),
-                            if (paymentReady) ...[
-                              const SizedBox(height: 10),
-                              Wrap(
-                                alignment: WrapAlignment.center,
-                                spacing: 8,
-                                runSpacing: 4,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  for (final (amount, label) in const [
-                                    (null, 'All plans'),
-                                    (3, '3 OMR'),
-                                    (7, '7 OMR'),
-                                  ])
-                                    ChoiceChip(
-                                      label: Text(label),
-                                      selected: selectedAmount == amount,
-                                      selectedColor:
-                                          purple.withValues(alpha: 0.18),
-                                      backgroundColor: panel,
-                                      onSelected: (_) => setState(
-                                          () => selectedAmount = amount),
-                                    ),
-                                  TextButton.icon(
-                                    onPressed: () => setState(
-                                        () => newestFirst = !newestFirst),
-                                    style: TextButton.styleFrom(
-                                        foregroundColor: purple),
-                                    icon: const Icon(Icons.swap_vert_rounded),
-                                    label: Text(newestFirst
-                                        ? 'Newest first'
-                                        : 'Oldest first'),
-                                  ),
-                                ],
-                              ),
-                            ],
-                            const SizedBox(height: 8),
-                            if (paymentSnapshot.hasError)
-                              const Text(
-                                  'Could not load subscriptions. Check your connection.')
-                            else if (!paymentReady)
-                              const Center(child: CircularProgressIndicator())
-                            else if (visible.isEmpty)
-                              const Text(
-                                  'No subscription records for this selection.'),
-                          ],
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: AppColors.page(context, bg),
+        bottomNavigationBar: adminBottomNav(context, 0),
+        body: SafeArea(
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(child: _dashboardHeader(context)),
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                      stream: users,
+                      builder: (context, snapshot) => _statBox(
+                        Icons.groups,
+                        'Total Users',
+                        snapshot.data?.docs.length.toString() ??
+                            (snapshot.hasError ? 'Unavailable' : '…'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                AdminUserSubscriptionsScreen(firestore: db),
+                          ),
                         ),
                       ),
                     ),
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
-                      sliver: SliverList.builder(
-                        itemCount: paymentReady ? visible.length : 0,
-                        itemBuilder: (context, index) {
-                          final entry = visible[index];
-                          return _subscriptionRow(
-                              context, entry, profiles[entry.uid]);
-                        },
-                      ),
+                    const SizedBox(height: 10),
+                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                      stream: payments,
+                      builder: (context, snapshot) {
+                        final total =
+                            snapshot.data?.docs.fold<num>(0, (sum, doc) {
+                          final data = doc.data();
+                          return data['status'] == 'pending' &&
+                                  data['amount'] is num
+                              ? sum + (data['amount'] as num)
+                              : sum;
+                        });
+                        return _statBox(
+                          Icons.stacked_line_chart,
+                          'Demo Revenue',
+                          total == null
+                              ? (snapshot.hasError ? 'Unavailable' : '…')
+                              : '${total.toStringAsFixed(2)} OMR',
+                        );
+                      },
                     ),
-                    SliverToBoxAdapter(child: _logoutButton(context)),
+                    const SizedBox(height: 10),
+                    _managementButtons(context),
                   ],
-                );
-              },
-            );
-          },
+                ),
+              ),
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    const SizedBox(height: 18),
+                    _logoutButton(context),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 
   Widget _dashboardHeader(BuildContext context) => Column(
         children: [
@@ -195,17 +105,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back_ios,
-                    size: 32, color: Colors.black),
+                icon: Icon(Icons.arrow_back_ios,
+                    size: 32, color: AppColors.ink(context)),
               ),
-              PopupMenuButton<String>(
+              PopupMenuButton<_AdminSetting>(
                 tooltip: 'Account settings',
-                onSelected: (_) =>
-                    Navigator.pushNamed(context, '/changePassword'),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(
-                      value: 'password', child: Text('Change password')),
-                ],
+                onSelected: (setting) async {
+                  switch (setting) {
+                    case _AdminSetting.lightMode:
+                      await Appearance.setDark(false);
+                    case _AdminSetting.darkMode:
+                      await Appearance.setDark(true);
+                    case _AdminSetting.changePassword:
+                      await Navigator.pushNamed(context, '/changePassword');
+                  }
+                },
+                itemBuilder: (context) {
+                  final dark = Theme.of(context).brightness == Brightness.dark;
+                  return [
+                    CheckedPopupMenuItem(
+                        value: _AdminSetting.lightMode,
+                        checked: !dark,
+                        child: const Text('Light mode')),
+                    CheckedPopupMenuItem(
+                        value: _AdminSetting.darkMode,
+                        checked: dark,
+                        child: const Text('Dark mode')),
+                    const PopupMenuItem(
+                        value: _AdminSetting.changePassword,
+                        child: Text('Change password')),
+                  ];
+                },
               ),
             ],
           ),
@@ -216,30 +146,45 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ],
       );
 
-  Widget _statBox(IconData icon, String label, String value) => Container(
+  Widget _statBox(IconData icon, String label, String value,
+          {VoidCallback? onTap}) =>
+      SizedBox(
         width: 250,
-        constraints: const BoxConstraints(minHeight: 42),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-            color: panel, borderRadius: BorderRadius.circular(22)),
-        child: Row(
-          children: [
-            Icon(icon, color: purple, size: 28),
-            const SizedBox(width: 12),
-            Expanded(
-                child: Text(label,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'serif',
-                    ))),
-            Text(value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'serif',
-                )),
-          ],
+        child: Material(
+          color: AppColors.panel(context, panel),
+          borderRadius: BorderRadius.circular(22),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(22),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              child: Row(
+                children: [
+                  Icon(icon,
+                      color: AppColors.accent(context, purple), size: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                      child: Text(label,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'serif',
+                          ))),
+                  Text(value,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'serif',
+                      )),
+                  if (onTap != null) ...[
+                    const SizedBox(width: 6),
+                    Icon(Icons.chevron_right,
+                        size: 18, color: AppColors.accent(context, purple)),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ),
       );
 
@@ -247,21 +192,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         width: 250,
         padding: const EdgeInsets.fromLTRB(24, 18, 24, 20),
         decoration: BoxDecoration(
-            color: panel, borderRadius: BorderRadius.circular(25)),
+            color: AppColors.panel(context, panel),
+            borderRadius: BorderRadius.circular(25)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _dashboardButton('Manage Users',
                 () => Navigator.pushNamed(context, '/adminUsers')),
-            const SizedBox(height: 16),
-            _dashboardButton(
-                'Subscriptions / Payments',
-                () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) =>
-                              AdminPaymentsScreen(firestore: widget.firestore)),
-                    )),
             const SizedBox(height: 16),
             _dashboardButton('Manage System',
                 () => Navigator.pushNamed(context, '/adminSystem')),
@@ -274,7 +211,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(0, 40),
-          side: const BorderSide(color: Colors.black),
+          side: BorderSide(color: AppColors.ink(context)),
           shape: const StadiumBorder(),
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
         ),
@@ -284,8 +221,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Flexible(
                 child: Text(label,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.black,
+                    style: TextStyle(
+                      color: AppColors.ink(context),
                       fontSize: 16,
                       fontFamily: 'serif',
                       fontWeight: FontWeight.bold,
@@ -322,143 +259,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ),
       );
-
-  Widget _comparison(BuildContext context, int basicCount, int premiumCount) {
-    final highest = basicCount > premiumCount ? basicCount : premiumCount;
-    final animation = MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : const Duration(milliseconds: 550);
-    return Container(
-      width: 250,
-      padding: const EdgeInsets.all(14),
-      decoration:
-          BoxDecoration(color: panel, borderRadius: BorderRadius.circular(22)),
-      child: Column(
-        children: [
-          const Text('Subscribers by plan',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final (label, count, color) in [
-                ('Basic · 3 OMR', basicCount, brown),
-                ('Premium · 7 OMR', premiumCount, purple),
-              ])
-                Expanded(
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 38,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Align(
-                          alignment: Alignment.bottomCenter,
-                          child: TweenAnimationBuilder<double>(
-                            tween: Tween(
-                                begin: 0,
-                                end: highest == 0 ? 0 : 70 * count / highest),
-                            duration: animation,
-                            curve: Curves.easeOutCubic,
-                            builder: (context, height, _) => Container(
-                              width: 38,
-                              height: height,
-                              decoration: BoxDecoration(
-                                color: color,
-                                borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(5)),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text('$label\n$count',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _subscriptionRow(BuildContext context, _SubscriptionEntry entry,
-      Map<String, dynamic>? profile) {
-    final name =
-        '${profile?['firstName'] ?? ''} ${profile?['lastName'] ?? ''}'.trim();
-    final contact = entry.email.isEmpty ? entry.uid : entry.email;
-    final color = entry.amount == 3 ? brown : purple;
-    final localizations = MaterialLocalizations.of(context);
-    final omanTime = entry.createdAt?.toUtc().add(const Duration(hours: 4));
-    final date = omanTime == null
-        ? 'Date unavailable'
-        : '${localizations.formatShortDate(omanTime)} · '
-            '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(omanTime), alwaysUse24HourFormat: true)}';
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      color: panel,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        leading: Icon(Icons.receipt_long_rounded, color: color),
-        title: Text(name.isEmpty ? contact : name),
-        subtitle: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (name.isNotEmpty) Text(contact),
-            Text('${entry.plan} · $date'),
-          ],
-        ),
-        trailing: Text('${entry.amount} OMR',
-            style: TextStyle(color: color, fontWeight: FontWeight.bold)),
-      ),
-    );
-  }
-}
-
-class _SubscriptionEntry {
-  const _SubscriptionEntry(
-      this.uid, this.email, this.amount, this.plan, this.createdAt);
-
-  final String uid;
-  final String email;
-  final num amount;
-  final String plan;
-  final DateTime? createdAt;
-
-  static _SubscriptionEntry? fromRecord(Map<String, dynamic> data) {
-    final amount = data['amount'];
-    final uid = data['uid'];
-    if (!['pending', 'demo_active', 'paid'].contains(data['status']) ||
-        uid is! String ||
-        uid.isEmpty ||
-        amount is! num ||
-        SubscriptionAccess.planMonths(data) == 0) {
-      return null;
-    }
-    final stamp = data['createdAt'];
-    final plan = data['plan'];
-    return _SubscriptionEntry(
-      uid,
-      data['email']?.toString() ?? '',
-      amount,
-      plan is String && plan.trim().isNotEmpty
-          ? plan
-          : amount == 3
-              ? 'Basic Plan'
-              : 'Premium Plan',
-      stamp is Timestamp ? stamp.toDate() : null,
-    );
-  }
 }
 
 Widget adminBottomNav(BuildContext context, int index) {
@@ -466,10 +266,10 @@ Widget adminBottomNav(BuildContext context, int index) {
 
   return BottomNavigationBar(
     currentIndex: index,
-    selectedItemColor: Colors.black,
-    unselectedItemColor: Colors.black,
+    selectedItemColor: AppColors.ink(context),
+    unselectedItemColor: AppColors.ink(context),
     type: BottomNavigationBarType.fixed,
-    backgroundColor: Colors.white,
+    backgroundColor: AppColors.panel(context, Colors.white),
     onTap: (i) {
       if (i == 0) {
         Navigator.pushReplacement(
@@ -494,17 +294,18 @@ Widget adminBottomNav(BuildContext context, int index) {
         );
       }
     },
-    items: const [
+    items: [
       BottomNavigationBarItem(
-        icon: Icon(Icons.stacked_line_chart, color: purple),
+        icon: Icon(Icons.stacked_line_chart,
+            color: AppColors.accent(context, purple)),
         label: 'Dashboard',
       ),
       BottomNavigationBarItem(
-        icon: Icon(Icons.groups, color: purple),
+        icon: Icon(Icons.groups, color: AppColors.accent(context, purple)),
         label: 'Users',
       ),
       BottomNavigationBarItem(
-        icon: Icon(Icons.settings, color: purple),
+        icon: Icon(Icons.settings, color: AppColors.accent(context, purple)),
         label: 'System',
       ),
     ],

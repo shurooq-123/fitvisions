@@ -1,4 +1,6 @@
+import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
+import '../widgets/prototype_ui.dart';
 
 import '../services/auth_service.dart';
 import '../services/login_notification_service.dart';
@@ -46,7 +48,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final emailSent = await LoginNotificationService.send();
       if (!mounted) return;
-      if (!emailSent) showMessage('Signed in, but the login email could not be sent.');
+      if (!emailSent)
+        showMessage('Signed in, but the login email could not be sent.');
 
       if (role == 'admin') {
         Navigator.pushReplacementNamed(
@@ -87,13 +90,14 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
         child: Align(
           alignment: Alignment.topCenter,
           child: SizedBox(
             width: 320,
             child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
               child: Column(
                 children: [
                   const CustomBackButton(),
@@ -111,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       26,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFEFEF),
+                      color: AppColors.panel(context),
                       borderRadius: BorderRadius.circular(58),
                     ),
                     child: Column(
@@ -125,13 +129,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 24),
                         label('Email'),
+                        const SizedBox(height: 5),
                         field(
                           emailController,
                           'name@gmail.com',
                           keyboard: TextInputType.emailAddress,
                         ),
-                        const SizedBox(height: 26),
+                        const SizedBox(height: 14),
                         label('Password'),
+                        const SizedBox(height: 5),
                         passwordField(),
                         const SizedBox(height: 8),
                         Align(
@@ -143,10 +149,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 '/forgot',
                               );
                             },
-                            child: const Text(
+                            child: Text(
                               'Forget Password ?',
                               style: TextStyle(
-                                color: Colors.black87,
+                                color: AppColors.ink(context, Colors.black87),
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -157,10 +163,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         Center(
                           child: SizedBox(
                             width: 135,
-                            height: 42,
                             child: ElevatedButton(
                               onPressed: loading ? null : login,
                               style: ElevatedButton.styleFrom(
+                                minimumSize: const Size(0, 44),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 8),
                                 backgroundColor: brown,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -197,6 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                             child: const Text(
                               'Don’t have an account? Sign Up',
+                              textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.blue,
                                 fontSize: 13,
@@ -228,49 +237,39 @@ class _LoginScreenState extends State<LoginScreen> {
     String hint, {
     TextInputType keyboard = TextInputType.text,
   }) {
-    return SizedBox(
-      height: 30,
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboard,
-        decoration: InputDecoration(
-          hintText: hint,
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 8,
-          ),
-          border: const OutlineInputBorder(),
-        ),
+    return TextField(
+      controller: controller,
+      keyboardType: keyboard,
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: AppColors.field(context),
+        contentPadding: prototypeFieldPadding,
+        border: prototypeFieldBorder,
       ),
     );
   }
 
   Widget passwordField() {
-    return SizedBox(
-      height: 30,
-      child: TextField(
-        controller: passwordController,
-        obscureText: hidePassword,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 8,
+    return TextField(
+      controller: passwordController,
+      obscureText: hidePassword,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: AppColors.field(context),
+        contentPadding: prototypeFieldPadding,
+        border: prototypeFieldBorder,
+        suffixIcon: IconButton(
+          padding: EdgeInsets.zero,
+          icon: Icon(
+            hidePassword ? Icons.visibility_off : Icons.visibility,
+            size: 18,
           ),
-          border: const OutlineInputBorder(),
-          suffixIcon: IconButton(
-            padding: EdgeInsets.zero,
-            icon: Icon(
-              hidePassword ? Icons.visibility_off : Icons.visibility,
-              size: 18,
-            ),
-            onPressed: () {
-              setState(() {
-                hidePassword = !hidePassword;
-              });
-            },
-          ),
+          onPressed: () {
+            setState(() {
+              hidePassword = !hidePassword;
+            });
+          },
         ),
       ),
     );

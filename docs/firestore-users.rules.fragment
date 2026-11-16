@@ -1,0 +1,39 @@
+// REVIEW/ MERGE ONLY: paste inside the existing match /databases/{database}/documents.
+// This is NOT a complete replacement for the project's deployed rules.
+// Replace an existing /users match; review broader overlapping allow rules too.
+function isFitVisionsAdmin() {
+  return request.auth != null
+    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+}
+
+match /users/{userId} {
+  allow get: if request.auth != null
+    && (request.auth.uid == userId || isFitVisionsAdmin());
+  allow list: if isFitVisionsAdmin();
+
+  allow create: if request.auth != null
+    && request.auth.uid == userId
+    && request.resource.data.keys().hasAll([
+      'uid', 'firstName', 'lastName', 'phone', 'email', 'role', 'createdAt'
+    ])
+    && request.resource.data.keys().hasOnly([
+      'uid', 'firstName', 'lastName', 'phone', 'email', 'role', 'createdAt'
+    ])
+    && request.resource.data.uid == userId
+    && request.resource.data.email == request.auth.token.email
+    && request.resource.data.role == 'user'
+    && request.resource.data.firstName is string
+    && request.resource.data.lastName is string
+    && request.resource.data.phone is string
+    && request.resource.data.createdAt == request.time;
+
+  allow update: if request.auth != null
+    && (request.auth.uid == userId || isFitVisionsAdmin())
+    && request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['firstName', 'lastName', 'phone'])
+    && request.resource.data.firstName is string
+    && request.resource.data.lastName is string
+    && request.resource.data.phone is string;
+
+  allow delete: if isFitVisionsAdmin() && request.auth.uid != userId;
+}

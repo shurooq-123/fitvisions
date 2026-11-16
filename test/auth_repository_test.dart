@@ -35,8 +35,6 @@ void main() {
   late MockDocument document;
   late MockSnapshot snapshot;
   late AuthRepository repository;
-  late bool mailFails;
-  late int mailCalls;
 
   setUpAll(() {
     registerFallbackValue(const GetOptions());
@@ -51,21 +49,12 @@ void main() {
     collection = MockCollection();
     document = MockDocument();
     snapshot = MockSnapshot();
-    mailFails = false;
-    mailCalls = 0;
-    repository = AuthRepository(auth: auth, firestore: firestore,
-        notifyRegistration: () async {
-          mailCalls++;
-          if (mailFails) throw Exception('Mail offline');
-          return true;
-        });
+    repository = AuthRepository(auth: auth, firestore: firestore);
     when(() => credential.user).thenReturn(user);
     when(() => user.uid).thenReturn('test-uid');
     when(() => user.email).thenReturn('test@example.com');
+    when(() => user.emailVerified).thenReturn(false);
     when(() => auth.signInWithEmailAndPassword(
-        email: any(named: 'email'),
-        password: any(named: 'password'))).thenAnswer((_) async => credential);
-    when(() => auth.createUserWithEmailAndPassword(
         email: any(named: 'email'),
         password: any(named: 'password'))).thenAnswer((_) async => credential);
     when(() => auth.signOut()).thenAnswer((_) async {});
@@ -79,11 +68,10 @@ void main() {
     when(() => snapshot.data()).thenReturn({'role': 'user'});
   });
 
-  Future<bool> register() => repository.registerUser(
+  Future<void> register() => repository.registerUser(
       firstName: 'Test',
       lastName: 'User',
       phone: '91234567',
-      email: 'test@example.com',
       password: 'Aa@12345');
 
   test('private profile is read only after authentication and by UID',
@@ -141,65 +129,72 @@ void main() {
     expect(AuthService.errorMessage(error), contains('Firestore permissions'));
   });
 
-  test('successful registration creates a user profile then signs out',
-      () async {
-    expect(await register(), isTrue);
-    final data =
-        verify(() => document.set(captureAny())).captured.single as Map;
+  test('only a confirmed email can finish registration', () async {
+    when(() => auth.currentUser).thenReturn(user);
+    await expectLater(register(), throwsA(isA<AccountSetupException>()));
+    verifyNever(() => user.updatePassword(any()));
+    verifyNever(() => document.set(any()));
+
+    when(() => user.emailVerified).thenReturn(true);
+    when(() => snapshot.exists).thenReturn(false);
+    when(() => user.updatePassword(any())).thenAnswer((_) async {});
+    await register();
+    final data = verify(() => document.set(captureAny())).captured.single as Map;
     expect(data['role'], 'user');
     expect(data['uid'], 'test-uid');
+    expect(data['email'], 'test@example.com');
+    expect(data['requiresEmailVerification'], isTrue);
     expect(data.containsKey('password'), isFalse);
     verify(() => auth.signOut()).called(1);
-    verifyNever(() => user.delete());
-    expect(mailCalls, 1);
-    verifyNever(() => user.sendEmailVerification());
   });
 
-  test('notification failure retains account and closes session', () async {
-    mailFails = true;
-    expect(await register(), isFalse);
-    verifyNever(() => user.delete());
-    verify(() => auth.signOut()).called(1);
-    verifyNever(() => user.sendEmailVerification());
-  });
-
-  test('rejected profile write rolls back only the newly created auth account',
-      () async {
-    when(() => document.set(any())).thenThrow(FirebaseException(
-        plugin: 'cloud_firestore', code: 'permission-denied'));
+  test('email-link registration cannot overwrite an existing profile', () async {
+    const link = 'https://example.com/link';
+    when(() => auth.isSignInWithEmailLink(link)).thenReturn(true);
+    when(() => auth.signInWithEmailLink(
+        email: 'test@example.com', emailLink: link))
+        .thenAnswer((_) async => credential);
+    when(() => user.emailVerified).thenReturn(true);
     await expectLater(
-        register(),
-        throwsA(isA<AccountSetupException>()
-            .having((e) => e.message, 'message', contains('rolled back'))));
-    verify(() => user.delete()).called(1);
+        repository.confirmRegistrationEmail('test@example.com', link),
+        throwsA(isA<AccountSetupException>()));
     verify(() => auth.signOut()).called(1);
-  });
-
-  test('failed rollback reports retained account', () async {
-    when(() => document.set(any())).thenThrow(FirebaseException(
-        plugin: 'cloud_firestore', code: 'permission-denied'));
-    when(() => user.delete())
-        .thenThrow(FirebaseAuthException(code: 'network-request-failed'));
-    await expectLater(
-        register(),
-        throwsA(isA<AccountSetupException>().having(
-            (e) => e.message, 'message', contains('Do not register again'))));
-  });
-
-  test('ambiguous write failure does not delete a possibly valid account',
-      () async {
-    when(() => document.set(any())).thenThrow(TimeoutException('Offline'));
-    await expectLater(register(), throwsA(isA<AccountSetupException>()));
-    verifyNever(() => user.delete());
-  });
-
-  test('duplicate registration never deletes an existing account', () async {
-    when(() => auth.createUserWithEmailAndPassword(
-            email: any(named: 'email'), password: any(named: 'password')))
-        .thenThrow(FirebaseAuthException(code: 'email-already-in-use'));
-    await expectLater(register(), throwsA(isA<FirebaseAuthException>()));
-    verifyNever(() => user.delete());
+    verifyNever(() => user.updatePassword(any()));
     verifyNever(() => document.set(any()));
+  });
+
+  test('unverified new account receives a link and cannot enter', () async {
+    when(() => snapshot.data()).thenReturn({
+      'role': 'user',
+      'requiresEmailVerification': true,
+    });
+    await expectLater(
+      repository.loginAndGetRole(
+          email: 'test@example.com', password: 'Aa@12345'),
+      throwsA(isA<AccountSetupException>().having(
+          (error) => error.message, 'message', contains('Verify your email'))),
+    );
+    verify(() => user.sendEmailVerification()).called(1);
+    verify(() => auth.signOut()).called(1);
+  });
+
+  test('verified new account enters without resending a link', () async {
+    when(() => snapshot.data()).thenReturn({
+      'role': 'user',
+      'requiresEmailVerification': true,
+    });
+    when(() => user.emailVerified).thenReturn(true);
+    expect(
+        await repository.loginAndGetRole(
+            email: 'test@example.com', password: 'Aa@12345'),
+        'user');
+    verifyNever(() => user.sendEmailVerification());
+  });
+
+  test('email validation rejects whitespace and empty domain segments', () {
+    expect(AuthService.isValidEmail('user+demo@example.com'), isTrue);
+    expect(AuthService.isValidEmail('user name@example.com'), isFalse);
+    expect(AuthService.isValidEmail('user@example..com'), isFalse);
   });
 
   test('password reuse is rejected before updating Firebase', () async {

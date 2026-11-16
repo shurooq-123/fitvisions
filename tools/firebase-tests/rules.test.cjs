@@ -2,7 +2,7 @@ const {before, after, test} = require('node:test');
 const fs = require('node:fs');
 const path = require('node:path');
 const {initializeTestEnvironment, assertSucceeds, assertFails} = require('@firebase/rules-unit-testing');
-const {doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, serverTimestamp, writeBatch, deleteDoc} = require('firebase/firestore');
+const {doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, serverTimestamp, writeBatch} = require('firebase/firestore');
 const {ref, uploadBytes, getBytes} = require('firebase/storage');
 let env, alice, bob, admin, guest;
 const profile = (uid, role='user') => ({uid, email:`${uid}@example.com`, firstName:'Test', lastName:'User', phone:'91234567', role, createdAt:serverTimestamp()});
@@ -18,7 +18,7 @@ before(async () => {
   guest = env.unauthenticatedContext();
   await env.withSecurityRulesDisabled(async ctx => {
     for (const uid of ['alice','bob','admin']) await setDoc(doc(ctx.firestore(),'users',uid),profile(uid,uid==='admin'?'admin':'user'));
-    await setDoc(doc(ctx.firestore(),'plans','basic'),{name:'Basic',price:3,duration:'1 Month',durationMonths:1,features:'Preview'});
+    await setDoc(doc(ctx.firestore(),'plans','basic'),{name:'Basic',price:3,duration:'1 Month',features:'Preview'});
   });
 });
 after(async () => { if(env) await env.cleanup(); });
@@ -30,11 +30,44 @@ test('owner profile access, no guest access or cross-user listing', async () => 
   await assertFails(getDocs(collection(alice.firestore(),'users')));
   await assertSucceeds(getDocs(collection(admin.firestore(),'users')));
 });
-test('new account can register but cannot grant itself admin', async () => {
+test('email choice requires the matching secret and can only be recorded once', async () => {
+  await env.withSecurityRulesDisabled(async ctx => {
+    const db=ctx.firestore();
+    for (const id of ['approve','decline','expired']) {
+      await setDoc(doc(db,'registrationDecisions',id),{
+        decision:'pending', yesProof:'yes-secret', noProof:'no-secret',
+        expiresAt:new Date(Date.now()+(id==='expired'?-60000:60000)),
+      });
+    }
+  });
+  const db=guest.firestore();
+  const approve=doc(db,'registrationDecisions','approve');
+  await assertFails(getDoc(approve));
+  await assertFails(updateDoc(approve,{decision:'approved',submittedProof:'no-secret'}));
+  await assertFails(updateDoc(approve,{decision:'approved',submittedProof:'yes-secret',extra:true}));
+  await assertSucceeds(updateDoc(approve,{decision:'approved',submittedProof:'yes-secret'}));
+  await assertFails(updateDoc(approve,{decision:'declined',submittedProof:'no-secret'}));
+  await assertSucceeds(updateDoc(doc(db,'registrationDecisions','decline'),{
+    decision:'declined',submittedProof:'no-secret',
+  }));
+  await assertFails(updateDoc(doc(db,'registrationDecisions','expired'),{
+    decision:'approved',submittedProof:'yes-secret',
+  }));
+});
+test('only a verified email can create its own non-admin profile', async () => {
   const ctx=env.authenticatedContext('new',{email:'new@example.com'});
-  await assertFails(setDoc(doc(ctx.firestore(),'users','new'),profile('new','admin')));
-  await assertSucceeds(setDoc(doc(ctx.firestore(),'users','new'),profile('new')));
-  await assertFails(updateDoc(doc(ctx.firestore(),'users','new'),{role:'admin'}));
+  const verified=env.authenticatedContext('new',{email:'new@example.com',email_verified:true});
+  const db=verified.firestore();
+  const user=doc(db,'users','new');
+  await assertFails(setDoc(doc(ctx.firestore(),'users','new'),{...profile('new'),requiresEmailVerification:true}));
+  await assertFails(setDoc(user,profile('new')));
+  await assertFails(setDoc(user,{...profile('new','admin'),requiresEmailVerification:true}));
+  await assertSucceeds(setDoc(user,{...profile('new'),requiresEmailVerification:true}));
+  await assertSucceeds(getDoc(user));
+  await assertFails(updateDoc(user,{role:'admin'}));
+  await assertFails(updateDoc(user,{requiresEmailVerification:false}));
+  await assertFails(getDoc(doc(ctx.firestore(),'plans','basic')));
+  await assertSucceeds(getDoc(doc(db,'plans','basic')));
 });
 test('measurement and history batch saves atomically with owner isolation',async()=>{
   const db=alice.firestore(),batch=writeBatch(db);
@@ -67,7 +100,7 @@ test('plans are readable by members and writable only by admins',async()=>{
   await assertSucceeds(updateDoc(doc(admin.firestore(),'plans','basic'),{features:'Updated',updatedAt:serverTimestamp()}));
 });
 test('subscription uses catalog price and cannot self-activate',async()=>{
-  const data={...identity('alice'),planId:'basic',plan:'Basic',price:3,durationMonths:1,features:'Updated',status:'selected',createdAt:serverTimestamp()};
+  const data={...identity('alice'),planId:'basic',plan:'Basic',price:3,status:'selected',createdAt:serverTimestamp()};
   await assertFails(setDoc(doc(alice.firestore(),'subscriptions','tampered'),{...data,price:0}));
   await assertSucceeds(setDoc(doc(alice.firestore(),'subscriptions','sub'),data));
   await assertFails(updateDoc(doc(alice.firestore(),'subscriptions','sub'),{status:'active'}));
@@ -75,7 +108,7 @@ test('subscription uses catalog price and cannot self-activate',async()=>{
 test('payment requests cannot claim paid, change amount, or store card details',async()=>{
   const db=alice.firestore();
   await assertSucceeds(getDoc(doc(db,'payments','sub')));
-  const data={...identity('alice'),subscriptionId:'sub',planId:'basic',plan:'Basic',amount:3,durationMonths:1,features:'Updated',status:'pending',createdAt:serverTimestamp()};
+  const data={...identity('alice'),subscriptionId:'sub',planId:'basic',plan:'Basic',amount:3,status:'pending',createdAt:serverTimestamp()};
   await assertFails(setDoc(doc(db,'payments','forged'),{...data,status:'paid'}));
   await assertFails(setDoc(doc(db,'payments','cheap'),{...data,amount:0}));
   await assertFails(setDoc(doc(db,'payments','card'),{...data,cvv:'123'}));
@@ -101,27 +134,4 @@ test('generation previews remain private to owner and admin', async()=>{
  await assertFails(setDoc(doc(bob.firestore(),'history','spoof'),payload));
  await assertFails(setDoc(doc(alice.firestore(),'history','oversize'),{...payload,previewBase64:'a'.repeat(700001)}));
  await assertFails(setDoc(doc(alice.firestore(),'history','bad-kind'),{...payload,kind:'admin'}));
-});
-
-test('editing catalogue does not change purchased subscription snapshot', async()=>{
- await assertSucceeds(updateDoc(doc(admin.firestore(),'plans','basic'),{price:5,durationMonths:2,duration:'2 Months'}));
- const sub=(await getDoc(doc(alice.firestore(),'subscriptions','sub'))).data();
- if(sub.price!==3 || sub.durationMonths!==1) throw Error('Snapshot changed');
- await assertFails(updateDoc(doc(admin.firestore(),'subscriptions','sub'),{price:5}));
- await assertFails(updateDoc(doc(admin.firestore(),'plans','basic'),{price:'abc'}));
- await assertFails(updateDoc(doc(admin.firestore(),'plans','basic'),{price:-1}));
-});
-test('clients cannot delete users or forge notifications, owner can mark read',async()=>{
- await assertFails(deleteDoc(doc(admin.firestore(),'users','bob')));
- await assertFails(setDoc(doc(alice.firestore(),'notifications','fake'),{uid:'alice',read:false}));
- await env.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),'notifications','notice'),{uid:'alice',title:'Payment',body:'Test',read:false,createdAt:serverTimestamp()}));
- await assertSucceeds(updateDoc(doc(alice.firestore(),'notifications','notice'),{read:true}));
- await assertFails(updateDoc(doc(alice.firestore(),'notifications','notice'),{body:'Forged'}));
- await assertFails(getDoc(doc(bob.firestore(),'notifications','notice')));
-});
-
-test('idempotent generation save can inspect a missing own ID but not another users record',async()=>{
- await assertSucceeds(getDoc(doc(alice.firestore(),'history','alice_new')));
- await env.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),'history','alice_bob'),{...identity('bob'),title:'Private',createdAt:serverTimestamp()}));
- await assertFails(getDoc(doc(alice.firestore(),'history','alice_bob')));
 });

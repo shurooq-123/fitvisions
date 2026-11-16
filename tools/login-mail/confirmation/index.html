@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>FitVisions registration confirmation</title>
+<style>
+  body { font: 1rem system-ui, sans-serif; background: #ced1c6; margin: 0; padding: 2rem 1rem; }
+  main { background: white; border-radius: 1.25rem; max-width: 28rem; padding: 1.75rem; margin: auto; }
+  button { background: #574543; color: white; border: 0; border-radius: .5rem; padding: .8rem 1rem; font: inherit; }
+</style>
+<main>
+  <h1>FitVisions</h1>
+  <p id="message" role="status">Checking your registration link…</p>
+  <button id="choice" hidden type="button"></button>
+</main>
+<script type="module">
+  const params = new URLSearchParams(location.hash.slice(1));
+  const id = params.get('id') ?? '';
+  const proof = params.get('proof') ?? '';
+  const decision = params.get('decision');
+  const message = document.querySelector('#message');
+  const button = document.querySelector('#choice');
+  if (!/^[a-f0-9]{32}$/.test(id) || !/^[a-f0-9]{48}$/.test(proof) ||
+      !['approved', 'declined'].includes(decision)) {
+    message.textContent = 'This registration link is incomplete. Request a new one in FitVisions.';
+  } else {
+    const approved = decision === 'approved';
+    message.textContent = approved
+      ? 'Confirm that you requested a FitVisions account.'
+      : 'Reject this FitVisions registration request.';
+    button.textContent = approved ? 'Yes, it’s me' : 'No, cancel registration';
+    button.hidden = false;
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      const endpoint = new URL('https://firestore.googleapis.com/v1/projects/fitvisions-33e6d/databases/(default)/documents/registrationDecisions/' + id);
+      endpoint.searchParams.append('updateMask.fieldPaths', 'decision');
+      endpoint.searchParams.append('updateMask.fieldPaths', 'submittedProof');
+      endpoint.searchParams.set('currentDocument.exists', 'true');
+      try {
+        const result = await fetch(endpoint, {
+          method: 'PATCH',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({fields: {
+            decision: {stringValue: decision},
+            submittedProof: {stringValue: proof},
+          }}),
+        });
+        if (!result.ok) {
+          if (result.status === 403 || result.status === 404) {
+            message.textContent = 'This request has already been answered or has expired. Check the original FitVisions app.';
+            button.hidden = true;
+            return;
+          }
+          throw new Error('Could not save your choice');
+        }
+        message.textContent = approved
+          ? 'Email confirmed. Return to FitVisions on the device where you started registration.'
+          : 'Registration declined. FitVisions will cancel the request on the original device.';
+        button.hidden = true;
+        history.replaceState(null, '', location.pathname);
+      } catch {
+        message.textContent = 'Could not save your choice. Check your connection and try again.';
+        button.disabled = false;
+      }
+    });
+  }
+</script>
+</html>

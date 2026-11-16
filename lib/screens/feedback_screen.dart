@@ -1,3 +1,4 @@
+import '../constants/app_colors.dart';
 import '../widgets/prototype_ui.dart';
 import 'package:flutter/material.dart';
 import '../services/app_data_service.dart';
@@ -76,11 +77,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       child: Column(children: [
         PrototypePanel(
             child: Column(children: [
-          const SizedBox(height: 24),
-          const FittedBox(
-              child:
-                  Text('Rate Your Experience', style: TextStyle(fontSize: 27))),
-          const SizedBox(height: 8),
+          const Text('Rate Your Experience',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
           Row(
               children: List.generate(
                   5,
@@ -91,8 +91,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                           icon: Icon(
                               i < rating ? Icons.star : Icons.star_border,
                               color: Colors.amber,
-                              size: 38))))),
-          const SizedBox(height: 22),
+                              size: 32))))),
+          const SizedBox(height: 16),
           const Align(
               alignment: Alignment.centerLeft,
               child: Text('Write the feedback:',
@@ -102,14 +102,26 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               controller: feedbackController,
               maxLines: 7,
               maxLength: 4000,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color(0xFFE8EBF3),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.zero))),
+                  fillColor: AppColors.field(context, const Color(0xFFE8EBF3)),
+                  border: prototypeFieldBorder)),
         ])),
         const SizedBox(height: 14),
         PrototypeButton(loading ? 'Sending...' : 'Submit',
             onPressed: loading ? null : submitFeedback),
+        TextButton(
+            onPressed: loading
+                ? null
+                : () {
+                    if (ModalRoute.of(context)?.settings.arguments ==
+                        'afterPayment') {
+                      Navigator.pushReplacementNamed(context, '/history');
+                    } else {
+                      Navigator.maybePop(context);
+                    }
+                  },
+            child: const Text('Skip feedback')),
         const SizedBox(height: 10),
         const Text('Your feedback helps us improve\nthe app !!',
             textAlign: TextAlign.center,

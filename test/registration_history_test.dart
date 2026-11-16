@@ -19,7 +19,7 @@ void main() {
     expect(AuthService.isValidPassword('Password!'), isFalse);
     expect(AuthService.isValidPassword('Password1!'), isTrue);
   });
-  test('History retains avatar previews and merges subscriptions newest first',
+  test('History retains avatar previews and merges subscriptions oldest first',
       () {
     final result = mergeHistory([
       {
@@ -41,7 +41,7 @@ void main() {
       },
     ]);
     expect(result.length, 2);
-    expect(result.last['kind'], 'subscription');
-    expect(result.first['previewBase64'], 'saved');
+    expect(result.first['kind'], 'subscription');
+    expect(result.last['previewBase64'], 'saved');
   });
 }

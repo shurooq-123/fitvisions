@@ -1,10 +1,8 @@
-import 'dart:async';
-import 'services/notification_service.dart';
-import 'widgets/account_header.dart';
-import 'screens/notifications_screen.dart';
-import 'screens/reports_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'constants/app_colors.dart';
+import 'services/appearance.dart';
 
 import 'screens/welcome_screen.dart';
 import 'screens/login_screen.dart';
@@ -36,24 +34,55 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp();
+  await Appearance.load();
 
   runApp(const FitVisionsApp());
-  unawaited(NotificationService.start().catchError((_) {
-    NotificationService.status.value =
-        'Push notifications unavailable. Retry in Notifications.';
-  }));
 }
 
 class FitVisionsApp extends StatelessWidget {
   const FitVisionsApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ValueListenableBuilder<ThemeMode>(
+        valueListenable: Appearance.mode,
+        builder: (context, mode, _) => _buildApp(mode),
+      );
+
+  Widget _buildApp(ThemeMode mode) {
     return MaterialApp(
-      navigatorKey: NotificationService.navigator,
-      scaffoldMessengerKey: NotificationService.messenger,
       title: 'FitVisions',
       debugShowCheckedModeBanner: false,
+      themeMode: mode,
+      builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+        value: Theme.of(context).brightness == Brightness.dark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
+        child: child!,
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: false,
+        fontFamily: 'TimesNewRoman',
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF1C1E1B),
+        inputDecorationTheme: const InputDecorationTheme(
+          isDense: true,
+          filled: true,
+          fillColor: Color(0xFF383B34),
+          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(14))),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            elevation: 0,
+          ),
+        ),
+      ),
       theme: ThemeData(
         useMaterial3: false,
         fontFamily: 'TimesNewRoman',
@@ -89,9 +118,7 @@ class FitVisionsApp extends StatelessWidget {
         }
         return null;
       },
-      routes: <String, WidgetBuilder>{
-        '/notifications': (context) => const NotificationsScreen(),
-        '/reports': (context) => const ReportsScreen(),
+      routes: {
         '/': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
@@ -120,10 +147,6 @@ class FitVisionsApp extends StatelessWidget {
         '/adminSystem': (context) => const AdminSystemScreen(),
         '/adminPlans': (context) => const AdminPlansScreen(),
       },
-      builder: (context, child) => Column(children: [
-        const AccountHeader(),
-        Expanded(child: child ?? const SizedBox.shrink())
-      ]),
     );
   }
 }
