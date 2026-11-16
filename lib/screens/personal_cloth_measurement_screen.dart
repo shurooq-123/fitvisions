@@ -7,12 +7,18 @@ import '../services/app_data_service.dart';
 import '../widgets/prototype_ui.dart';
 import 'ai_generation_screen.dart';
 import '../services/avatar_prompt.dart';
+import '../services/body_size_presets.dart';
 import '../widgets/measurement_guide.dart';
 import '../widgets/clothing_library.dart';
 
 class PersonalClothMeasurementScreen extends StatefulWidget {
-  const PersonalClothMeasurementScreen({super.key, this.initialClothing, this.outfitDetails = ''});
+  const PersonalClothMeasurementScreen(
+      {super.key,
+      this.initialClothing,
+      this.outfitDetails = '',
+      this.readyMade = false});
   final String? initialClothing;
+  final bool readyMade;
   final String outfitDetails;
 
   @override
@@ -24,14 +30,12 @@ class _PersonalClothMeasurementScreenState
     extends State<PersonalClothMeasurementScreen> {
   static const brown = Color(0xFF574543);
 
-  final heightController = TextEditingController();
-  final weightController = TextEditingController();
-  final chestController = TextEditingController();
-  final waistController = TextEditingController();
-  final hipController = TextEditingController();
+  Map<String, String> bodyMeasurements = {};
+  String? selectedSize;
 
   File? clothImage;
   File? personalImage;
+  AvatarGender? gender;
   String? savedClothPath;
   String? savedPersonalPath;
 
@@ -50,10 +54,10 @@ class _PersonalClothMeasurementScreenState
 
   Future<void> pickImage(String kind) async {
     if (loading) return;
-    final image = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (image == null || !mounted) return;
     setState(() => loading = true);
     try {
+      final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (image == null || !mounted) return;
       final path = await AppDataService.saveImage(image.path, kind);
       if (!mounted) return;
       setState(() {
@@ -76,31 +80,24 @@ class _PersonalClothMeasurementScreenState
   }
 
   Future<void> saveData() async {
-    if (heightController.text.trim().isEmpty ||
-        weightController.text.trim().isEmpty ||
-        chestController.text.trim().isEmpty ||
-        waistController.text.trim().isEmpty ||
-        hipController.text.trim().isEmpty) {
-      showMessage('Please enter all measurements');
-      return;
-    }
-
-    final values = [
-      heightController,
-      weightController,
-      chestController,
-      waistController,
-      hipController
-    ].map((c) => double.tryParse(c.text.trim())).toList();
-    if (values.any((v) => v == null || !v.isFinite || v <= 0) ||
-        values[0]! > 250 ||
-        values[1]! > 400 ||
-        values.skip(2).any((v) => v! > 300)) {
+    if (loading) return;
+    final measurements = {
+      for (final entry in bodyMeasurements.entries)
+        if (entry.value.isNotEmpty) entry.key: entry.value,
+    };
+    if (!validAvatarMeasurements(measurements)) {
       showMessage(
-          'Enter valid positive measurements: height/chest/waist/hips in cm and weight in kg.');
+          'Enter a height of 50–250 cm and valid chest, waist and hip measurements. Shoulder width is optional.');
       return;
     }
-
+    if (clothImage == null) {
+      showMessage('Choose a clothing image from your album.');
+      return;
+    }
+    if (!widget.readyMade && gender == null) {
+      showMessage('Select Female or Male.');
+      return;
+    }
     try {
       setState(() => loading = true);
 
@@ -111,11 +108,10 @@ class _PersonalClothMeasurementScreenState
               : personalImage == null
                   ? 'clothOnly'
                   : 'personalAndCloth',
-          'height': heightController.text.trim(),
-          'weight': weightController.text.trim(),
-          'chest': chestController.text.trim(),
-          'waist': waistController.text.trim(),
-          'hip': hipController.text.trim(),
+          'height': measurements['Height'],
+          'chest': measurements['Chest'],
+          'waist': measurements['Waist'],
+          'hip': measurements['Hips'],
           'clothImagePath': savedClothPath,
           'personalImagePath': savedPersonalPath,
         },
@@ -127,34 +123,31 @@ class _PersonalClothMeasurementScreenState
         'Measurements saved successfully',
       );
 
-      final paths = [
-        if (clothImage != null) clothImage!.path,
-        if (personalImage != null) personalImage!.path
-      ];
-      final measurements = {
-        'Height': heightController.text.trim(),
-        'Weight': weightController.text.trim(),
-        'Chest': chestController.text.trim(),
-        'Waist': waistController.text.trim(),
-        'Hips': hipController.text.trim()
-      };
       Navigator.push(
           context,
           MaterialPageRoute(
               builder: (_) => AiGenerationScreen(
-                    title: 'Generate Avatar',
-                    avatar: true,
-                    outfitDetails: widget.outfitDetails,
-                    photos: paths,
-                    measurements: measurements,
-                    clothingPhoto: clothImage?.path,
-                    personalPhoto: personalImage?.path,
-                    prompt: avatarPrompt(measurements,
-                        clothing: clothImage != null,
-                        person: personalImage != null),
-                  )));
+                  title: widget.readyMade
+                      ? 'Try Ready-made Outfits'
+                      : 'Generate Avatar',
+                  measuredBodyReference: true,
+                  avatar: true,
+                  autoGenerate: true,
+                  outfitDetails: widget.outfitDetails,
+                  photos: [
+                    if (clothImage != null) clothImage!.path,
+                    if (personalImage != null) personalImage!.path
+                  ],
+                  measurements: measurements,
+                  clothingPhoto: clothImage?.path,
+                  avatarGender: gender,
+                  size: selectedSize,
+                  personalPhoto: personalImage?.path,
+                  prompt: avatarPrompt(measurements,
+                      clothing: clothImage != null,
+                      person: personalImage != null))));
     } catch (e) {
-      showMessage(e.toString());
+      if (mounted) showMessage(e.toString());
     } finally {
       if (mounted) {
         setState(() => loading = false);
@@ -172,127 +165,88 @@ class _PersonalClothMeasurementScreenState
   }
 
   @override
-  void dispose() {
-    heightController.dispose();
-    weightController.dispose();
-    chestController.dispose();
-    waistController.dispose();
-    hipController.dispose();
-
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) => PrototypePage(
           child: Column(children: [
-        const PrototypeLogo(width: 190, symbolOnly: true),
-        const SizedBox(height: 20),
-        const Text('Generate Avatar',
+        const PrototypeLogo(width: 225),
+        const SizedBox(height: 12),
+        Text(widget.readyMade ? 'Ready-made Avatar' : 'Generate Avatar',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 24),
-        const Text(
-            'Hover over or tap a measurement name for help. Photos are optional; without a personal photo we create a synthetic 3D-style avatar.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12)),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         PrototypePanel(
             child: Column(children: [
-          measurementRow('Height', heightController, '175 cm'),
-          measurementRow('Weight', weightController, '55 kg'),
-          measurementRow('Chest', chestController, '96 cm'),
-          measurementRow('Waist', waistController, '75 cm'),
-          measurementRow('Hips', hipController, '75 cm'),
-          uploadRow('Clothing photo\n(optional)', clothImage, pickClothImage),
-          TextButton.icon(
-            icon: const Icon(Icons.checkroom),
-            label: const Text('Choose a ready-made outfit'),
-            onPressed: loading
+          BodyMeasurements(
+            avatarSizing: true,
+            onChanged: (values) => bodyMeasurements = values,
+            onSize: (size) => selectedSize = size,
+            afterFields: widget.readyMade
                 ? null
-                : () async {
-                    final path = await chooseClothingTemplate(context);
-                    if (path == null || !mounted) return;
-                    setState(() {
-                      clothImage = File(path);
-                      savedClothPath = path;
-                    });
-                  },
+                : Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: DropdownButtonFormField<AvatarGender>(
+                      initialValue: gender,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Gender',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                            value: AvatarGender.female, child: Text('Female')),
+                        DropdownMenuItem(
+                            value: AvatarGender.male, child: Text('Male')),
+                      ],
+                      onChanged: loading
+                          ? null
+                          : (value) => setState(() => gender = value),
+                    ),
+                  ),
           ),
-          if (clothImage != null) ...[
-            if (clothingTemplates.containsKey(clothImage!.path))
-              Image.asset(clothImage!.path, height: 160)
-            else
-              Image.file(clothImage!, height: 160),
-            TextButton(
-                onPressed: loading
-                    ? null
-                    : () => setState(() {
-                          clothImage = null;
-                          savedClothPath = null;
-                        }),
-                child: const Text('Remove clothing photo')),
-          ],
-          uploadRow(
-              'Personal photo\n(optional)', personalImage, pickPersonalImage),
-          if (personalImage != null)
-            TextButton(
-                onPressed: loading
-                    ? null
-                    : () => setState(() {
-                          personalImage = null;
-                          savedPersonalPath = null;
-                        }),
-                child: const Text('Remove personal photo')),
+          if (!widget.readyMade && widget.initialClothing == null)
+            photoBox('Clothing image', clothImage, pickClothImage),
+          const SizedBox(height: 10),
+          photoBox(
+              'Personal photo (optional)', personalImage, pickPersonalImage),
           const SizedBox(height: 22),
+          const Text(
+              'Generate sends your selected images and measurements to Cloudflare AI.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12)),
+          const SizedBox(height: 8),
           PrototypeButton(loading ? 'Saving...' : 'Generate',
               onPressed: loading ? null : saveData),
         ])),
-        if (!AppDataService.cloudImagesEnabled)
-          const Padding(
-              padding: EdgeInsets.only(top: 10),
-              child: Text(
-                  'Selected photos are sent to Cloudflare only when you confirm AI generation.',
-                  style: TextStyle(fontSize: 11))),
-        const MeasurementGuide(),
       ]));
-  Widget measurementRow(
-          String label, TextEditingController controller, String hint) =>
-      Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(children: [
-            SizedBox(width: 92, child: MeasurementLabel(label)),
-            Expanded(
-                child: SizedBox(
-                    height: 34,
-                    child: TextField(
-                        controller: controller,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        textAlign: TextAlign.center,
-                        decoration: InputDecoration(
-                            hintText: hint,
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 6),
-                            border: const OutlineInputBorder(
-                                borderRadius: BorderRadius.zero)))))
-          ]));
-  Widget uploadRow(String label, File? file, VoidCallback pick) => Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(children: [
-        SizedBox(width: 92, child: Text(label)),
-        Expanded(
-            child: InkWell(
-                onTap: loading ? null : pick,
-                child: Container(
-                    height: 34,
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.black54)),
-                    child: Icon(
-                        file == null ? Icons.upload_outlined : Icons.check,
-                        size: 20,
-                        color: prototypeBrown))))
-      ]));
+  Widget photoBox(String label, File? file, VoidCallback pick) => Material(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: Colors.black26),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: loading ? null : pick,
+          child: SizedBox(
+            width: double.infinity,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(children: [
+                Row(children: [
+                  const Icon(Icons.photo_library_outlined,
+                      color: prototypeBrown),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(label)),
+                ]),
+                if (file != null) ...[
+                  const SizedBox(height: 8),
+                  if (clothingTemplates.containsKey(file.path))
+                    Image.asset(file.path, height: 110)
+                  else
+                    Image.file(file, height: 110),
+                ],
+              ]),
+            ),
+          ),
+        ),
+      );
 }

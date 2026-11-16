@@ -1,7 +1,9 @@
+import '../widgets/subscription_summary.dart';
 import '../widgets/prototype_ui.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/app_data_service.dart';
+import '../services/subscription_access.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key, this.firestore, this.savePlan});
@@ -17,6 +19,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   double selectedPrice = 0;
   String selectedPlanId = '';
   bool saving = false;
+  bool activated = false;
+  late final plansStream = (widget.firestore ?? FirebaseFirestore.instance)
+      .collection('plans')
+      .orderBy('price', descending: true)
+      .snapshots();
+
+  Map<String, dynamic>? get checkoutArguments =>
+      ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
   Future<void> continueWithPlan() async {
     if (saving) return;
@@ -27,22 +37,35 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     }
     setState(() => saving = true);
     try {
+      if (widget.savePlan == null &&
+          await AppDataService.hasActiveSubscription()) {
+        if (!mounted) return;
+        final returnToDesign = checkoutArguments?['returnToDesign'] == true;
+        if (returnToDesign) {
+          Navigator.pop(context, true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('You already have an active subscription.')));
+        }
+        return;
+      }
       final subscriptionId = widget.savePlan == null
           ? await AppDataService.saveSubscription(planId: selectedPlanId)
           : await widget.savePlan!(selectedPlanId);
       if (!mounted) return;
-      final returnToDesign = (ModalRoute.of(context)?.settings.arguments
-              as Map<String, dynamic>?)?['returnToDesign'] ==
-          true;
-      final paid =
-          await Navigator.pushNamed(context, '/payment', arguments: {
+      final returnToDesign = checkoutArguments?['returnToDesign'] == true;
+      final avatarAction = checkoutArguments?['avatarAction'];
+      final paid = await Navigator.pushNamed(context, '/payment', arguments: {
         'subscriptionId': subscriptionId,
         'plan': selectedPlan,
         'price': selectedPrice,
-        'returnToDesign': returnToDesign,
+        'returnToSubscription': true,
       });
-      if (mounted && returnToDesign && paid == true) {
+      if (!mounted || paid != true) return;
+      if (returnToDesign && avatarAction == null) {
         Navigator.pop(context, true);
+      } else {
+        setState(() => activated = true);
       }
     } catch (_) {
       if (mounted) {
@@ -59,37 +82,51 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   Widget build(BuildContext context) => PrototypePage(
       title: 'Subscription',
       child: Column(children: [
-        StreamBuilder<QuerySnapshot>(
-            stream: (widget.firestore ?? FirebaseFirestore.instance)
-                .collection('plans')
-                .orderBy('price', descending: true)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return const Text('Could not load plans. Please try again.');
-              }
-              if (!snapshot.hasData) return const CircularProgressIndicator();
-              if (snapshot.data!.docs.isEmpty) {
-                return const Text('No subscription plans available');
-              }
-              return Column(
-                  children: snapshot.data!.docs.map((doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                return Padding(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    child: SubscriptionPlanCard(
-                        data: data,
-                        selected: selectedPlanId == doc.id,
-                        onTap: () => setState(() {
+        if (widget.firestore == null) const SubscriptionSummary(),
+        const SizedBox(height: 18),
+        if (activated && checkoutArguments?['returnToDesign'] == true)
+          PrototypeButton('Continue',
+              onPressed: () => Navigator.pop(context, true)),
+        if (!activated)
+          StreamBuilder<QuerySnapshot>(
+              stream: plansStream,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Text('Could not load plans. Please try again.');
+                }
+                if (!snapshot.hasData) return const CircularProgressIndicator();
+                final plans = <num, QueryDocumentSnapshot>{};
+                for (final doc in snapshot.data!.docs) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final price = data['price'];
+                  if (price is num && SubscriptionAccess.months(price) > 0) {
+                    plans.putIfAbsent(price, () => doc);
+                  }
+                }
+                if (plans.isEmpty) {
+                  return const Text('No subscription plans available');
+                }
+                return Column(
+                    children: plans.values.map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  return Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: SubscriptionPlanCard(
+                          data: data,
+                          selected: selectedPlanId == doc.id,
+                          onTap: () {
+                            if (saving) return;
+                            setState(() {
                               selectedPlanId = doc.id;
                               selectedPlan = data['name'] ?? '';
                               selectedPrice =
                                   (data['price'] as num?)?.toDouble() ?? 0;
-                            })));
-              }).toList());
-            }),
-        PrototypeButton(saving ? 'Saving...' : 'Subscribe',
-            onPressed: saving ? null : continueWithPlan),
+                            });
+                            continueWithPlan();
+                          }));
+                }).toList());
+              }),
+        if (saving) const CircularProgressIndicator(),
         const SizedBox(height: 8),
         const Text('Demo subscription • No real charge',
             style: TextStyle(fontSize: 11)),
@@ -112,9 +149,26 @@ class SubscriptionPlanCard extends StatelessWidget {
         ? price.toInt().toString()
         : price.toString();
     final raw = data['features'];
-    final features = raw is List
-        ? raw.map((v) => v.toString()).toList()
-        : '$raw'.split('\n');
+    final standard = price == 3 || price == 7;
+    final features = standard
+        ? [
+            'Generate Avatar and Design Clothes',
+            'Edit your results and download images',
+            'One subscription covers both options',
+            price == 7
+                ? '6 months of access • about 1.17 OMR/month'
+                : '1 month of access • 3 OMR/month',
+            'No automatic renewal',
+            'AI generation subject to service availability',
+          ]
+        : raw is List
+            ? raw.map((v) => v.toString()).toList()
+            : '$raw'.split('\n');
+    final duration = price == 7
+        ? '6 Months'
+        : price == 3
+            ? '1 Month'
+            : data['duration'] ?? '';
     return Semantics(
         selected: selected,
         button: true,
@@ -135,7 +189,7 @@ class SubscriptionPlanCard extends StatelessWidget {
                       style: const TextStyle(
                           fontSize: 21, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
-                  Text('$amount OMR / ${data['duration'] ?? ''}',
+                  Text('$amount OMR / $duration',
                       style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),

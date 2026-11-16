@@ -19,10 +19,9 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.text('User Dashboard'), findsOneWidget);
+    expect(find.text('Welcome'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.tap(find.text('Generate Avatar'));
-    await tester.ensureVisible(find.text('Continue'));
-    await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     expect(find.text('Try-on destination'), findsOneWidget);
   });

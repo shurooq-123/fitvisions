@@ -1,13 +1,23 @@
+import 'password_policy.dart';
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'auth_repository.dart';
+import 'login_notification_service.dart';
 
 class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static final AuthRepository _repository =
-      AuthRepository(auth: _auth, firestore: _firestore);
+  static final AuthRepository _repository = AuthRepository(
+      auth: _auth,
+      firestore: _firestore,
+      notifyRegistration: () =>
+          LoginNotificationService.send(registration: true),
+      notifyPasswordChanged: () =>
+          LoginNotificationService.send(passwordChanged: true));
 
   static String errorMessage(Object error) {
     if (error is AccountSetupException) return error.message;
@@ -15,6 +25,18 @@ class AuthService {
       return 'The server took too long to respond. Check your connection and try again.';
     }
     if (error is FirebaseAuthException) {
+      final detail = (error.message ?? '').toLowerCase();
+      if (error.code == 'network-request-failed' ||
+          ((error.code == 'internal-error' || error.code == 'unknown') &&
+              [
+                'connection reset',
+                'unreachable host',
+                'timed out',
+                'network error'
+              ].any(detail.contains))) {
+        return 'Connection to Firebase was interrupted. Reconnect to the internet and try again. '
+            'If you were registering, account creation could not be confirmed; try Login before registering again.';
+      }
       switch (error.code) {
         case 'invalid-credential':
         case 'invalid-login-credentials':
@@ -54,17 +76,11 @@ class AuthService {
   }
 
   static bool isValidEmail(String email) {
-    return RegExp
-    (r'^[^@]+@[^@]+\.[^@]+').hasMatch(email.trim());
+    return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email.trim());
   }
 
-  static bool isValidPassword(String password) {
-    return password.length >= 8 &&
-        password.length <= 15 &&
-        RegExp(r'[A-Z]').hasMatch(password) &&
-        RegExp(r'[a-z]').hasMatch(password) &&
-        RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password);
-  }
+  static bool isValidPassword(String password) =>
+      PasswordPolicy.isValid(password);
 
   static bool isValidSingleName(String name) {
     return RegExp(r'^[a-zA-Z\u0600-\u06FF]+$').hasMatch(name.trim());
@@ -74,14 +90,14 @@ class AuthService {
     return RegExp(r'^[0-9]{8}$').hasMatch(phone.trim());
   }
 
-  static Future<void> registerUser({
+  static Future<bool> registerUser({
     required String firstName,
     required String lastName,
     required String phone,
     required String email,
     required String password,
   }) async {
-    await _repository.registerUser(
+    return _repository.registerUser(
         firstName: firstName,
         lastName: lastName,
         phone: phone,
@@ -97,10 +113,39 @@ class AuthService {
   }
 
   static Future<void> sendResetLink(String email) async {
-    await _auth.sendPasswordResetEmail(email: email.trim());
+    if (!kDebugMode) {
+      throw const AccountSetupException(
+          'Password recovery is unavailable in this build.');
+    }
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
+    try {
+      final request = await client
+          .postUrl(Uri.parse('http://127.0.0.1:8789/forgot-password'));
+      request.headers.contentType = ContentType.json;
+      request.write(jsonEncode({'email': email.trim()}));
+      final response =
+          await request.close().timeout(const Duration(seconds: 30));
+      await response.drain<void>().timeout(const Duration(seconds: 5));
+      if (response.statusCode == 202) return;
+      if (response.statusCode == 429) {
+        throw const AccountSetupException(
+            'Too many reset requests. Please wait and try again.');
+      }
+      if (response.statusCode == 503) {
+        throw const AccountSetupException(
+            'Connect the FitVisions sender email and try again.');
+      }
+      throw const AccountSetupException(
+          'Could not send the reset link. Please try again.');
+    } on SocketException {
+      throw const AccountSetupException(
+          'Connect the phone to the FitVisions mail service and try again.');
+    } finally {
+      client.close(force: true);
+    }
   }
 
-  static Future<void> changePassword(String newPassword,
+  static Future<bool> changePassword(String newPassword,
           {required String currentPassword}) =>
       _repository.changePassword(
           currentPassword: currentPassword, newPassword: newPassword);

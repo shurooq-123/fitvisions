@@ -35,6 +35,8 @@ void main() {
   late MockDocument document;
   late MockSnapshot snapshot;
   late AuthRepository repository;
+  late bool mailFails;
+  late int mailCalls;
 
   setUpAll(() {
     registerFallbackValue(const GetOptions());
@@ -49,7 +51,14 @@ void main() {
     collection = MockCollection();
     document = MockDocument();
     snapshot = MockSnapshot();
-    repository = AuthRepository(auth: auth, firestore: firestore);
+    mailFails = false;
+    mailCalls = 0;
+    repository = AuthRepository(auth: auth, firestore: firestore,
+        notifyRegistration: () async {
+          mailCalls++;
+          if (mailFails) throw Exception('Mail offline');
+          return true;
+        });
     when(() => credential.user).thenReturn(user);
     when(() => user.uid).thenReturn('test-uid');
     when(() => user.email).thenReturn('test@example.com');
@@ -70,7 +79,7 @@ void main() {
     when(() => snapshot.data()).thenReturn({'role': 'user'});
   });
 
-  Future<void> register() => repository.registerUser(
+  Future<bool> register() => repository.registerUser(
       firstName: 'Test',
       lastName: 'User',
       phone: '91234567',
@@ -134,7 +143,7 @@ void main() {
 
   test('successful registration creates a user profile then signs out',
       () async {
-    await register();
+    expect(await register(), isTrue);
     final data =
         verify(() => document.set(captureAny())).captured.single as Map;
     expect(data['role'], 'user');
@@ -142,16 +151,16 @@ void main() {
     expect(data.containsKey('password'), isFalse);
     verify(() => auth.signOut()).called(1);
     verifyNever(() => user.delete());
-    verify(() => user.sendEmailVerification()).called(1);
+    expect(mailCalls, 1);
+    verifyNever(() => user.sendEmailVerification());
   });
 
-  test('verification email failure retains account and closes session', () async {
-    when(() => user.sendEmailVerification())
-        .thenThrow(FirebaseAuthException(code: 'network-request-failed'));
-    await expectLater(register(), throwsA(isA<AccountSetupException>()
-        .having((e) => e.message, 'message', contains('Your account was created'))));
+  test('notification failure retains account and closes session', () async {
+    mailFails = true;
+    expect(await register(), isFalse);
     verifyNever(() => user.delete());
     verify(() => auth.signOut()).called(1);
+    verifyNever(() => user.sendEmailVerification());
   });
 
   test('rejected profile write rolls back only the newly created auth account',
@@ -224,5 +233,31 @@ void main() {
             currentPassword: 'Wrong@123', newPassword: 'New@12345'),
         throwsA(isA<FirebaseAuthException>()));
     verifyNever(() => user.updatePassword(any()));
+  });
+  test('password email runs after update and mail failure still signs out', () async {
+    var updated = false;
+    var notified = false;
+    when(() => auth.currentUser).thenReturn(user);
+    when(() => user.reauthenticateWithCredential(any())).thenAnswer((_) async => credential);
+    when(() => user.updatePassword(any())).thenAnswer((_) async { updated = true; });
+    final subject = AuthRepository(auth: auth, firestore: firestore,
+        notifyPasswordChanged: () async {
+          expect(updated, isTrue);
+          notified = true;
+          throw Exception('SMTP offline');
+        });
+    expect(await subject.changePassword(currentPassword:'Old@12345',newPassword:'New@12345'), isFalse);
+    expect(notified, isTrue);
+    verify(() => auth.signOut()).called(1);
+  });
+  test('failed password update never sends a success notification', () async {
+    var notified = false;
+    when(() => auth.currentUser).thenReturn(user);
+    when(() => user.reauthenticateWithCredential(any())).thenAnswer((_) async => credential);
+    when(() => user.updatePassword(any())).thenThrow(FirebaseAuthException(code:'network-request-failed'));
+    final subject = AuthRepository(auth:auth,firestore:firestore,
+        notifyPasswordChanged:() async { notified=true; return true; });
+    await expectLater(subject.changePassword(currentPassword:'Old@12345',newPassword:'New@12345'),throwsA(isA<FirebaseAuthException>()));
+    expect(notified,isFalse);
   });
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:country_picker/country_picker.dart';
+import '../services/phone_validation.dart';
 import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../widgets/custom_back_button.dart';
@@ -26,6 +28,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool hidePassword = true;
   bool hideConfirmPassword = true;
   bool loading = false;
+  Country phoneCountry = Country.parse('OM');
 
   Future<void> register() async {
     if (loading) return;
@@ -36,10 +39,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       setState(() => loading = true);
 
-      await AuthService.registerUser(
+      final emailSent = await AuthService.registerUser(
         firstName: firstNameController.text.trim(),
         lastName: lastNameController.text.trim(),
-        phone: mobileController.text.trim(),
+        phone: internationalMobile(
+            mobileController.text.trim(), phoneCountry.countryCode)!,
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
@@ -47,9 +51,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Account created. A verification email has been requested. Check your inbox and spam folder.'),
+        SnackBar(
+          content: Text(emailSent
+              ? 'Account created successfully. A confirmation email has been sent.'
+              : 'Account created successfully. The confirmation email could not be sent. You can log in.'),
           backgroundColor: brown,
         ),
       );
@@ -194,7 +199,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               }
 
                               if (!AuthService.isValidPassword(password)) {
-                                return '8-15 chars, uppercase, lowercase, special char';
+                                return 'At least 8 chars, uppercase, lowercase, number, special char';
                               }
 
                               return null;
@@ -226,7 +231,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 8),
                           const Text(
-                            'Password: 8-15 chars, uppercase, lowercase, special character',
+                            'Password: At least 8 chars, uppercase, lowercase, number, special character',
                             style: TextStyle(
                               fontSize: 10,
                               color: Colors.black54,
@@ -317,69 +322,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget phoneField() {
-    return TextFormField(
-      controller: mobileController,
-      keyboardType: TextInputType.number,
-      maxLength: 8,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(8),
-        TextInputFormatter.withFunction((oldValue, newValue) {
-          final text = newValue.text;
-
-          if (text.isEmpty) {
-            return newValue;
-          }
-
-          if (!text.startsWith('7') && !text.startsWith('9')) {
-            return oldValue;
-          }
-
-          return newValue;
-        }),
-      ],
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      validator: (value) {
-        final phone = value!.trim();
-
-        if (phone.isEmpty) {
-          return 'Mobile number is required';
-        }
-
-        if (!RegExp(r'^[79][0-9]{7}$').hasMatch(phone)) {
-          return 'Number must start with 7 or 9 and contain 8 digits';
-        }
-
-        return null;
-      },
-      decoration: const InputDecoration(
-        isDense: true,
-        prefixIcon: Padding(
-            padding: EdgeInsets.only(left: 8, right: 4), child: Text('+968 ')),
-        prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
-        counterText: '',
-        hintText: '',
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 6,
+  Widget phoneField() => Column(children: [
+        Material(
+            color: Colors.transparent,
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text('${phoneCountry.name} (+${phoneCountry.phoneCode})',
+                  style: const TextStyle(fontSize: 14)),
+              trailing: const Icon(Icons.arrow_drop_down),
+              onTap: () => showCountryPicker(
+                  context: context,
+                  showPhoneCode: true,
+                  onSelect: (country) => setState(() {
+                        phoneCountry = country;
+                        mobileController.clear();
+                      })),
+            )),
+        TextFormField(
+          controller: mobileController,
+          keyboardType: TextInputType.phone,
+          maxLength: phoneCountry.countryCode == 'OM' ? 8 : 15,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Mobile number is required';
+            }
+            if (internationalMobile(value, phoneCountry.countryCode) == null) {
+              return phoneCountry.countryCode == 'OM'
+                  ? 'Enter a valid 8-digit Oman mobile number'
+                  : 'Enter a valid mobile number for ${phoneCountry.name}';
+            }
+            return null;
+          },
+          decoration: InputDecoration(
+            prefixText: '+${phoneCountry.phoneCode} ',
+            helperText: phoneCountry.countryCode == 'OM'
+                ? '8 digits'
+                : 'Local mobile number without country code',
+            helperMaxLines: 2,
+            errorMaxLines: 3,
+            filled: true,
+            fillColor: Colors.white,
+            border: const OutlineInputBorder(borderRadius: BorderRadius.zero),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          ),
         ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.zero),
-        errorBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.red, width: 1.5),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.red, width: 1.5),
-        ),
-        errorStyle: TextStyle(
-          fontSize: 10,
-          height: 0.9,
-        ),
-      ),
-    );
-  }
+      ]);
 
   Widget passwordField({
     required TextEditingController controller,

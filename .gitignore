@@ -30,6 +30,8 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+/output/
+/android/app/google-services.json
 node_modules/
 .firebase/
 firebase-debug.log

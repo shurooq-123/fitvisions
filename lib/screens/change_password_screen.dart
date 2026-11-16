@@ -1,3 +1,4 @@
+import '../services/password_policy.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../widgets/custom_back_button.dart';
@@ -23,17 +24,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool loading = false;
 
   Future<void> changePassword() async {
-    final password = passwordController.text.trim();
-    final confirm = confirmController.text.trim();
+    final password = passwordController.text;
+    final confirm = confirmController.text;
 
     if (password.isEmpty || confirm.isEmpty || currentController.text.isEmpty) {
       showMessage('Please fill all fields');
       return;
     }
 
-    if (!AuthService.isValidPassword(password)) {
+    if (!PasswordPolicy.isValid(password)) {
       showMessage(
-        'Password must be 8-15 chars with uppercase, lowercase, and special character',
+        PasswordPolicy.description,
       );
       return;
     }
@@ -46,12 +47,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     try {
       setState(() => loading = true);
 
-      await AuthService.changePassword(password,
-          currentPassword: currentController.text.trim());
+      final emailSent = await AuthService.changePassword(password,
+          currentPassword: currentController.text);
 
       if (!mounted) return;
 
-      showMessage('Password changed successfully');
+      showMessage(emailSent
+          ? 'Password changed successfully. A confirmation email has been sent.'
+          : 'Password changed successfully, but the confirmation email could not be sent.');
       Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
     } catch (e) {
       showMessage(AuthService.errorMessage(e));
@@ -143,7 +146,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        'Password: 8-15 chars, uppercase, lowercase, special character',
+                        PasswordPolicy.description,
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 10, color: Colors.black54),
                       ),
@@ -169,7 +172,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                   ),
                                 )
                               : const Text(
-                                  'Continue',
+                                  'Change password',
                                   style: TextStyle(color: Colors.white),
                                 ),
                         ),

@@ -1,3 +1,4 @@
+import 'subscription_access.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -64,12 +65,16 @@ class AppDataService {
       {required Map<String, dynamic> measurements}) async {
     final user = requireUser();
     final batch = firestore.batch();
-    batch.set(firestore.collection('measurements').doc(user.uid), {
-      ...measurements,
-      ..._identity(user),
-      'imageStorage': cloudImagesEnabled ? 'firebase_storage' : 'local_only',
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    batch.set(
+        firestore.collection('measurements').doc(user.uid),
+        {
+          ...measurements,
+          ..._identity(user),
+          'imageStorage':
+              cloudImagesEnabled ? 'firebase_storage' : 'local_only',
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true));
     _history(batch, user, 'Measurements saved / updated');
     await batch.commit();
   }
@@ -123,6 +128,20 @@ class AppDataService {
     return savedPath;
   }
 
+  static Stream<Map<String, dynamic>?> subscriptionStream() => firestore
+      .collection('payments')
+      .where('uid', isEqualTo: requireUser().uid)
+      .snapshots()
+      .map((s) => SubscriptionAccess.active(s.docs.map((d) => d.data())));
+
+  static Future<bool> hasActiveSubscription() async {
+    final records = await firestore
+        .collection('payments')
+        .where('uid', isEqualTo: requireUser().uid)
+        .get(const GetOptions(source: Source.server));
+    return SubscriptionAccess.active(records.docs.map((d) => d.data())) != null;
+  }
+
   static Future<String> saveSubscription({required String planId}) async {
     final user = requireUser();
     final plan = (await firestore
@@ -130,7 +149,10 @@ class AppDataService {
             .doc(planId)
             .get(const GetOptions(source: Source.server)))
         .data();
-    if (plan == null) throw Exception('This plan is no longer available.');
+    if (plan == null ||
+        SubscriptionAccess.months((plan['price'] as num?) ?? 0) == 0) {
+      throw Exception('This plan is no longer available.');
+    }
     final ref = firestore.collection('subscriptions').doc();
     final batch = firestore.batch();
     batch.set(ref, {
@@ -161,7 +183,11 @@ class AppDataService {
             .doc(sub['planId'] as String)
             .get(const GetOptions(source: Source.server)))
         .data();
-    if (plan == null) throw Exception('This plan is no longer available.');
+    if (plan == null ||
+        plan['price'] != sub['price'] ||
+        SubscriptionAccess.months((plan['price'] as num?) ?? 0) == 0) {
+      throw Exception('This plan has changed. Choose your plan again.');
+    }
     final payment = firestore.collection('payments').doc(subscriptionId);
     // One request per subscription; an interrupted retry does not duplicate it.
     if ((await payment.get(const GetOptions(source: Source.server))).exists) {

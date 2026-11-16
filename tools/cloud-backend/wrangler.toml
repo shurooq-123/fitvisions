@@ -1,0 +1,22 @@
+name = "fitvisions-api"
+main = "src/worker.mjs"
+compatibility_date = "2026-11-02"
+workers_dev = true
+account_id = "0111d4c60ec1f60dc6c783f0b62854dd"
+
+[vars]
+FIREBASE_PROJECT = "fitvisions-33e6d"
+
+[ai]
+binding = "AI"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fitvisions-events"
+database_id = "REPLACE_AFTER_CREATE"
+
+[triggers]
+crons = ["*/10 * * * *"]
+
+[observability]
+enabled = false

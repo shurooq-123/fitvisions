@@ -1,0 +1,50 @@
+// Authentication repair only. Other app features require separate rules.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /users/{uid} {
+      allow get: if request.auth != null
+        && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasAll([
+          'uid', 'email', 'firstName', 'lastName', 'phone', 'role', 'createdAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'uid', 'email', 'firstName', 'lastName', 'phone', 'role', 'createdAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == 'user'
+        && request.resource.data.firstName is string
+        && request.resource.data.lastName is string
+        && request.resource.data.phone is string
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if request.auth != null
+        && (request.auth.uid == uid || isAdmin())
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['firstName', 'lastName', 'phone'])
+        && request.resource.data.firstName is string
+        && request.resource.data.lastName is string
+        && request.resource.data.phone is string;
+
+      allow delete: if isAdmin() && request.auth.uid != uid;
+    }
+
+    // Allow the admin dashboard to display its existing statistics.
+    match /payments/{id} {
+      allow read: if isAdmin();
+    }
+    match /feedback/{id} {
+      allow read: if isAdmin();
+    }
+  }
+}

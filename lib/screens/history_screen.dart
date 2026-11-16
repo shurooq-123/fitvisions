@@ -3,6 +3,7 @@ import '../widgets/history_preview.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/app_data_service.dart';
+import '../services/history_feed.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key, this.history});
@@ -13,7 +14,43 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  Map<String, dynamic>? selected;
+  late final Stream<List<Map<String, dynamic>>> feed;
+  @override
+  void initState() {
+    super.initState();
+    feed = widget.history != null
+        ? widget.history!.map((snapshot) => mergeHistory(
+            snapshot.docs.map((d) => d.data() as Map<String, dynamic>).toList(),
+            []))
+        : historyFeed(
+            AppDataService.userHistoryStream(),
+            AppDataService.firestore
+                .collection('subscriptions')
+                .where('uid', isEqualTo: AppDataService.requireUser().uid)
+                .snapshots());
+  }
+
+  String search = '';
+  String dateLabel(dynamic value) {
+    final date = value is Timestamp
+        ? value.toDate().toLocal()
+        : value is DateTime
+            ? value.toLocal()
+            : DateTime.tryParse(value?.toString() ?? '')?.toLocal();
+    if (date == null) return 'Date unavailable';
+    const days = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday'
+    ];
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${days[date.weekday - 1]}, ${two(date.day)}/${two(date.month)}/${date.year} • ${two(date.hour)}:${two(date.minute)}';
+  }
+
   void showDetails(Map<String, dynamic> data) =>
       showHistoryResult(context, data);
 
@@ -40,9 +77,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
             ),
             const SizedBox(height: 25),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+              child: TextField(
+                onChanged: (value) =>
+                    setState(() => search = value.trim().toLowerCase()),
+                decoration: InputDecoration(
+                  hintText: 'Search history or date',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: const Color(0xFFEFEFEF),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none),
+                ),
+              ),
+            ),
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: widget.history ?? AppDataService.userHistoryStream(),
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: feed,
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return const Center(
@@ -55,21 +108,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     );
                   }
 
-                  final items = snapshot.data!.docs.toList()
-                    ..sort((a, b) {
-                      final aTime = (a.data()
-                          as Map<String, dynamic>)['createdAt'] as Timestamp?;
-                      final bTime = (b.data()
-                          as Map<String, dynamic>)['createdAt'] as Timestamp?;
-                      return (bTime?.millisecondsSinceEpoch ?? 0)
-                          .compareTo(aTime?.millisecondsSinceEpoch ?? 0);
-                    });
+                  final items = snapshot.data!
+                      .where((item) =>
+                          '${item['title'] ?? ''} ${dateLabel(item['createdAt'])}'
+                              .toLowerCase()
+                              .contains(search))
+                      .toList();
 
                   if (items.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
-                        'No history yet',
-                        style: TextStyle(fontSize: 18),
+                        search.isEmpty
+                            ? 'No history yet'
+                            : 'No matching history',
+                        style: const TextStyle(fontSize: 18),
                       ),
                     );
                   }
@@ -78,7 +130,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 22),
                     itemCount: items.length,
                     itemBuilder: (context, index) {
-                      final data = items[index].data() as Map<String, dynamic>;
+                      final data = items[index];
 
                       final title = data['title'] ?? 'Activity';
 
@@ -94,7 +146,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ),
                         child: InkWell(
                             onTap: () {
-                              setState(() => selected = data);
                               showDetails(data);
                             },
                             child: Row(
@@ -106,7 +157,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Text(
-                                    "$title\n${data['createdAt'] is Timestamp ? (data['createdAt'] as Timestamp).toDate().toString().split(' ').first : ''}",
+                                    "$title\n${dateLabel(data['createdAt'])}",
                                     style: const TextStyle(
                                       fontSize: 15,
                                       fontFamily: 'serif',
@@ -123,32 +174,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 },
               ),
             ),
-            Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: SizedBox(
-                  width: 220,
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                        backgroundColor: const Color(0xFFEFEFEF),
-                        foregroundColor: Colors.black,
-                        shape: const StadiumBorder()),
-                    onPressed: () {
-                      if (selected != null) {
-                        showDetails(selected!);
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                            content: Text(
-                                'Select a history item to view its details.')));
-                      }
-                    },
-                    child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Text('View Details'),
-                          Icon(Icons.arrow_forward_ios, color: Colors.grey)
-                        ]),
-                  ),
-                )),
           ],
         ),
       ),

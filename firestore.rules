@@ -1,0 +1,122 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    function member() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    function admin() {
+      return member() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    function newOwner() {
+      return member() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email;
+    }
+    function ownRecord() { return member() && resource.data.uid == request.auth.uid; }
+    function text(value, max) { return value is string && value.size() > 0 && value.size() <= max; }
+    function planMatches(data) {
+      let plan = get(/databases/$(database)/documents/plans/$(data.planId)).data;
+      return data.plan == plan.name && data.price == plan.price;
+    }
+
+    match /users/{uid} {
+      allow get: if owner(uid) || admin();
+      allow list: if admin();
+      allow create: if owner(uid)
+        && request.resource.data.keys().hasAll(['uid','email','firstName','lastName','phone','role','createdAt'])
+        && request.resource.data.keys().hasOnly(['uid','email','firstName','lastName','phone','role','createdAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == 'user'
+        && text(request.resource.data.firstName, 50)
+        && text(request.resource.data.lastName, 50)
+        && request.resource.data.phone is string
+        && request.resource.data.createdAt == request.time;
+      allow update: if (owner(uid) || admin())
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['firstName','lastName','phone'])
+        && text(request.resource.data.firstName, 50)
+        && text(request.resource.data.lastName, 50)
+        && request.resource.data.phone is string;
+      allow delete: if admin() && !owner(uid);
+    }
+
+    match /plans/{id} {
+      allow read: if member();
+      allow create, update: if admin()
+        && request.resource.data.keys().hasOnly(['name','price','duration','features','createdAt','updatedAt'])
+        && text(request.resource.data.name, 100)
+        && request.resource.data.price is number && request.resource.data.price >= 0
+        && text(request.resource.data.duration, 100)
+        && text(request.resource.data.features, 4000);
+      allow delete: if admin();
+    }
+
+    match /measurements/{uid} {
+      allow read: if member() && owner(uid);
+      allow create, update: if owner(uid) && newOwner()
+        && request.resource.data.keys().hasOnly(['uid','email','measurementType','height','weight','chest','waist','hip','clothChest','clothWaist','clothShoulder','clothSleeve','clothLength','clothImagePath','personalImagePath','imageStorage','updatedAt'])
+        && request.resource.data.measurementType in ['bodyOnly','clothOnly','personalAndCloth']
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if member() && owner(uid);
+    }
+
+    match /user_uploads/{uid} {
+      allow read: if member() && owner(uid);
+      allow create, update: if owner(uid) && newOwner()
+        && request.resource.data.keys().hasOnly(['uid','email','clothImagePath','personalImagePath','imageStorage','updatedAt'])
+        && request.resource.data.imageStorage in ['local_only','firebase_storage']
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if member() && owner(uid);
+    }
+
+    match /history/{id} {
+      allow read: if ownRecord() || admin();
+      allow create: if newOwner()
+        && request.resource.data.keys().hasOnly(['uid','email','title','createdAt','kind','previewBase64'])
+        && (!('kind' in request.resource.data) || request.resource.data.kind in ['avatar','clothes'])
+        && (!('previewBase64' in request.resource.data) || (text(request.resource.data.previewBase64, 700000) && request.resource.data.kind in ['avatar','clothes']))
+        && text(request.resource.data.title, 500)
+        && request.resource.data.createdAt == request.time;
+      allow delete: if ownRecord();
+    }
+
+    match /feedback/{id} {
+      allow read: if ownRecord() || admin();
+      allow create: if newOwner()
+        && request.resource.data.keys().hasOnly(['uid','email','message','rating','createdAt'])
+        && text(request.resource.data.message, 4000)
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.createdAt == request.time;
+      allow delete: if admin();
+    }
+
+    match /subscriptions/{id} {
+      allow read: if ownRecord() || admin();
+      allow create: if newOwner()
+        && request.resource.data.keys().hasOnly(['uid','email','planId','plan','price','status','createdAt'])
+        && request.resource.data.status == 'selected'
+        && request.resource.data.planId is string
+        && planMatches(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+      // Activation must come from a trusted payment backend.
+    }
+
+    match /payments/{id} {
+      allow read: if ownRecord() || admin();
+      allow get: if member()
+        && get(/databases/$(database)/documents/subscriptions/$(id)).data.uid == request.auth.uid;
+      allow create: if newOwner()
+        && request.resource.data.keys().hasOnly(['uid','email','subscriptionId','planId','plan','amount','status','createdAt'])
+        && request.resource.data.status == 'pending'
+        && request.resource.data.subscriptionId is string
+        && get(/databases/$(database)/documents/subscriptions/$(request.resource.data.subscriptionId)).data.uid == request.auth.uid
+        && get(/databases/$(database)/documents/subscriptions/$(request.resource.data.subscriptionId)).data.planId == request.resource.data.planId
+        && request.resource.data.plan == get(/databases/$(database)/documents/plans/$(request.resource.data.planId)).data.name
+        && request.resource.data.amount == get(/databases/$(database)/documents/plans/$(request.resource.data.planId)).data.price
+        && request.resource.data.createdAt == request.time;
+      // Clients cannot mark a payment as paid or write card information.
+    }
+  }
+}

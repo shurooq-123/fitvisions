@@ -27,6 +27,39 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                      android:host="fitvisions-33e6d.firebaseapp.com"
+                      android:path="/login" />
+            </intent-filter>
+
+        </activity>
+
+        <activity
+            android:name=".PasswordResetLinkActivity"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                      android:host="fitvisions-33e6d.firebaseapp.com"
+                      android:path="/__/auth/action" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="fitvisions-33e6d.firebaseapp.com" />
+                <data android:host="fitvisions-33e6d.web.app" />
+                <data android:path="/__/auth/links" />
+            </intent-filter>
         </activity>
 
         <meta-data
