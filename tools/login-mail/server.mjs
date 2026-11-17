@@ -1,3 +1,4 @@
+import {deliverEvent} from './event-notifications.mjs';
 import http from 'node:http';
 import {randomBytes} from 'node:crypto';
 import {writeFile, readFile} from 'node:fs/promises';
@@ -135,14 +136,18 @@ const server = http.createServer(async (req, res) => {
         throw error;
       }
     }
-    if (!['/login','/registration','/password-changed'].includes(req.url) || req.method !== 'POST') return reply(res,404,{error:'Not found'});
-    if (!transport) return reply(res,503,{error:'Sender email is not connected yet.'});
+    if (!['/login','/registration','/password-changed','/event'].includes(req.url) || req.method !== 'POST') return reply(res,404,{error:'Not found'});
+    if (!transport && req.url !== '/event') return reply(res,503,{error:'Sender email is not connected yet.'});
     if (req.headers.origin) return reply(res,403,{error:'Forbidden'});
     const token = (req.headers.authorization || '').replace(/^Bearer /,'');
     let claims;
     try {
       ({payload:claims} = await jwtVerify(token, keys, {algorithms:['RS256'],audience:project,issuer:`https://securetoken.google.com/${project}`}));
     } catch { return reply(res,401,{error:'Sign in again.'}); }
+    if (req.url === '/event') {
+      const result = await deliverEvent(await body(req), claims, token, transport, sender);
+      return reply(res,result.status,{accepted:result.status === 200});
+    }
     const now = Math.floor(Date.now()/1000);
     if (!claims.sub || !claims.email || !Number.isInteger(claims.auth_time) || now - claims.auth_time > 300 || claims.auth_time > now + 30) return reply(res,401,{error:'A recent login is required.'});
     // Read the role under the caller's own Firestore rules, never trust a client email or role.

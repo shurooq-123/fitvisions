@@ -1,3 +1,4 @@
+import 'event_notification_service.dart';
 import 'dart:async';
 import 'package:path_provider/path_provider.dart';
 import 'subscription_access.dart';
@@ -56,8 +57,11 @@ class AppDataService {
     if (preview.length > 700000) throw StateError('Preview too large');
     final record = firestore.collection('history').doc(recordId);
     if (recordId != null &&
-        (await record.get(const GetOptions(source: Source.server))).exists)
+        (await record.get(const GetOptions(source: Source.server))).exists) {
+      await EventNotificationService.enqueue(
+          'generation', record.id, 'تم حفظ التصميم | Design saved');
       return;
+    }
     await record.set({
       ..._identity(user),
       'title': title.length > 500 ? title.substring(0, 500) : title,
@@ -65,6 +69,8 @@ class AppDataService {
       'previewBase64': preview,
       'createdAt': FieldValue.serverTimestamp(),
     });
+    await EventNotificationService.enqueue('generation', record.id,
+        'تم إنشاء التصميم بنجاح | Your design has been created.');
   }
 
   static Future<void> saveOrUpdateMeasurements(
@@ -214,6 +220,8 @@ class AppDataService {
     final payment = firestore.collection('payments').doc(subscriptionId);
     // One request per subscription; an interrupted retry does not duplicate it.
     if ((await payment.get(const GetOptions(source: Source.server))).exists) {
+      await EventNotificationService.enqueue(
+          'payment', payment.id, 'تم حفظ الدفع | Payment saved');
       return;
     }
     final batch = firestore.batch();
@@ -230,6 +238,8 @@ class AppDataService {
     });
     _history(batch, user, 'Payment request submitted (not charged)');
     await batch.commit();
+    await EventNotificationService.enqueue('payment', payment.id,
+        'تم تسجيل الدفع التجريبي: ${sub['price']} OMR، ${SubscriptionAccess.planMonths(sub)} شهر | Demo payment recorded: ${sub['price']} OMR, ${SubscriptionAccess.planMonths(sub)} months.');
   }
 
   static Future<void> sendFeedback(String message,

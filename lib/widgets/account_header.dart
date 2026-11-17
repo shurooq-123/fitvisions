@@ -64,12 +64,21 @@ class AccountHeader extends StatelessWidget {
                                   child: const Icon(
                                       Icons.notifications_outlined)));
                         }),
-                    IconButton(
-                        tooltip: 'Download and share reports',
-                        icon: const Icon(Icons.description_outlined),
-                        onPressed: () => NotificationService
-                            .navigator.currentState!
-                            .pushNamed('/reports')),
+                    StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                        stream: FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(user.uid)
+                            .snapshots(),
+                        builder: (_, snapshot) =>
+                            snapshot.data?.data()?['role'] == 'admin'
+                                ? IconButton(
+                                    tooltip: 'Download and share reports',
+                                    icon:
+                                        const Icon(Icons.description_outlined),
+                                    onPressed: () => NotificationService
+                                        .navigator.currentState!
+                                        .pushNamed('/reports'))
+                                : const SizedBox.shrink()),
                   ])));
         });
   }

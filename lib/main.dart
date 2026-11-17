@@ -1,3 +1,4 @@
+import 'services/event_notification_service.dart';
 import 'dart:async';
 import 'services/notification_service.dart';
 import 'widgets/app_shell.dart';
@@ -42,6 +43,7 @@ void main() async {
   await Appearance.load();
 
   runApp(const FitVisionsApp());
+  unawaited(EventNotificationService.start());
   unawaited(NotificationService.start().catchError((_) {
     NotificationService.status.value =
         'Push notifications unavailable. Retry in Notifications.';

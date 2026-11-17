@@ -33,6 +33,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               .get(const GetOptions(source: Source.server)))
           .data();
       final admin = profile?['role'] == 'admin';
+      if (!admin) throw StateError('Administrator access required');
       final name =
           '${profile?['firstName'] ?? ''} ${profile?['lastName'] ?? ''}'.trim();
       final collection = {
@@ -41,9 +42,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         'Feedback': 'feedback'
       }[selected]!;
       Query<Map<String, dynamic>> query = db.collection(collection);
-      if (!admin) {
-        query = query.where('uid', isEqualTo: user.uid);
-      } else if (filterUid?.trim().isNotEmpty == true) {
+      if (filterUid?.trim().isNotEmpty == true) {
         query = query.where('uid', isEqualTo: filterUid!.trim());
       }
       final records = (await query.get(const GetOptions(source: Source.server)))
@@ -69,7 +68,26 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => PrototypePage(
+  Widget build(BuildContext context) {
+    final uid = AppDataService.uid;
+    if (uid == null)
+      return const Scaffold(
+          body: Center(child: Text('Administrator access required')));
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream:
+            AppDataService.firestore.collection('users').doc(uid).snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting)
+            return const Scaffold(
+                body: Center(child: CircularProgressIndicator()));
+          if (snapshot.data?.data()?['role'] != 'admin')
+            return const Scaffold(
+                body: Center(child: Text('Administrator access required')));
+          return reportContent(context);
+        });
+  }
+
+  Widget reportContent(BuildContext context) => PrototypePage(
       nav: false,
       title: 'Reports',
       child: Column(children: [
@@ -85,8 +103,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       pdf = null;
                     })),
         const SizedBox(height: 16),
-        const Text(
-            'Reports contain your records. Administrators can export system-wide records. Keep downloaded reports private.'),
+        const Text('Administrator reports. Keep downloaded reports private.'),
         const SizedBox(height: 16),
         PrototypeButton('Generate report', onPressed: busy ? null : generate),
         if (busy) const LinearProgressIndicator(),
