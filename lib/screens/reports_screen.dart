@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -69,10 +70,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     final uid = AppDataService.uid;
     if (uid == null)
       return const Scaffold(
-          body: Center(child: Text('Administrator access required')));
+          body: Center(child: AppText('Administrator access required')));
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream:
             AppDataService.firestore.collection('users').doc(uid).snapshots(),
@@ -82,7 +84,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 body: Center(child: CircularProgressIndicator()));
           if (snapshot.data?.data()?['role'] != 'admin')
             return const Scaffold(
-                body: Center(child: Text('Administrator access required')));
+                body: Center(child: AppText('Administrator access required')));
           return reportContent(context);
         });
   }
@@ -94,7 +96,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         DropdownButtonFormField<String>(
             initialValue: selected,
             items: ['Activity', 'Subscriptions and payments', 'Feedback']
-                .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                .map((s) => DropdownMenuItem(value: s, child: AppText(s)))
                 .toList(),
             onChanged: busy
                 ? null
@@ -103,19 +105,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       pdf = null;
                     })),
         const SizedBox(height: 16),
-        const Text('Administrator reports. Keep downloaded reports private.'),
+        const AppText(
+            'Administrator reports. Keep downloaded reports private.'),
         const SizedBox(height: 16),
         PrototypeButton('Generate report', onPressed: busy ? null : generate),
         if (busy) const LinearProgressIndicator(),
         if (error != null)
-          Text(error!, style: const TextStyle(color: Colors.red)),
+          AppText(error!, style: const TextStyle(color: Colors.red)),
         if (pdf != null) ...[
           const SizedBox(height: 16),
-          const Text('Report ready'),
+          const AppText('Report ready'),
           Wrap(spacing: 8, children: [
             TextButton.icon(
                 icon: const Icon(Icons.download),
-                label: const Text('Save PDF / Print'),
+                label: const AppText('Save PDF / Print'),
                 onPressed: () async {
                   try {
                     await Printing.layoutPdf(
@@ -123,14 +126,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   } catch (_) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text(
+                          content: AppText(
                               'Could not open PDF export. Try Share PDF.')));
                     }
                   }
                 }),
             TextButton.icon(
                 icon: const Icon(Icons.share),
-                label: const Text('Share PDF'),
+                label: const AppText('Share PDF'),
                 onPressed: () async {
                   try {
                     await Printing.sharePdf(
@@ -138,7 +141,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   } catch (_) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text(
+                          content: AppText(
                               'Could not share the report. Please retry.')));
                     }
                   }

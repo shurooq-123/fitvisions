@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'dart:async';
 import 'dart:math';
@@ -146,7 +147,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: brown),
+      SnackBar(content: AppText(message), backgroundColor: brown),
     );
   }
 
@@ -227,6 +228,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
@@ -257,14 +259,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Center(
-                            child: Text(
+                            child: AppText(
                               'REGISTER',
                               style: TextStyle(fontSize: 21),
                             ),
                           ),
                           const SizedBox(height: 18),
                           if (emailConfirmed)
-                            const Text(
+                            const AppText(
                                 'Email confirmed. Enter your details to finish.'),
                           label('First Name'),
                           normalField(
@@ -274,13 +276,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               final name = value!.trim();
 
                               if (name.isEmpty) {
-                                return 'First name is required';
+                                return tr('First name is required');
                               }
 
                               if (!RegExp(
                                 r'^[a-zA-Z\u0600-\u06FF]{1,15}$',
                               ).hasMatch(name)) {
-                                return 'Only one word and maximum 15 letters';
+                                return tr(
+                                    'Only one word and maximum 15 letters');
                               }
 
                               return null;
@@ -294,13 +297,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               final name = value!.trim();
 
                               if (name.isEmpty) {
-                                return 'Last name is required';
+                                return tr('Last name is required');
                               }
 
                               if (!RegExp(
                                 r'^[a-zA-Z\u0600-\u06FF]{1,15}$',
                               ).hasMatch(name)) {
-                                return 'Only one word and maximum 15 letters';
+                                return tr(
+                                    'Only one word and maximum 15 letters');
                               }
 
                               return null;
@@ -318,11 +322,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               final email = value!.trim();
 
                               if (email.isEmpty) {
-                                return 'Email is required';
+                                return tr('Email is required');
                               }
 
                               if (!AuthService.isValidEmail(email)) {
-                                return 'Enter a valid email address';
+                                return tr('Enter a valid email address');
                               }
 
                               return null;
@@ -341,11 +345,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               final password = value!.trim();
 
                               if (password.isEmpty) {
-                                return 'Password is required';
+                                return tr('Password is required');
                               }
 
                               if (!AuthService.isValidPassword(password)) {
-                                return 'At least 8 chars, uppercase, lowercase, number, special char';
+                                return tr(
+                                    'At least 8 chars, uppercase, lowercase, number, special char');
                               }
 
                               return null;
@@ -364,19 +369,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               final confirmPassword = value!.trim();
 
                               if (confirmPassword.isEmpty) {
-                                return 'Confirm password is required';
+                                return tr('Confirm password is required');
                               }
 
                               if (confirmPassword !=
                                   passwordController.text.trim()) {
-                                return 'Passwords do not match';
+                                return tr('Passwords do not match');
                               }
 
                               return null;
                             },
                           ),
                           const SizedBox(height: 8),
-                          Text(
+                          AppText(
                             'Password: At least 8 chars, uppercase, lowercase, number, special character',
                             style: TextStyle(
                               fontSize: 10,
@@ -411,7 +416,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           color: Colors.white,
                                         ),
                                       )
-                                    : const Text(
+                                    : const AppText(
                                         'Register',
                                         style: TextStyle(
                                           color: Colors.white,
@@ -422,11 +427,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                           if (linkSent && !emailConfirmed) ...[
-                            const Text(
+                            const AppText(
                                 'Waiting for your email confirmation. You can open it on another device.'),
                             TextButton(
                               onPressed: loading ? null : _cancelWaiting,
-                              child: const Text('Cancel request'),
+                              child: const AppText('Cancel request'),
                             ),
                           ],
                         ],
@@ -445,7 +450,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget label(String text) {
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 4),
-      child: Text(
+      child: AppText(
         text,
         style: const TextStyle(fontSize: 14),
       ),
@@ -463,11 +468,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       controller: controller,
       keyboardType: keyboard,
       readOnly: readOnly,
-      validator: validator,
+      validator: (value) => trError(validator(value)),
       autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         isDense: true,
-        hintText: hint,
+        hintText: trError(hint),
         filled: true,
         fillColor: AppColors.field(context),
         contentPadding: prototypeFieldPadding,
@@ -485,7 +490,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             color: Colors.transparent,
             child: ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text('${phoneCountry.name} (+${phoneCountry.phoneCode})',
+              title: AppText(
+                  '${phoneCountry.getTranslatedName(context) ?? phoneCountry.name} (+${phoneCountry.phoneCode})',
                   style: const TextStyle(fontSize: 14)),
               trailing: const Icon(Icons.arrow_drop_down),
               onTap: () => showCountryPicker(
@@ -504,7 +510,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           autovalidateMode: AutovalidateMode.onUserInteraction,
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Mobile number is required';
+              return tr('Mobile number is required');
             }
             if (internationalMobile(value, phoneCountry.countryCode) == null) {
               return phoneCountry.countryCode == 'OM'
@@ -537,11 +543,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return TextFormField(
       controller: controller,
       obscureText: hide,
-      validator: validator,
+      validator: (value) => trError(validator(value)),
       autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         isDense: true,
-        hintText: '',
+        hintText: trError(''),
         filled: true,
         fillColor: AppColors.field(context),
         contentPadding: prototypeFieldPadding,

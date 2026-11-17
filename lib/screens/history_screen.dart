@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import '../widgets/prototype_ui.dart';
 import '../widgets/history_preview.dart';
@@ -60,6 +61,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
@@ -71,7 +73,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_ios, size: 30))),
             const SizedBox(height: 25),
-            const Text(
+            const AppText(
               'History',
               style: TextStyle(
                 fontSize: 22,
@@ -85,7 +87,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 onChanged: (value) =>
                     setState(() => search = value.trim().toLowerCase()),
                 decoration: InputDecoration(
-                  hintText: 'Search history or date',
+                  hintText: trError('Search history or date'),
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
                   fillColor: AppColors.field(context, const Color(0xFFEFEFEF)),
@@ -100,9 +102,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 value: newestFirst,
                 items: const [
                   DropdownMenuItem(
-                      value: true, child: Text('Newest to oldest')),
+                      value: true, child: AppText('Newest to oldest')),
                   DropdownMenuItem(
-                      value: false, child: Text('Oldest to newest'))
+                      value: false, child: AppText('Oldest to newest'))
                 ],
                 onChanged: (v) => setState(() => newestFirst = v ?? true)),
             Expanded(
@@ -111,7 +113,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return const Center(
-                        child: Text(
+                        child: AppText(
                             'Could not load history. Check your connection and try again.'));
                   }
                   if (!snapshot.hasData) {
@@ -135,7 +137,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   }
                   if (items.isEmpty) {
                     return Center(
-                      child: Text(
+                      child: AppText(
                         search.isEmpty
                             ? 'No history yet'
                             : 'No matching history',
@@ -174,7 +176,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     child: HistoryPreview(data)),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: Text(
+                                  child: AppText(
                                     "$title\n${dateLabel(data['createdAt'])}",
                                     style: const TextStyle(
                                       fontSize: 15,

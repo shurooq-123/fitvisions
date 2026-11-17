@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -149,21 +150,21 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Delete Plan'),
-          content: Text('Delete "$name"?'),
+          title: const AppText('Delete Plan'),
+          content: AppText('Delete "$name"?'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Cancel'),
+              child: const AppText('Cancel'),
             ),
             TextButton(
               onPressed: () async {
                 Navigator.pop(context);
                 await deletePlan(id);
               },
-              child: const Text('Delete'),
+              child: const AppText('Delete'),
             ),
           ],
         );
@@ -174,7 +175,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
   void showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(text),
+        content: AppText(text),
         backgroundColor: brown,
       ),
     );
@@ -191,6 +192,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     final showForm = showAddForm || editingId != null;
 
     return Scaffold(
@@ -203,7 +205,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 28),
-                  const Text(
+                  const AppText(
                     'Subscription Plans',
                     style: TextStyle(
                       fontSize: 24,
@@ -222,7 +224,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
+                      child: const AppText(
                         'Add New Plan',
                         style: TextStyle(
                           color: Colors.white,
@@ -254,7 +256,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
                       if (plans.isEmpty) {
                         return const Padding(
                           padding: EdgeInsets.all(20),
-                          child: Text('No plans yet'),
+                          child: AppText('No plans yet'),
                         );
                       }
 
@@ -296,7 +298,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          AppText(
             editingId == null ? 'Add New Plan' : 'Edit Selected Plan',
             style: const TextStyle(
               fontSize: 19,
@@ -315,7 +317,8 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
             controller: featuresController,
             maxLines: 4,
             decoration: InputDecoration(
-              hintText: 'Unlimited try-ons\nSave your looks\nNo watermark',
+              hintText:
+                  trError('Unlimited try-ons\nSave your looks\nNo watermark'),
               filled: true,
               fillColor: AppColors.field(context),
               border: const OutlineInputBorder(),
@@ -339,7 +342,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : Text(
+                      : AppText(
                           editingId == null ? 'Add' : 'Update',
                           style: const TextStyle(color: Colors.white),
                         ),
@@ -349,7 +352,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: clearForm,
-                  child: const Text('Cancel'),
+                  child: const AppText('Cancel'),
                 ),
               ),
             ],
@@ -395,7 +398,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
+                child: AppText(
                   name,
                   style: const TextStyle(
                     fontSize: 18,
@@ -404,14 +407,14 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
                 ),
               ),
               IconButton(
-                tooltip: 'Edit plan',
+                tooltip: tr('Edit plan'),
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 48),
                 padding: EdgeInsets.zero,
                 onPressed: () => fillForm(id, data),
                 icon: const Icon(Icons.edit),
               ),
               IconButton(
-                tooltip: 'Delete plan',
+                tooltip: tr('Delete plan'),
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 48),
                 padding: EdgeInsets.zero,
                 onPressed: () => confirmDelete(id, name),
@@ -420,7 +423,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
             ],
           ),
           const SizedBox(height: 6),
-          Text(
+          AppText(
             '$price OMR / $duration',
             style: const TextStyle(
               fontSize: 16,
@@ -428,7 +431,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          AppText(
             features,
             style: const TextStyle(fontSize: 13),
           ),
@@ -440,7 +443,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
   Widget label(String text) {
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 4),
-      child: Text(text),
+      child: AppText(text),
     );
   }
 
@@ -448,7 +451,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
     return TextField(
       controller: controller,
       decoration: InputDecoration(
-        hintText: hint,
+        hintText: trError(hint),
         filled: true,
         fillColor: AppColors.field(context),
         border: const OutlineInputBorder(),

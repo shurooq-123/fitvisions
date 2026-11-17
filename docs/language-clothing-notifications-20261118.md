@@ -1,0 +1,10 @@
+# Clothing categories, language and notification badge — 18 November 2026
+
+- The local AI bridge classifies the uploaded garment (not the wearer's identity) as male, female, unisex or unknown. Generation checks that classification against the selected avatar gender before calling the image generator. A mismatch is rejected; uncertain images require a clearer reference. Changing the reference invalidates the cache. Unisex is accepted for either selected gender.
+- Both avatar generation prompts and clothing-design prompts explicitly preserve the selected adult gender. Measured-avatar prompts retain the supplied dimensions and instruct the model not to copy the reference model's body. This is still probabilistic image generation, not verified physical garment fit.
+- English/Arabic is selectable below appearance settings in the user profile and the admin account menu. The choice persists on the device. Flutter localization supplies RTL, localized date pickers and country names. Presentation translations do not change saved answer keys or AI prompt inputs. User-authored content is not machine-translated.
+- Opening notification history marks displayed unread records as read. Existing Firestore streams update the badge. Each record is auto-marked once per visit, so manual marking as unread remains available. Failed writes show an error rather than pretending to persist.
+
+Validation: 211 Flutter tests passed, including 21 small-screen Arabic layout cases, language persistence/direction, retaining typed form input, rejecting garment mismatches before generation, unisex gender/measurement prompts, and automatic notification reads. Local vision endpoint tested against repository sample images: bridal_satin=female; traditional_male=male; nurse_male=unisex. These three cases do not establish universal classifier accuracy. Dart analyzer has no errors/warnings; informational lint findings remain.
+
+Runtime: the local AI bridge was restarted with the user's re-entered key and the existing installed app session. It remains a laptop/USB development connection. Credentials are not included in Git. No paid plan or cloud backend deployment was added.

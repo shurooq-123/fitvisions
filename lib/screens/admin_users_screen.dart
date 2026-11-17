@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -26,16 +27,16 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           .call({'uid': id});
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Account archived; transaction records retained.')));
+          content: AppText('Account archived; transaction records retained.')));
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e.message ?? 'Could not archive this account.')));
+          content: AppText(e.message ?? 'Could not archive this account.')));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content:
-              Text('Could not contact the server. No records were deleted.')));
+          content: AppText(
+              'Could not contact the server. No records were deleted.')));
     }
   }
 
@@ -44,22 +45,22 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Archive User'),
-          content: Text(
+          title: const AppText('Archive User'),
+          content: AppText(
               'Archive this account? Active subscriptions must expire first. Account: "$name"?'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Cancel'),
+              child: const AppText('Cancel'),
             ),
             TextButton(
               onPressed: () async {
                 Navigator.pop(context);
                 await deleteUser(id);
               },
-              child: const Text('Delete'),
+              child: const AppText('Delete'),
             ),
           ],
         );
@@ -75,6 +76,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
@@ -94,7 +96,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            const AppText(
               'Users',
               style: TextStyle(
                 fontSize: 22,
@@ -120,8 +122,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         .replaceAll(RegExp(r'\s+'), ' ');
                   });
                 },
-                decoration: const InputDecoration(
-                  hintText: 'Search users',
+                decoration: InputDecoration(
+                  hintText: trError('Search users'),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -162,7 +164,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
                   if (users.isEmpty) {
                     return const Center(
-                      child: Text('No users found'),
+                      child: AppText('No users found'),
                     );
                   }
 
@@ -215,7 +217,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       child: Row(
         children: [
           Expanded(
-            child: Text(
+            child: AppText(
               '$name\n$email',
               style: const TextStyle(
                 fontSize: 14,
@@ -224,7 +226,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             ),
           ),
           IconButton(
-              tooltip: 'View user history',
+              tooltip: tr('View user history'),
               icon: Icon(Icons.history, color: AppColors.accent(context)),
               onPressed: () => Navigator.push(
                   context,
@@ -232,7 +234,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                       builder: (_) => AdminUserHistoryScreen(
                           uid: id, name: name, firestore: widget.firestore)))),
           IconButton(
-              tooltip: 'Delete user',
+              tooltip: tr('Delete user'),
               onPressed: () => confirmDelete(id, name),
               icon: const Icon(Icons.delete, color: Colors.red)),
         ],

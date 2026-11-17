@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -28,15 +29,18 @@ class _DressReferencePreviewState extends State<DressReferencePreview> {
   }
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<Uint8List>(
-      future: bytes,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) return const Icon(Icons.broken_image_outlined);
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        return Image.memory(snapshot.data!, fit: BoxFit.contain);
-      });
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => FutureBuilder<Uint8List>(
+          future: bytes,
+          builder: (context, snapshot) {
+            if (snapshot.hasError)
+              return const Icon(Icons.broken_image_outlined);
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            return Image.memory(snapshot.data!, fit: BoxFit.contain);
+          }));
 }
 
 Future<DressReference?> chooseDressReference(
@@ -51,8 +55,8 @@ Future<DressReference?> chooseDressReference(
               height: MediaQuery.sizeOf(context).height * .85,
               child: Column(children: [
                 ListTile(
-                    title: const Text('Dress reference library'),
-                    subtitle: const Text(
+                    title: const AppText('Dress reference library'),
+                    subtitle: const AppText(
                         'Closest choices first. Fabric and occasions are visual suggestions, not verified product details.'),
                     trailing: IconButton(
                         onPressed: () => Navigator.pop(context),
@@ -62,7 +66,7 @@ Future<DressReference?> chooseDressReference(
                         ? const Center(
                             child: Padding(
                                 padding: EdgeInsets.all(24),
-                                child: Text(
+                                child: AppText(
                                     'These references are women’s occasion dresses. Select Female and an appropriate occasion. No references are available here for children, teens or abayas.',
                                     textAlign: TextAlign.center)))
                         : GridView.builder(
@@ -86,14 +90,14 @@ Future<DressReference?> chooseDressReference(
                                                 child: DressReferencePreview(
                                                     ref,
                                                     key: ValueKey(ref.id))),
-                                            Text('${ref.id} · ${ref.colour}',
+                                            AppText('${ref.id} · ${ref.colour}',
                                                 style: const TextStyle(
                                                     fontWeight:
                                                         FontWeight.bold)),
-                                            Text(
+                                            AppText(
                                                 '${ref.length} · ${ref.cut}\n${ref.neckline} · ${ref.sleeves}\n${ref.fabric} appearance · ${ref.style}',
                                                 textAlign: TextAlign.center),
-                                            Text('Use reference',
+                                            AppText('Use reference',
                                                 style: TextStyle(
                                                     color: AppColors.ink(
                                                         context,

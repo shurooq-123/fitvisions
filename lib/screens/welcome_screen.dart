@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -9,6 +10,7 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
@@ -63,7 +65,7 @@ class WelcomeScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                             ),
-                            child: const Text(
+                            child: const AppText(
                               'About us',
                               style: TextStyle(
                                 color: Colors.white,
@@ -101,7 +103,7 @@ class WelcomeScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
           ),
         ),
-        child: Text(
+        child: AppText(
           text,
           style: const TextStyle(
             color: Colors.white,

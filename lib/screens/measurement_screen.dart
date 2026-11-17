@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../services/app_data_service.dart';
@@ -63,7 +64,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
   void showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(text),
+        content: AppText(text),
         backgroundColor: brown,
       ),
     );
@@ -81,6 +82,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
@@ -108,7 +110,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Center(
-                          child: Text(
+                          child: AppText(
                             'Measurements',
                             style: TextStyle(
                               fontSize: 22,
@@ -149,7 +151,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : const Text(
+                                  : const AppText(
                                       'Save measurements',
                                       style: TextStyle(
                                         color: Colors.white,
@@ -174,7 +176,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
   Widget label(String text) {
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 4),
-      child: Text(
+      child: AppText(
         text,
         style: const TextStyle(fontSize: 14),
       ),
@@ -188,7 +190,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
         controller: controller,
         keyboardType: TextInputType.number,
         decoration: InputDecoration(
-          hintText: hint,
+          hintText: trError(hint),
           filled: true,
           fillColor: AppColors.field(context),
           contentPadding: const EdgeInsets.symmetric(horizontal: 10),

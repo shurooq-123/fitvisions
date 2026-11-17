@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../services/measurement_avatar.dart';
@@ -83,83 +84,86 @@ class _MeasurementAvatarScreenState extends State<MeasurementAvatarScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => PrototypePage(
-      title: 'Measured Avatar',
-      child: Column(children: [
-        const Text(
-            'A geometric mannequin built locally from your measurements. No AI guesses are used for its four measured dimensions.',
-            textAlign: TextAlign.center),
-        SizedBox(
-            height: 370,
-            width: 280,
-            child: CustomPaint(
-                painter: MeasurementAvatarPainter(model, angle: angle))),
-        Slider(
-            value: angle,
-            min: -math.pi,
-            max: math.pi,
-            label: 'View angle',
-            onChanged: busy ? null : (v) => setState(() => angle = v)),
-        Form(
-            key: form,
-            child: Column(children: [
-              for (final e in fields.entries)
-                Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: TextFormField(
-                      controller: e.value,
-                      enabled: !busy,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(
-                          labelText: e.key,
-                          suffixText: 'cm',
-                          border: const OutlineInputBorder()),
-                      validator: (v) {
-                        final n = double.tryParse(v ?? '');
-                        return n == null ||
-                                !n.isFinite ||
-                                n <= 0 ||
-                                n > (e.key == 'Height' ? 250 : 300)
-                            ? 'Enter a valid ${e.key.toLowerCase()} in cm'
-                            : null;
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => PrototypePage(
+          title: 'Measured Avatar',
+          child: Column(children: [
+            const AppText(
+                'A geometric mannequin built locally from your measurements. No AI guesses are used for its four measured dimensions.',
+                textAlign: TextAlign.center),
+            SizedBox(
+                height: 370,
+                width: 280,
+                child: CustomPaint(
+                    painter: MeasurementAvatarPainter(model, angle: angle))),
+            Slider(
+                value: angle,
+                min: -math.pi,
+                max: math.pi,
+                label: 'View angle',
+                onChanged: busy ? null : (v) => setState(() => angle = v)),
+            Form(
+                key: form,
+                child: Column(children: [
+                  for (final e in fields.entries)
+                    Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: TextFormField(
+                          controller: e.value,
+                          enabled: !busy,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          decoration: InputDecoration(
+                              labelText: tr(e.key),
+                              suffixText: 'cm',
+                              border: const OutlineInputBorder()),
+                          validator: (v) {
+                            final n = double.tryParse(v ?? '');
+                            return n == null ||
+                                    !n.isFinite ||
+                                    n <= 0 ||
+                                    n > (e.key == 'Height' ? 250 : 300)
+                                ? 'Enter a valid ${e.key.toLowerCase()} in cm'
+                                : null;
+                          },
+                        ))
+                ])),
+            TextButton(
+                onPressed: busy ? null : updateModel,
+                child: const AppText('Update body')),
+            for (final e in model.measured.entries)
+              AppText('${e.key}: ${e.value.toStringAsFixed(2)} cm on mesh'),
+            const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: AppText(
+                    'Height and torso loop lengths match the entered values. Body depth, limbs and head are estimated. Weight does not uniquely determine shape. This is not a body scan or a clothing-fit simulation. Personal and garment photos do not change this geometric mannequin.',
+                    textAlign: TextAlign.center)),
+            if (error != null)
+              AppText(error!, style: const TextStyle(color: Colors.red)),
+            if (busy) const CircularProgressIndicator(),
+            PrototypeButton('Save avatar', onPressed: busy ? null : save),
+            TextButton(
+                onPressed: busy
+                    ? null
+                    : () async {
+                        if (!updateModel()) return;
+                        setState(() => busy = true);
+                        try {
+                          final bytes = await renderMeasurementAvatar(model);
+                          if (!context.mounted) return;
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => AvatarComparisonScreen(
+                                      bodyImage: bytes,
+                                      measurements: model.dimensions.map(
+                                          (k, v) =>
+                                              MapEntry(k, v.toString())))));
+                        } finally {
+                          if (mounted) setState(() => busy = false);
+                        }
                       },
-                    ))
-            ])),
-        TextButton(
-            onPressed: busy ? null : updateModel,
-            child: const Text('Update body')),
-        for (final e in model.measured.entries)
-          Text('${e.key}: ${e.value.toStringAsFixed(2)} cm on mesh'),
-        const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Text(
-                'Height and torso loop lengths match the entered values. Body depth, limbs and head are estimated. Weight does not uniquely determine shape. This is not a body scan or a clothing-fit simulation. Personal and garment photos do not change this geometric mannequin.',
-                textAlign: TextAlign.center)),
-        if (error != null)
-          Text(error!, style: const TextStyle(color: Colors.red)),
-        if (busy) const CircularProgressIndicator(),
-        PrototypeButton('Save avatar', onPressed: busy ? null : save),
-        TextButton(
-            onPressed: busy
-                ? null
-                : () async {
-                    if (!updateModel()) return;
-                    setState(() => busy = true);
-                    try {
-                      final bytes = await renderMeasurementAvatar(model);
-                      if (!context.mounted) return;
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => AvatarComparisonScreen(
-                                  bodyImage: bytes,
-                                  measurements: model.dimensions.map(
-                                      (k, v) => MapEntry(k, v.toString())))));
-                    } finally {
-                      if (mounted) setState(() => busy = false);
-                    }
-                  },
-            child: const Text('Compare AI models')),
-      ]));
+                child: const AppText('Compare AI models')),
+          ])));
 }

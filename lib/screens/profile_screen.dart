@@ -1,3 +1,5 @@
+import '../services/app_language.dart';
+import '../widgets/language_selector.dart';
 import '../widgets/subscription_summary.dart';
 import '../widgets/prototype_ui.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,15 +15,17 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     final user = FirebaseAuth.instance.currentUser;
     return PrototypePage(
         title: 'Profile',
         index: 1,
         child: Column(children: [
           const _AppearanceSwitch(),
+          const LanguageSelector(),
           const SizedBox(height: 18),
           user == null
-              ? const Text('No user logged in')
+              ? const AppText('No user logged in')
               : FutureBuilder<DocumentSnapshot>(
                   future: FirebaseFirestore.instance
                       .collection('users')
@@ -29,7 +33,7 @@ class ProfileScreen extends StatelessWidget {
                       .get(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
-                      return const Text(
+                      return const AppText(
                           'Could not load profile. Please try again.');
                     }
                     if (snapshot.connectionState != ConnectionState.done) {
@@ -58,15 +62,16 @@ class ProfileScreen extends StatelessWidget {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                        Text(name.isEmpty ? 'User' : name),
+                                        AppText(name.isEmpty ? 'User' : name),
                                         const SizedBox(height: 5),
-                                        Text(data['email'] ?? user.email ?? '',
+                                        AppText(
+                                            data['email'] ?? user.email ?? '',
                                             style:
                                                 const TextStyle(fontSize: 12)),
                                         if ((data['phone'] ?? '')
                                             .toString()
                                             .isNotEmpty)
-                                          Text(
+                                          AppText(
                                               '${data['phone']}'.startsWith('+')
                                                   ? '${data['phone']}'
                                                   : '+968 ${data['phone']}',
@@ -118,7 +123,7 @@ class ProfileScreen extends StatelessWidget {
     return showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-              title: Text(showPayment ? 'Payment details' : 'Subscription'),
+              title: AppText(showPayment ? 'Payment details' : 'Subscription'),
               scrollable: true,
               content: SubscriptionSummary(
                 showPayment: showPayment,
@@ -130,7 +135,7 @@ class ProfileScreen extends StatelessWidget {
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(dialogContext),
-                    child: const Text('Close')),
+                    child: const AppText('Close')),
               ],
             ));
   }
@@ -140,7 +145,7 @@ class ProfileScreen extends StatelessWidget {
       ListTile(
           dense: true,
           leading: Icon(icon, color: AppColors.accent(context), size: 23),
-          title: Text(text,
+          title: AppText(text,
               style: const TextStyle(fontFamily: 'serif', fontSize: 16)),
           trailing:
               const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 23),
@@ -152,13 +157,14 @@ class _AppearanceSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     final dark = Theme.of(context).brightness == Brightness.dark;
     return PrototypePanel(
       radius: 24,
       padding: 4,
       child: SwitchListTile(
-        title: const Text('Dark mode'),
-        subtitle: Text(dark ? 'Dark' : 'Light'),
+        title: const AppText('Dark mode'),
+        subtitle: AppText(dark ? 'Dark' : 'Light'),
         secondary:
             Icon(dark ? Icons.dark_mode_outlined : Icons.light_mode_outlined),
         value: dark,

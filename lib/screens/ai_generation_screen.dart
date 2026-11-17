@@ -1,3 +1,5 @@
+import '../services/app_language.dart';
+import '../services/clothing_compatibility.dart';
 import '../constants/app_colors.dart';
 import 'dart:io';
 import 'dart:math';
@@ -36,6 +38,7 @@ class AiGenerationScreen extends StatefulWidget {
       this.size,
       this.outfitDetails = '',
       this.generator,
+      this.clothingClassifier,
       this.subscriptionCheck,
       this.autoGenerate = false,
       this.compactDesignResult = false,
@@ -58,6 +61,7 @@ class AiGenerationScreen extends StatefulWidget {
   final AvatarGarment? garmentType;
   final AvatarGender? avatarGender;
   final Future<Uint8List> Function(String, List<Uint8List>)? generator;
+  final Future<String> Function(Uint8List)? clothingClassifier;
   final Future<bool> Function()? subscriptionCheck;
   @override
   State<AiGenerationScreen> createState() => _AiGenerationScreenState();
@@ -68,6 +72,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   final actionUpdates = ValueNotifier(0);
   late final Map<String, TextEditingController> measures;
   String? clothingPhoto;
+  String? checkedClothing, checkedCategory;
   bool unlocked = false, checkingOut = false, structureChanged = false;
   Uint8List? output;
   final avatarViews = <AvatarViewAngle, Uint8List>{};
@@ -232,7 +237,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
         if (mounted && completed && !paid) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content:
-                  Text('Payment could not be verified. Please try again.')));
+                  AppText('Payment could not be verified. Please try again.')));
         }
       }
       if (mounted) update(() => unlocked = paid);
@@ -240,7 +245,8 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Could not check your subscription. Please retry.')));
+            content:
+                AppText('Could not check your subscription. Please retry.')));
       }
       return false;
     } finally {
@@ -392,6 +398,19 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
       error = null;
     });
     try {
+      if ((widget.generator == null || widget.clothingClassifier != null) &&
+          clothingPhoto != null &&
+          widget.avatarGender != null) {
+        if (checkedClothing != clothingPhoto || checkedCategory == 'unknown') {
+          checkedCategory = await (widget.clothingClassifier ??
+              AiGenerationService
+                  .clothingCategory)(await imageReference(clothingPhoto!));
+          checkedClothing = clothingPhoto;
+        }
+        final mismatch = clothingMismatch(
+            widget.avatarGender!, checkedCategory ?? 'unknown');
+        if (mismatch != null) throw Exception(mismatch);
+      }
       final result = hasMeasuredPreview
           ? await generateCloudAvatar(measurements, edit: edit)
           : await generateImage(measurements, edit: edit);
@@ -570,7 +589,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
       ),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         IconButton(
-          tooltip: 'Previous avatar view',
+          tooltip: tr('Previous avatar view'),
           onPressed: canRotate ? () => rotateAvatar(-1) : null,
           icon: const Icon(Icons.chevron_left),
         ),
@@ -578,7 +597,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
           value: avatarView,
           items: [
             for (final angle in AvatarViewAngle.values)
-              DropdownMenuItem(value: angle, child: Text(angle.label)),
+              DropdownMenuItem(value: angle, child: AppText(angle.label)),
           ],
           onChanged: !canRotate
               ? null
@@ -587,17 +606,17 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                 },
         ),
         IconButton(
-          tooltip: 'Next avatar view',
+          tooltip: tr('Next avatar view'),
           onPressed: canRotate ? () => rotateAvatar(1) : null,
           icon: const Icon(Icons.chevron_right),
         ),
       ]),
       if (loadingView case final angle?) ...[
         const LinearProgressIndicator(),
-        Text('Generating ${angle.label.toLowerCase()} view…'),
+        AppText('Generating ${angle.label.toLowerCase()} view…'),
       ],
       if (viewError != null)
-        Text(viewError!,
+        AppText(viewError!,
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.red)),
     ]);
@@ -609,7 +628,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
         if (resultMeasurements[name] case final value?) (name, value),
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Your measurements',
+      const AppText('Your measurements',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
       LayoutBuilder(builder: (context, constraints) {
@@ -629,12 +648,12 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name,
+                    AppText(name,
                         style: TextStyle(
                             fontSize: 12,
                             color: AppColors.ink(context, prototypeBrown))),
                     const SizedBox(height: 4),
-                    Text('${displayMeasurement(value)} $measurementUnit',
+                    AppText('${displayMeasurement(value)} $measurementUnit',
                         style: const TextStyle(
                             fontSize: 17, fontWeight: FontWeight.bold)),
                   ]),
@@ -642,7 +661,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
         ]);
       }),
       const SizedBox(height: 8),
-      const Text('Entered values • AI preview is approximate',
+      const AppText('Entered values • AI preview is approximate',
           style: TextStyle(fontSize: 12)),
     ]);
   }
@@ -671,6 +690,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
       photos
           .add(await renderBodyReferenceSheet(MeasurementAvatar(measurements)));
     }
+    final genderInstruction = widget.avatarGender == null
+        ? ''
+        : ' The avatar must remain an adult ${widget.avatarGender!.subject}, including for unisex garments. Use the entered body measurements; do not copy the reference model body or gender. ';
     final bodyInstruction = widget.measuredBodyReference
         ? ' The final reference image is a front and side guide to the measured body. Preserve its silhouette and proportions. Output one dressed figure, with no labels.'
         : '';
@@ -681,8 +703,8 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
         : widget.prompt;
     return (widget.generator ?? AiGenerationService.generate)(
       editImage
-          ? 'Edit reference image 0: $editInstructions. $bodyInstruction Preserve all other details. Fully clothed, non-explicit fashion image. ${widget.outfitDetails}'
-          : '${widget.outfitDetails} $basePrompt$bodyInstruction ${edit ? 'Additional requested changes: $editInstructions' : ''}',
+          ? 'Edit reference image 0: $editInstructions. $genderInstruction $bodyInstruction Preserve all other details. Fully clothed, non-explicit fashion image. ${widget.outfitDetails}'
+          : '${widget.outfitDetails} $basePrompt$genderInstruction$bodyInstruction ${edit ? 'Additional requested changes: $editInstructions' : ''}',
       photos,
     );
   }
@@ -719,8 +741,8 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
       await const MethodChannel('fitvisions/downloads')
           .invokeMethod<String>('savePreview', bytes);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Saved to Downloads / FitVisions.')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: AppText('Saved to Downloads / FitVisions.')));
         Navigator.pushNamed(context, '/feedback');
       }
     } catch (_) {
@@ -745,7 +767,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
           TextButton.icon(
               onPressed: busy ? null : retryHistory,
               icon: const Icon(Icons.cloud_upload),
-              label: const Text('Retry saving history')),
+              label: const AppText('Retry saving history')),
         if (busy)
           Padding(
               padding: const EdgeInsets.all(16),
@@ -753,20 +775,21 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                 const CircularProgressIndicator(),
                 if (!widget.compactDesignResult) ...[
                   const SizedBox(height: 12),
-                  const Text('Preparing your result…'),
+                  const AppText('Preparing your result…'),
                 ],
               ])),
         if (error != null)
           Padding(
               padding: const EdgeInsets.all(12),
-              child: Text(error!, style: const TextStyle(color: Colors.red))),
+              child:
+                  AppText(error!, style: const TextStyle(color: Colors.red))),
         const SizedBox(height: 12),
       ];
 
   List<Widget> editorFields() => [
         if (widget.avatar && measures.isNotEmpty)
           ExpansionTile(
-              title: const Text('Edit measurements / clothing'),
+              title: const AppText('Edit measurements / clothing'),
               initiallyExpanded: hasMeasuredPreview,
               children: [
                 if (hasMeasuredPreview)
@@ -775,8 +798,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                     value: inches,
                     items: const [
                       DropdownMenuItem(
-                          value: false, child: Text('Centimetres (cm)')),
-                      DropdownMenuItem(value: true, child: Text('Inches (in)')),
+                          value: false, child: AppText('Centimetres (cm)')),
+                      DropdownMenuItem(
+                          value: true, child: AppText('Inches (in)')),
                     ],
                     onChanged: busy ? null : changeMeasurementUnit,
                   ),
@@ -806,21 +830,21 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                   TextButton.icon(
                       onPressed: busy ? null : replaceClothing,
                       icon: const Icon(Icons.image),
-                      label: const Text('Change clothing photo')),
+                      label: const AppText('Change clothing photo')),
                 if (!hasMeasuredPreview && clothingPhoto != null)
-                  const Text('Clothing photo selected'),
+                  const AppText('Clothing photo selected'),
                 if (!hasMeasuredPreview) const MeasurementGuide(),
               ]),
         const SizedBox(height: 12),
         if (!hasMeasuredPreview && !widget.compactDesignResult)
-          Text(widget.avatar
+          AppText(widget.avatar
               ? suggestedSize(currentMeasurements)
               : 'Size suggestion: use ${widget.size ?? 'your chosen size'} as a starting point and compare the brand chart. Do not change your body measurements to match a size.'),
         const SizedBox(height: 12),
-        const Text('Change clothing colour',
+        const AppText('Change clothing colour',
             style: TextStyle(fontWeight: FontWeight.bold)),
         if (showEditDescription)
-          const Text(
+          const AppText(
               'Choose a colour, then tap Apply changes. AI colour matching is approximate.',
               textAlign: TextAlign.center),
         Wrap(
@@ -829,7 +853,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                 .map((colour) => ChoiceChip(
                     avatar:
                         CircleAvatar(backgroundColor: colour.value, radius: 9),
-                    label: Text(colour.key),
+                    label: AppText(colour.key),
                     selected: colourChanges[colourTarget] == colour.key,
                     onSelected: busy
                         ? null
@@ -842,14 +866,14 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                             })))
                 .toList()),
         if (colourChanges.isNotEmpty) ...[
-          Text(
+          AppText(
               colourChanges.entries
                   .map((e) => '${e.key}: ${e.value}')
                   .join(' • '),
               textAlign: TextAlign.center),
           TextButton(
               onPressed: busy ? null : () => update(colourChanges.clear),
-              child: const Text('Clear colour choices')),
+              child: const AppText('Clear colour choices')),
         ],
         const SizedBox(height: 16),
         if (showEditDescription)
@@ -858,103 +882,108 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
               enabled: !busy,
               maxLength: 500,
               maxLines: 2,
-              decoration: const InputDecoration(
-                  labelText: 'Describe your changes',
-                  hintText: 'Change the colour, sleeves or embroidery')),
+              decoration: InputDecoration(
+                  labelText: tr('Describe your changes'),
+                  hintText:
+                      trError('Change the colour, sleeves or embroidery'))),
       ];
 
   @override
-  Widget build(BuildContext context) => PrototypePage(
-      title: widget.title,
-      nav: !hasMeasuredPreview,
-      child: Column(children: [
-        if (!hasMeasuredPreview && !widget.compactDesignResult)
-          Text(
-              widget.geometryOnly
-                  ? 'Measured mannequin render. Estimated anatomy; no clothing-fit guarantee.'
-                  : widget.avatar
-                      ? '3D-style avatar image. Body measurements and fit are not guaranteed.'
-                      : 'Create a clothing concept from your selected preferences.',
-              textAlign: TextAlign.center),
-        const SizedBox(height: 16),
-        if (output != null)
-          hasMeasuredPreview
-              ? avatarResult()
-              : Image.memory(output!, gaplessPlayback: true),
-        if (hasMeasuredPreview && resultMeasurements.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          measurementCards(),
-        ],
-        if (output == null &&
-            !widget.autoGenerate &&
-            !hasMeasuredPreview &&
-            !widget.compactDesignResult)
-          const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                  'Your design details, measurements and any selected photos will be sent to Cloudflare AI when you tap Generate.')),
-        if (output == null ||
-            (!hasMeasuredPreview &&
-                (!widget.compactDesignResult || busy || error != null)))
-          ...operationStatus(),
-        if (output == null && (!widget.autoGenerate || error != null))
-          PrototypeButton('Generate',
-              onPressed: busy ? null : () => generate()),
-        if (hasMeasuredPreview && output != null)
-          TextButton(
-            onPressed: busy || loadingView != null ? null : showAvatarActions,
-            child: const Text('Continue'),
-          ),
-        if (widget.compactDesignResult && output != null)
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              PrototypeButton('Edit',
-                  onPressed: checkingOut || busy
-                      ? null
-                      : () => avatarAction(context, 'edit',
-                          closeOptionsAfterEdit: false)),
-              PrototypeButton('Save',
-                  onPressed: checkingOut || busy
-                      ? null
-                      : () => avatarAction(context, 'download')),
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => PrototypePage(
+          title: widget.title,
+          nav: !hasMeasuredPreview,
+          child: Column(children: [
+            if (!hasMeasuredPreview && !widget.compactDesignResult)
+              AppText(
+                  widget.geometryOnly
+                      ? 'Measured mannequin render. Estimated anatomy; no clothing-fit guarantee.'
+                      : widget.avatar
+                          ? '3D-style avatar image. Body measurements and fit are not guaranteed.'
+                          : 'Create a clothing concept from your selected preferences.',
+                  textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            if (output != null)
+              hasMeasuredPreview
+                  ? avatarResult()
+                  : Image.memory(output!, gaplessPlayback: true),
+            if (hasMeasuredPreview && resultMeasurements.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              measurementCards(),
             ],
-          ),
-        if (output != null &&
-            !unlocked &&
-            !hasMeasuredPreview &&
-            !widget.compactDesignResult) ...[
-          const Text(
-              'Subscribe and complete the demo payment to edit or download this image. No real charge.',
-              textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          PrototypeButton(checkingOut ? 'Opening…' : 'Edit / Save',
-              onPressed: checkingOut || busy ? null : () => checkout()),
-        ],
-        if (output != null && unlocked && widget.geometryOnly) ...[
-          PrototypeButton('Download', onPressed: busy ? null : download),
-          TextButton(
-              onPressed: busy ? null : () => Navigator.pop(context),
-              child: const Text('Edit body dimensions')),
-        ],
-        if (output != null &&
-            unlocked &&
-            !widget.geometryOnly &&
-            !hasMeasuredPreview &&
-            !widget.compactDesignResult) ...[
-          const Text('Demo access unlocked • No real payment',
-              style: TextStyle(fontSize: 12)),
-          ...editorFields(),
-          PrototypeButton('Apply changes',
-              onPressed: busy || checkingOut ? null : applyChanges),
-          const SizedBox(height: 12),
-          PrototypeButton('Download', onPressed: busy ? null : download),
-          TextButton(
-              onPressed:
-                  busy ? null : () => Navigator.pushNamed(context, '/feedback'),
-              child: const Text('Feedback')),
-        ],
-      ]));
+            if (output == null &&
+                !widget.autoGenerate &&
+                !hasMeasuredPreview &&
+                !widget.compactDesignResult)
+              const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: AppText(
+                      'Your design details, measurements and any selected photos will be sent to Cloudflare AI when you tap Generate.')),
+            if (output == null ||
+                (!hasMeasuredPreview &&
+                    (!widget.compactDesignResult || busy || error != null)))
+              ...operationStatus(),
+            if (output == null && (!widget.autoGenerate || error != null))
+              PrototypeButton('Generate',
+                  onPressed: busy ? null : () => generate()),
+            if (hasMeasuredPreview && output != null)
+              TextButton(
+                onPressed:
+                    busy || loadingView != null ? null : showAvatarActions,
+                child: const AppText('Continue'),
+              ),
+            if (widget.compactDesignResult && output != null)
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  PrototypeButton('Edit',
+                      onPressed: checkingOut || busy
+                          ? null
+                          : () => avatarAction(context, 'edit',
+                              closeOptionsAfterEdit: false)),
+                  PrototypeButton('Save',
+                      onPressed: checkingOut || busy
+                          ? null
+                          : () => avatarAction(context, 'download')),
+                ],
+              ),
+            if (output != null &&
+                !unlocked &&
+                !hasMeasuredPreview &&
+                !widget.compactDesignResult) ...[
+              const AppText(
+                  'Subscribe and complete the demo payment to edit or download this image. No real charge.',
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              PrototypeButton(checkingOut ? 'Opening…' : 'Edit / Save',
+                  onPressed: checkingOut || busy ? null : () => checkout()),
+            ],
+            if (output != null && unlocked && widget.geometryOnly) ...[
+              PrototypeButton('Download', onPressed: busy ? null : download),
+              TextButton(
+                  onPressed: busy ? null : () => Navigator.pop(context),
+                  child: const AppText('Edit body dimensions')),
+            ],
+            if (output != null &&
+                unlocked &&
+                !widget.geometryOnly &&
+                !hasMeasuredPreview &&
+                !widget.compactDesignResult) ...[
+              const AppText('Demo access unlocked • No real payment',
+                  style: TextStyle(fontSize: 12)),
+              ...editorFields(),
+              PrototypeButton('Apply changes',
+                  onPressed: busy || checkingOut ? null : applyChanges),
+              const SizedBox(height: 12),
+              PrototypeButton('Download', onPressed: busy ? null : download),
+              TextButton(
+                  onPressed: busy
+                      ? null
+                      : () => Navigator.pushNamed(context, '/feedback'),
+                  child: const AppText('Feedback')),
+            ],
+          ])));
 }

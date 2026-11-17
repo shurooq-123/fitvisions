@@ -152,7 +152,7 @@ void main() {
         lessThan(tester.getTopLeft(find.textContaining('Newer result')).dy));
   });
   testWidgets(
-      'Notification history marks read and unread without changing content',
+      'Opening notifications marks unseen items read; manual unread remains available',
       (tester) async {
     final controller = StreamController<QuerySnapshot<Map<String, dynamic>>>();
     addTearDown(controller.close);
@@ -167,9 +167,8 @@ void main() {
       {'title': 'Subscription activated', 'body': 'Test notice', 'read': false}
     ]));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Mark read'));
-    await tester.pump();
-    expect(marked, true);
+    expect(marked,
+        true); // Automatic, without tapping the individual notification.
     controller.add(records([
       {'title': 'Subscription activated', 'body': 'Test notice', 'read': true}
     ]));

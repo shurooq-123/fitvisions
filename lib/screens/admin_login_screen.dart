@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
@@ -52,7 +53,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   void showMessage(String message) {
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+        .showSnackBar(SnackBar(content: AppText(message)));
   }
 
   @override
@@ -63,62 +64,68 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => PrototypePage(
-      nav: false,
-      child: Column(children: [
-        const PrototypeLogo(width: 235),
-        const SizedBox(height: 25),
-        PrototypePanel(
-            radius: 58,
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Center(
-                  child: Text('Admin Login', style: TextStyle(fontSize: 22))),
-              const SizedBox(height: 20),
-              const Text('Email'),
-              const SizedBox(height: 6),
-              TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                      hintText: 'admin@example.com',
-                      filled: true,
-                      fillColor: AppColors.field(context),
-                      contentPadding: prototypeFieldPadding,
-                      border: prototypeFieldBorder)),
-              const SizedBox(height: 16),
-              const Text('Password'),
-              const SizedBox(height: 6),
-              TextField(
-                  controller: passwordController,
-                  obscureText: hidePassword,
-                  decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppColors.field(context),
-                      contentPadding: prototypeFieldPadding,
-                      border: prototypeFieldBorder,
-                      suffixIcon: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(
-                              hidePassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              size: 18),
-                          onPressed: () =>
-                              setState(() => hidePassword = !hidePassword)))),
-              Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                      onPressed: () =>
-                          Navigator.pushNamed(context, '/adminForgot'),
-                      child: Text('Forget Password ?',
-                          style: TextStyle(
-                              color: AppColors.ink(context, Colors.black87),
-                              fontSize: 12)))),
-              Center(
-                  child: PrototypeButton(loading ? 'Signing in...' : 'LOGIN',
-                      onPressed: loading ? null : login)),
-              const SizedBox(height: 12),
-            ])),
-      ]));
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => PrototypePage(
+          nav: false,
+          child: Column(children: [
+            const PrototypeLogo(width: 235),
+            const SizedBox(height: 25),
+            PrototypePanel(
+                radius: 58,
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Center(
+                          child: AppText('Admin Login',
+                              style: TextStyle(fontSize: 22))),
+                      const SizedBox(height: 20),
+                      const AppText('Email'),
+                      const SizedBox(height: 6),
+                      TextField(
+                          controller: emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: InputDecoration(
+                              hintText: trError('admin@example.com'),
+                              filled: true,
+                              fillColor: AppColors.field(context),
+                              contentPadding: prototypeFieldPadding,
+                              border: prototypeFieldBorder)),
+                      const SizedBox(height: 16),
+                      const AppText('Password'),
+                      const SizedBox(height: 6),
+                      TextField(
+                          controller: passwordController,
+                          obscureText: hidePassword,
+                          decoration: InputDecoration(
+                              filled: true,
+                              fillColor: AppColors.field(context),
+                              contentPadding: prototypeFieldPadding,
+                              border: prototypeFieldBorder,
+                              suffixIcon: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  icon: Icon(
+                                      hidePassword
+                                          ? Icons.visibility_off
+                                          : Icons.visibility,
+                                      size: 18),
+                                  onPressed: () => setState(
+                                      () => hidePassword = !hidePassword)))),
+                      Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, '/adminForgot'),
+                              child: AppText('Forget Password ?',
+                                  style: TextStyle(
+                                      color: AppColors.ink(
+                                          context, Colors.black87),
+                                      fontSize: 12)))),
+                      Center(
+                          child: PrototypeButton(
+                              loading ? 'Signing in...' : 'LOGIN',
+                              onPressed: loading ? null : login)),
+                      const SizedBox(height: 12),
+                    ])),
+          ])));
 }

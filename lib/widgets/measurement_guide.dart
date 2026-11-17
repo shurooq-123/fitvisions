@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../services/body_size_presets.dart';
@@ -22,27 +23,29 @@ class MeasurementLabel extends StatelessWidget {
   final double? value, previous;
   final String label;
   @override
-  Widget build(BuildContext context) => Tooltip(
-        richMessage: WidgetSpan(
-            child: SizedBox(
-                width: 130,
-                height: 180,
-                child: Semantics(
-                    label: measurementHelp[label] ?? label,
-                    child: CustomPaint(
-                        painter: BodyMeasurePainter(label,
-                            value: value, previous: previous))))),
-        decoration: BoxDecoration(
-            color: AppColors.ink(context, const Color(0xFF574543)),
-            borderRadius: BorderRadius.circular(12)),
-        triggerMode: TooltipTriggerMode.tap,
-        showDuration: const Duration(seconds: 7),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Flexible(child: Text(label)),
-          const SizedBox(width: 3),
-          const Icon(Icons.info_outline, size: 14)
-        ]),
-      );
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => Tooltip(
+            richMessage: WidgetSpan(
+                child: SizedBox(
+                    width: 130,
+                    height: 180,
+                    child: Semantics(
+                        label: measurementHelp[label] ?? label,
+                        child: CustomPaint(
+                            painter: BodyMeasurePainter(label,
+                                value: value, previous: previous))))),
+            decoration: BoxDecoration(
+                color: AppColors.ink(context, const Color(0xFF574543)),
+                borderRadius: BorderRadius.circular(12)),
+            triggerMode: TooltipTriggerMode.tap,
+            showDuration: const Duration(seconds: 7),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Flexible(child: AppText(label)),
+              const SizedBox(width: 3),
+              const Icon(Icons.info_outline, size: 14)
+            ]),
+          ));
 }
 
 // Illustrative adult ranges, not a garment manufacturer's sizing standard.
@@ -92,14 +95,15 @@ class MeasurementGuide extends StatelessWidget {
   final void Function(String, Map<String, double>)? onSelect;
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     final rows = avatarSizing ? avatarSizeRows : sizeRows;
     return Column(children: [
       const SizedBox(height: 20),
-      Text('Size guide (${inches ? 'in' : 'cm'})',
+      AppText('Size guide (${inches ? 'in' : 'cm'})',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
       const SizedBox(height: 8),
       if (!avatarSizing)
-        const Text(
+        const AppText(
             'Illustrative adult chart only. Sizes vary by brand, gender and garment. XS means extra small; XL means extra large.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12)),
@@ -137,7 +141,7 @@ class MeasurementGuide extends StatelessWidget {
                                   ? null
                                   : () => onSelect!(
                                       row.first, bodySizeMidpoints(row)),
-                              child: Text(
+                              child: AppText(
                                   inches && row.first != 'Size' && cell != row.first
                                       ? cell
                                           .split('–')
@@ -288,104 +292,108 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
   }
 
   @override
-  Widget build(BuildContext context) => Column(children: [
-        DropdownButton<bool>(
-            isExpanded: true,
-            value: inches,
-            items: const [
-              DropdownMenuItem(value: false, child: Text('Centimetres (cm)')),
-              DropdownMenuItem(value: true, child: Text('Inches (in)'))
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => Column(children: [
+            DropdownButton<bool>(
+                isExpanded: true,
+                value: inches,
+                items: const [
+                  DropdownMenuItem(
+                      value: false, child: AppText('Centimetres (cm)')),
+                  DropdownMenuItem(value: true, child: AppText('Inches (in)'))
+                ],
+                onChanged: (v) {
+                  if (v == null || v == inches) return;
+                  setState(() {
+                    inches = v;
+                    for (final key in fields.keys) {
+                      final cm = centimetres[key];
+                      if (cm != null) setCentimetres(key, cm);
+                    }
+                  });
+                  widget.onUnitChanged?.call(inches);
+                  emit();
+                }),
+            for (final e in fields.entries)
+              Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(children: [
+                    SizedBox(
+                        width: 90,
+                        child: MeasurementLabel(e.key,
+                            value: centimetres[e.key],
+                            previous: previousValues[e.key])),
+                    Expanded(
+                        child: TextField(
+                            controller: e.value,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            onChanged: (text) {
+                              final value = double.tryParse(text);
+                              previousValues[e.key] = centimetres[e.key];
+                              centimetres[e.key] = value == null
+                                  ? null
+                                  : value * (inches ? 2.54 : 1);
+                              setState(() {});
+                              emit();
+                            },
+                            decoration: InputDecoration(
+                                hintText: trError(
+                                    widget.avatarSizing && e.key == 'Height'
+                                        ? (inches ? '19.69–98.43' : '50–250')
+                                        : e.key == 'Shoulders'
+                                            ? 'Optional'
+                                            : null),
+                                suffixText: inches ? 'in' : 'cm',
+                                filled: true,
+                                fillColor: AppColors.field(
+                                    context, const Color(0xFFFFFDFC)),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 12),
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                        color: Color(0xFFB8B9AE))))))
+                  ])),
+            if (widget.afterFields case final field?) field,
+            const SizedBox(height: 12),
+            if (!widget.avatarSizing) ...[
+              const AppText('Height examples',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              Wrap(spacing: 6, children: [
+                for (final cm in [145, 155, 165, 175, 185, 195, 205])
+                  ActionChip(
+                      label: AppText(inches
+                          ? '${(cm / 2.54).toStringAsFixed(1)} in'
+                          : '$cm cm'),
+                      onPressed: () {
+                        setState(() => setCentimetres('Height', cm.toDouble()));
+                        emit();
+                      })
+              ]),
             ],
-            onChanged: (v) {
-              if (v == null || v == inches) return;
-              setState(() {
-                inches = v;
-                for (final key in fields.keys) {
-                  final cm = centimetres[key];
-                  if (cm != null) setCentimetres(key, cm);
-                }
-              });
-              widget.onUnitChanged?.call(inches);
-              emit();
-            }),
-        for (final e in fields.entries)
-          Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(children: [
-                SizedBox(
-                    width: 90,
-                    child: MeasurementLabel(e.key,
-                        value: centimetres[e.key],
-                        previous: previousValues[e.key])),
-                Expanded(
-                    child: TextField(
-                        controller: e.value,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        onChanged: (text) {
-                          final value = double.tryParse(text);
-                          previousValues[e.key] = centimetres[e.key];
-                          centimetres[e.key] = value == null
-                              ? null
-                              : value * (inches ? 2.54 : 1);
-                          setState(() {});
-                          emit();
-                        },
-                        decoration: InputDecoration(
-                            hintText: widget.avatarSizing && e.key == 'Height'
-                                ? (inches ? '19.69–98.43' : '50–250')
-                                : e.key == 'Shoulders'
-                                    ? 'Optional'
-                                    : null,
-                            suffixText: inches ? 'in' : 'cm',
-                            filled: true,
-                            fillColor: AppColors.field(
-                                context, const Color(0xFFFFFDFC)),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 12),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                    color: Color(0xFFB8B9AE))))))
-              ])),
-        if (widget.afterFields case final field?) field,
-        const SizedBox(height: 12),
-        if (!widget.avatarSizing) ...[
-          const Text('Height examples',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          Wrap(spacing: 6, children: [
-            for (final cm in [145, 155, 165, 175, 185, 195, 205])
-              ActionChip(
-                  label: Text(inches
-                      ? '${(cm / 2.54).toStringAsFixed(1)} in'
-                      : '$cm cm'),
-                  onPressed: () {
-                    setState(() => setCentimetres('Height', cm.toDouble()));
-                    emit();
-                  })
-          ]),
-        ],
-        MeasurementGuide(
-            inches: inches,
-            avatarSizing: widget.avatarSizing,
-            selectedSize: selectedSize,
-            onSelect: (name, values) {
-              setState(() {
-                selectedSize = name;
-                for (final e in values.entries) {
-                  setCentimetres(e.key, e.value);
-                }
-              });
-              emit();
-              widget.onSize?.call(name);
-            }),
-        if (selectedSize != null)
-          Text('Selected size: $selectedSize',
-              style: const TextStyle(fontWeight: FontWeight.bold)),
-        if (!widget.avatarSizing)
-          const Text(
-              'Tap a size to fill chest, waist and hips with example values. Enter your own height; sizes vary by brand.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12)),
-      ]);
+            MeasurementGuide(
+                inches: inches,
+                avatarSizing: widget.avatarSizing,
+                selectedSize: selectedSize,
+                onSelect: (name, values) {
+                  setState(() {
+                    selectedSize = name;
+                    for (final e in values.entries) {
+                      setCentimetres(e.key, e.value);
+                    }
+                  });
+                  emit();
+                  widget.onSize?.call(name);
+                }),
+            if (selectedSize != null)
+              AppText('Selected size: $selectedSize',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+            if (!widget.avatarSizing)
+              const AppText(
+                  'Tap a size to fill chest, waist and hips with example values. Enter your own height; sizes vary by brand.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12)),
+          ]));
 }

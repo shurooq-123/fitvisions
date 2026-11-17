@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -38,12 +39,13 @@ class _SavedImageState extends State<SavedImage> {
   }
 
   Widget missing() =>
-      const Center(child: Text('Image unavailable. Select it again.'));
+      const Center(child: AppText('Image unavailable. Select it again.'));
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     if (clothingTemplates.containsKey(widget.path)) {
-      return Image.asset(widget.path, width: widget.width,
-          height: widget.height, fit: widget.fit);
+      return Image.asset(widget.path,
+          width: widget.width, height: widget.height, fit: widget.fit);
     }
     if (image == null) {
       return Image.file(File(widget.path),

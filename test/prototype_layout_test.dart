@@ -1,3 +1,5 @@
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:fitvisions/services/app_language.dart';
 // Firestore SDK interfaces are mocked only for isolated UI tests.
 // ignore_for_file: subtype_of_sealed_class
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -66,12 +68,18 @@ DocumentSnapshot avatarRecord() {
 }
 
 void main() {
+  setUpAll(() async {
+    final font = FontLoader('TimesNewRoman')..addFont(rootBundle.load('assets/fonts/times.ttf'));
+    await font.load();
+    await (FontLoader('serif')..addFont(rootBundle.load('assets/fonts/times.ttf'))).load();
+  });
   testWidgets('appearance changes the app theme and persists on the device',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
     addTearDown(() => Appearance.setDark(false));
     await Appearance.load();
     await tester.pumpWidget(const FitVisionsApp());
+    await tester.pumpAndSettle();
     final welcome = find.byType(WelcomeScreen);
     expect(Theme.of(tester.element(welcome)).brightness, Brightness.light);
     await Appearance.setDark(true);
@@ -256,6 +264,7 @@ void main() {
       (320.0, 640.0, 1.35, '-large-text'),
       (568.0, 320.0, 1.0, '-landscape'),
       (360.0, 800.0, 1.0, '-dark'),
+      (320.0, 640.0, 1.35, '-arabic'),
     ]) {
       testWidgets(
           '${entry.key} fits ${width.toInt()}×${height.toInt()} at text scale $scale$suffix',
@@ -264,14 +273,19 @@ void main() {
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
+        AppLanguage.locale.value = Locale(suffix == '-arabic' ? 'ar' : 'en');
+        addTearDown(() => AppLanguage.locale.value = const Locale('en'));
         final key = GlobalKey();
         await tester.pumpWidget(RepaintBoundary(
             key: key,
             child: MaterialApp(
+                locale: AppLanguage.locale.value,
+                supportedLocales: const [Locale('en'), Locale('ar')],
+                localizationsDelegates: GlobalMaterialLocalizations.delegates,
                 debugShowCheckedModeBanner: false,
                 theme: ThemeData(
                     useMaterial3: false,
-                    fontFamily: 'sans-serif',
+                    fontFamily: 'TimesNewRoman',
                     brightness:
                         suffix == '-dark' ? Brightness.dark : Brightness.light),
                 builder: (context, child) => MediaQuery(

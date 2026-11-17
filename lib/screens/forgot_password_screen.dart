@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -34,15 +35,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Check your email'),
-          content: const Text(
+          title: const AppText('Check your email'),
+          content: const AppText(
             'If an account exists, you will receive a FitVisions email. '
             'Open the newest link to choose a different password.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('OK'),
+              child: const AppText('OK'),
             ),
           ],
         ),
@@ -85,7 +86,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   void showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: AppText(message),
         backgroundColor: brown,
         duration: const Duration(seconds: 5),
       ),
@@ -100,6 +101,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
@@ -114,7 +116,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   const CustomBackButton(),
                   TextButton(
                     onPressed: loading ? null : openCopiedResetLink,
-                    child: const Text('Open copied reset link'),
+                    child: const AppText('Open copied reset link'),
                   ),
                   Image.asset('images/fv.png', width: 180),
                   const SizedBox(height: 30),
@@ -127,7 +129,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     child: Column(
                       children: [
-                        const Text(
+                        const AppText(
                           'FORGET PASSWORD',
                           textAlign: TextAlign.center,
                           style: TextStyle(
@@ -136,7 +138,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                         ),
                         const SizedBox(height: 18),
-                        const Text(
+                        const AppText(
                           'Enter your email',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 14),
@@ -144,7 +146,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         const SizedBox(height: 16),
                         const Align(
                           alignment: Alignment.centerLeft,
-                          child: Text(
+                          child: AppText(
                             'Email',
                             style: TextStyle(fontSize: 14),
                           ),
@@ -154,7 +156,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           controller: emailController,
                           keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
-                            hintText: 'name@gmail.com',
+                            hintText: trError('name@gmail.com'),
                             filled: true,
                             fillColor: AppColors.field(context),
                             border: prototypeFieldBorder,
@@ -185,7 +187,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Text(
+                                : const AppText(
                                     'Send Link',
                                     style: TextStyle(
                                       color: Colors.white,

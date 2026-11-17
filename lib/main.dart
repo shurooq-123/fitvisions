@@ -1,3 +1,6 @@
+import 'package:country_picker/country_picker.dart';
+import 'services/app_language.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'services/event_notification_service.dart';
 import 'dart:async';
 import 'services/notification_service.dart';
@@ -41,6 +44,7 @@ void main() async {
 
   await Firebase.initializeApp();
   await Appearance.load();
+  await AppLanguage.load();
 
   runApp(const FitVisionsApp());
   unawaited(EventNotificationService.start());
@@ -56,7 +60,9 @@ class FitVisionsApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ValueListenableBuilder<ThemeMode>(
         valueListenable: Appearance.mode,
-        builder: (context, mode, _) => _buildApp(mode),
+        builder: (context, mode, _) => ValueListenableBuilder<Locale>(
+            valueListenable: AppLanguage.locale,
+            builder: (_, locale, __) => _buildApp(mode)),
       );
 
   Widget _buildApp(ThemeMode mode) {
@@ -64,6 +70,12 @@ class FitVisionsApp extends StatelessWidget {
       navigatorKey: NotificationService.navigator,
       scaffoldMessengerKey: NotificationService.messenger,
       title: 'FitVisions',
+      locale: AppLanguage.locale.value,
+      supportedLocales: const [Locale('en'), Locale('ar')],
+      localizationsDelegates: [
+        ...GlobalMaterialLocalizations.delegates,
+        CountryLocalizations.delegate
+      ],
       debugShowCheckedModeBanner: false,
       themeMode: mode,
       builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(

@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import '../widgets/history_preview.dart';
 import '../widgets/feedback_message.dart';
@@ -31,157 +32,168 @@ class _AdminUserHistoryScreenState extends State<AdminUserHistoryScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        backgroundColor: AppColors.page(context, const Color(0xFFD5DBCD)),
-        appBar: AppBar(
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => DefaultTabController(
+          length: 3,
+          child: Scaffold(
             backgroundColor: AppColors.page(context, const Color(0xFFD5DBCD)),
-            elevation: 0,
-            title: const Text('User History'),
-            bottom: const TabBar(tabs: [
-              Tab(text: 'History / Try-ons'),
-              Tab(text: 'Feedback'),
-              Tab(text: 'Payments')
-            ])),
-        body: Column(children: [
-          Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: DropdownButton<bool>(
-                  isExpanded: true,
-                  value: newestFirst,
-                  items: const [
-                    DropdownMenuItem(
-                        value: true, child: Text('Newest to oldest')),
-                    DropdownMenuItem(
-                        value: false, child: Text('Oldest to newest')),
-                  ],
-                  onChanged: (v) => setState(() => newestFirst = v ?? true))),
-          Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(name,
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold))),
-          Expanded(
-              child: TabBarView(children: [
-            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: (firestore ?? FirebaseFirestore.instance)
-                  .collection('history')
-                  .where('uid', isEqualTo: uid)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const Center(
-                      child: Text(
-                          'Could not load this history. Check your connection and admin permissions.',
-                          textAlign: TextAlign.center));
-                }
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final records = snapshot.data!.docs.toList()
-                  ..sort(compareRecords);
-                if (records.isEmpty) {
-                  return const Center(
-                      child: Text('No history for this user yet'));
-                }
-                return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: records.length,
-                    itemBuilder: (_, index) {
-                      final data = records[index].data();
-                      final time = data['createdAt'];
-                      final date = time is Timestamp
-                          ? time.toDate().toLocal().toString().split('.').first
-                          : 'Date unavailable';
+            appBar: AppBar(
+                backgroundColor:
+                    AppColors.page(context, const Color(0xFFD5DBCD)),
+                elevation: 0,
+                title: const AppText('User History'),
+                bottom: const TabBar(tabs: [
+                  Tab(text: 'History / Try-ons'),
+                  Tab(text: 'Feedback'),
+                  Tab(text: 'Payments')
+                ])),
+            body: Column(children: [
+              Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: DropdownButton<bool>(
+                      isExpanded: true,
+                      value: newestFirst,
+                      items: const [
+                        DropdownMenuItem(
+                            value: true, child: AppText('Newest to oldest')),
+                        DropdownMenuItem(
+                            value: false, child: AppText('Oldest to newest')),
+                      ],
+                      onChanged: (v) =>
+                          setState(() => newestFirst = v ?? true))),
+              Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: AppText(name,
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold))),
+              Expanded(
+                  child: TabBarView(children: [
+                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: (firestore ?? FirebaseFirestore.instance)
+                      .collection('history')
+                      .where('uid', isEqualTo: uid)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return const Center(
+                          child: AppText(
+                              'Could not load this history. Check your connection and admin permissions.',
+                              textAlign: TextAlign.center));
+                    }
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final records = snapshot.data!.docs.toList()
+                      ..sort(compareRecords);
+                    if (records.isEmpty) {
+                      return const Center(
+                          child: AppText('No history for this user yet'));
+                    }
+                    return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: records.length,
+                        itemBuilder: (_, index) {
+                          final data = records[index].data();
+                          final time = data['createdAt'];
+                          final date = time is Timestamp
+                              ? time
+                                  .toDate()
+                                  .toLocal()
+                                  .toString()
+                                  .split('.')
+                                  .first
+                              : 'Date unavailable';
+                          return Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              elevation: 0,
+                              color: AppColors.panel(
+                                  context, const Color(0xFFF4F4F4)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24)),
+                              child: ListTile(
+                                  contentPadding: const EdgeInsets.all(16),
+                                  leading: SizedBox(
+                                      width: 64,
+                                      height: 64,
+                                      child: HistoryPreview(data)),
+                                  onTap: () => showHistoryResult(context, data),
+                                  title:
+                                      AppText('${data['title'] ?? 'Activity'}'),
+                                  subtitle: AppText(date)));
+                        });
+                  },
+                ),
+                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: (firestore ?? FirebaseFirestore.instance)
+                      .collection('feedback')
+                      .where('uid', isEqualTo: uid)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return const Center(
+                          child: AppText(
+                              'Could not load feedback. Check your connection and admin permissions.'));
+                    }
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final records = snapshot.data!.docs.toList()
+                      ..sort(compareRecords);
+                    if (records.isEmpty) {
+                      return const Center(
+                          child: AppText('No feedback for this user yet'));
+                    }
+                    return ListView(
+                        children: records.map((record) {
+                      return FeedbackMessage(record.data());
+                    }).toList());
+                  },
+                ),
+                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: (firestore ?? FirebaseFirestore.instance)
+                      .collection('payments')
+                      .where('uid', isEqualTo: uid)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return const Center(
+                          child: AppText(
+                              'Could not load payments. Please retry.'));
+                    }
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final records = snapshot.data!.docs.toList()
+                      ..sort(compareRecords);
+                    if (records.isEmpty) {
+                      return const Center(child: AppText('No payments yet'));
+                    }
+                    return ListView(
+                        children: records.map((record) {
+                      final data = record.data();
+                      final stamp = data['createdAt'];
+                      final date = stamp is Timestamp
+                          ? stamp
+                              .toDate()
+                              .toUtc()
+                              .add(const Duration(hours: 4))
+                              .toString()
+                              .split('.')
+                              .first
+                          : 'Saving date...';
                       return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          elevation: 0,
-                          color:
-                              AppColors.panel(context, const Color(0xFFF4F4F4)),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24)),
                           child: ListTile(
-                              contentPadding: const EdgeInsets.all(16),
-                              leading: SizedBox(
-                                  width: 64,
-                                  height: 64,
-                                  child: HistoryPreview(data)),
-                              onTap: () => showHistoryResult(context, data),
-                              title: Text('${data['title'] ?? 'Activity'}'),
-                              subtitle: Text(date)));
-                    });
-              },
-            ),
-            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: (firestore ?? FirebaseFirestore.instance)
-                  .collection('feedback')
-                  .where('uid', isEqualTo: uid)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const Center(
-                      child: Text(
-                          'Could not load feedback. Check your connection and admin permissions.'));
-                }
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final records = snapshot.data!.docs.toList()
-                  ..sort(compareRecords);
-                if (records.isEmpty) {
-                  return const Center(
-                      child: Text('No feedback for this user yet'));
-                }
-                return ListView(
-                    children: records.map((record) {
-                  return FeedbackMessage(record.data());
-                }).toList());
-              },
-            ),
-            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: (firestore ?? FirebaseFirestore.instance)
-                  .collection('payments')
-                  .where('uid', isEqualTo: uid)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const Center(
-                      child: Text('Could not load payments. Please retry.'));
-                }
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final records = snapshot.data!.docs.toList()
-                  ..sort(compareRecords);
-                if (records.isEmpty) {
-                  return const Center(child: Text('No payments yet'));
-                }
-                return ListView(
-                    children: records.map((record) {
-                  final data = record.data();
-                  final stamp = data['createdAt'];
-                  final date = stamp is Timestamp
-                      ? stamp
-                          .toDate()
-                          .toUtc()
-                          .add(const Duration(hours: 4))
-                          .toString()
-                          .split('.')
-                          .first
-                      : 'Saving date...';
-                  return Card(
-                      child: ListTile(
-                    title: Text(
-                        '${data['plan'] ?? 'Subscription'} — ${data['amount']} OMR'),
-                    subtitle: Text(
-                        '${data['email'] ?? ''}\n$date (Oman)\nDemo payment • No real charge'),
-                    isThreeLine: true,
-                  ));
-                }).toList());
-              },
-            )
-          ])),
-        ]),
-      ));
+                        title: AppText(
+                            '${data['plan'] ?? 'Subscription'} — ${data['amount']} OMR'),
+                        subtitle: AppText(
+                            '${data['email'] ?? ''}\n$date (Oman)\nDemo payment • No real charge'),
+                        isThreeLine: true,
+                      ));
+                    }).toList());
+                  },
+                )
+              ])),
+            ]),
+          )));
 }

@@ -1,3 +1,5 @@
+import '../services/app_language.dart';
+import '../services/avatar_prompt.dart';
 import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
@@ -340,7 +342,7 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(
+            content: AppText(
                 'Could not open photos. Check permissions and try again.')));
       }
     }
@@ -353,70 +355,76 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => PrototypePage(
-        title: reviewing ? 'Your Clothing Design' : 'Design Clothes',
-        child: Column(children: [
-          const PrototypeLogo(width: 160, symbolOnly: true),
-          const SizedBox(height: 16),
-          PrototypePanel(
-              radius: 30,
-              padding: 20,
-              child: reviewing ? summary() : questionnaire()),
-          const SizedBox(height: 20),
-          if (reviewing) ...[
-            PrototypeButton('Create design', onPressed: () {
-              final details = Map<String, String>.of(answers);
-              final templates =
-                  traditional ? omaniReferencePaths(male, details) : <String>[];
-              final rules =
-                  traditional ? omaniOutfitInstructions(male, details) : '';
-              final selectedDress = traditional ? null : dressReference;
-              final faceIndex =
-                  templates.length + (selectedDress == null ? 0 : 1);
-              final graduation = occasion == 'Graduation'
-                  ? 'GRADUATION ATTIRE. Show one front-facing, full-body avatar. The '
-                      'selected outfit is the focal point, clearly visible down to its hem. '
-                      'Put a square black academic mortarboard with a tassel '
-                      'on the avatar’s head and an open-front academic graduation gown '
-                      'in plain matte black over the selected outfit. Wear the gown '
-                      'unfastened, with its left and right panels falling behind both '
-                      'arms like an open coat. Leave the neckline, bodice and front of '
-                      'the outfit unobstructed. Preserve the chosen silhouette, colour, '
-                      'fabric and embroidery on the outfit underneath. '
-                      '${traditional && !male ? 'Wear the lihaf under the mortarboard, framing the visible face, with one end draped over a shoulder.' : ''}'
-                  : '';
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => AiGenerationScreen(
-                            title: 'Design Clothes',
-                            compactDesignResult: true,
-                            personalPhoto: facePhoto,
-                            dressReference: selectedDress,
-                            outfitDetails: [
-                              graduation,
-                              if (traditional) rules,
-                              if (selectedDress != null)
-                                selectedDress.description,
-                            ].join(' '),
-                            photos: [
-                              ...templates,
-                              if (facePhoto != null) facePhoto!
-                            ],
-                            preferredColour: answers['Favourite colour'],
-                            prompt:
-                                '${selectedDress == null ? '' : 'The first image is the single selected garment reference: ${selectedDress.description}. Match its cut and details closely while applying the user preferences; output only one outfit. '} '
-                                '${templates.isEmpty ? '' : 'Reference image 0 shows the Omani garment cut and embroidery. Use the other Omani clothing references to understand how the pieces are worn. Follow the user’s garment, colour and accessory choices. Ignore the reference models’ faces. '} '
-                                '${facePhoto == null ? 'Create one full-body 3D-style adult avatar wearing the designed outfit. Use a smooth featureless mannequin head without eyes, nose or mouth.' : 'Use reference image $faceIndex only for the face. Show one full-body 3D-style avatar wearing the requested outfit, preserving the reference face. Ignore the clothes in the face photo.'} Output one combined dressed avatar. Apply the selected clothing preferences. Neutral studio background, head to feet visible, realistic fabric, no text. $ageGuidance Keep the outfit within the selected occasion. Design preferences: ${details.entries.map((e) => '${e.key}: ${e.value}').join('; ')}.',
-                          )));
-            }),
-            const SizedBox(height: 12),
-            PrototypeButton('Edit choices',
-                onPressed: () => setState(() => reviewing = false)),
-          ] else
-            PrototypeButton('Review design', onPressed: review),
-        ]),
-      );
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => PrototypePage(
+            title: reviewing ? 'Your Clothing Design' : 'Design Clothes',
+            child: Column(children: [
+              const PrototypeLogo(width: 160, symbolOnly: true),
+              const SizedBox(height: 16),
+              PrototypePanel(
+                  radius: 30,
+                  padding: 20,
+                  child: reviewing ? summary() : questionnaire()),
+              const SizedBox(height: 20),
+              if (reviewing) ...[
+                PrototypeButton('Create design', onPressed: () {
+                  final details = Map<String, String>.of(answers);
+                  final templates = traditional
+                      ? omaniReferencePaths(male, details)
+                      : <String>[];
+                  final rules =
+                      traditional ? omaniOutfitInstructions(male, details) : '';
+                  final selectedDress = traditional ? null : dressReference;
+                  final faceIndex =
+                      templates.length + (selectedDress == null ? 0 : 1);
+                  final graduation = occasion == 'Graduation'
+                      ? 'GRADUATION ATTIRE. Show one front-facing, full-body avatar. The '
+                          'selected outfit is the focal point, clearly visible down to its hem. '
+                          'Put a square black academic mortarboard with a tassel '
+                          'on the avatar’s head and an open-front academic graduation gown '
+                          'in plain matte black over the selected outfit. Wear the gown '
+                          'unfastened, with its left and right panels falling behind both '
+                          'arms like an open coat. Leave the neckline, bodice and front of '
+                          'the outfit unobstructed. Preserve the chosen silhouette, colour, '
+                          'fabric and embroidery on the outfit underneath. '
+                          '${traditional && !male ? 'Wear the lihaf under the mortarboard, framing the visible face, with one end draped over a shoulder.' : ''}'
+                      : '';
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => AiGenerationScreen(
+                                title: 'Design Clothes',
+                                avatarGender: male
+                                    ? AvatarGender.male
+                                    : AvatarGender.female,
+                                compactDesignResult: true,
+                                personalPhoto: facePhoto,
+                                dressReference: selectedDress,
+                                outfitDetails: [
+                                  graduation,
+                                  if (traditional) rules,
+                                  if (selectedDress != null)
+                                    selectedDress.description,
+                                ].join(' '),
+                                photos: [
+                                  ...templates,
+                                  if (facePhoto != null) facePhoto!
+                                ],
+                                preferredColour: answers['Favourite colour'],
+                                prompt:
+                                    '${selectedDress == null ? '' : 'The first image is the single selected garment reference: ${selectedDress.description}. Match its cut and details closely while applying the user preferences; output only one outfit. '} '
+                                    '${templates.isEmpty ? '' : 'Reference image 0 shows the Omani garment cut and embroidery. Use the other Omani clothing references to understand how the pieces are worn. Follow the user’s garment, colour and accessory choices. Ignore the reference models’ faces. '} '
+                                    '${facePhoto == null ? 'Create one full-body 3D-style adult avatar wearing the designed outfit. Use a smooth featureless mannequin head without eyes, nose or mouth.' : 'Use reference image $faceIndex only for the face. Show one full-body 3D-style avatar wearing the requested outfit, preserving the reference face. Ignore the clothes in the face photo.'} Output one combined dressed avatar. Apply the selected clothing preferences. Neutral studio background, head to feet visible, realistic fabric, no text. $ageGuidance Keep the outfit within the selected occasion. Design preferences: ${details.entries.map((e) => '${e.key}: ${e.value}').join('; ')}.',
+                              )));
+                }),
+                const SizedBox(height: 12),
+                PrototypeButton('Edit choices',
+                    onPressed: () => setState(() => reviewing = false)),
+              ] else
+                PrototypeButton('Review design', onPressed: review),
+            ]),
+          ));
 
   Widget questionnaire() => Form(
       key: formKey,
@@ -427,7 +435,7 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
           for (final question in questions.entries) ...[
             Padding(
                 padding: const EdgeInsets.only(bottom: 6),
-                child: Text(question.key,
+                child: AppText(question.key,
                     style: const TextStyle(fontWeight: FontWeight.bold))),
             if (question.key == 'Favourite colour')
               FavouriteColourStrip(
@@ -484,7 +492,7 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                                         setState(() =>
                                             answers[question.key] = value);
                                       },
-                                      child: Text(value,
+                                      child: AppText(value,
                                           textAlign: TextAlign.center),
                                     ),
                                   ),
@@ -494,7 +502,7 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                     if (field.hasError)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
-                        child: Text(field.errorText!,
+                        child: AppText(field.errorText!,
                             style: TextStyle(
                                 color: Theme.of(context).colorScheme.error)),
                       ),
@@ -511,10 +519,10 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                     fillColor: AppColors.field(context),
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 12)),
-                hint: const Text('Select an option'),
+                hint: const AppText('Select an option'),
                 items: question.value
                     .map((value) =>
-                        DropdownMenuItem(value: value, child: Text(value)))
+                        DropdownMenuItem(value: value, child: AppText(value)))
                     .toList(),
                 onChanged: (value) => setState(() {
                   if (question.key == 'Gender / clothing style' &&
@@ -551,38 +559,38 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                             questions.keys.toList().indexOf(question.key) >
                                 questions.keys.toList().indexOf('Style'))
                     ? null
-                    : 'Please select an option',
+                    : tr('Please select an option'),
               ),
             if (question.key == 'Outfit type' && traditional)
-              Text(male
+              AppText(male
                   ? 'Ankle-length dishdasha and embroidered kumma'
                   : 'Below-knee dress, sirwal trousers and lihaf shawl'),
             const SizedBox(height: 18),
           ],
           PrototypePanel(
               child: Column(children: [
-            const Text('Personal photo (optional)',
+            const AppText('Personal photo (optional)',
                 style: TextStyle(fontWeight: FontWeight.bold)),
-            const Text(
+            const AppText(
                 'Add your face to the outfit preview. Without a photo, the face has no features.',
                 textAlign: TextAlign.center),
             Wrap(alignment: WrapAlignment.center, children: [
               TextButton.icon(
                   onPressed: () => pickFace(ImageSource.gallery),
                   icon: const Icon(Icons.photo_library),
-                  label: const Text('Gallery')),
+                  label: const AppText('Gallery')),
               TextButton.icon(
                   onPressed: () => pickFace(ImageSource.camera),
                   icon: const Icon(Icons.camera_alt),
-                  label: const Text('Camera')),
+                  label: const AppText('Camera')),
             ]),
             if (facePhoto != null) ...[
               Image.file(File(facePhoto!), height: 150),
-              const Text('Your selected photo is sent to Cloudflare AI.',
+              const AppText('Your selected photo is sent to Cloudflare AI.',
                   textAlign: TextAlign.center),
               TextButton(
                   onPressed: () => setState(() => facePhoto = null),
-                  child: const Text('Remove face photo')),
+                  child: const AppText('Remove face photo')),
             ],
             const SizedBox(height: 16),
           ])),
@@ -597,10 +605,10 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(question,
+                    AppText(question,
                         style: const TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    Text(answers[question] ?? 'Not specified'),
+                    AppText(answers[question] ?? 'Not specified'),
                   ])),
       ]);
 }

@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ class HistoryPreview extends StatelessWidget {
   final Map<String, dynamic> data;
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     if (data['kind'] == 'subscription') {
       return Icon(Icons.workspace_premium, color: AppColors.accent(context));
     }
@@ -31,7 +33,7 @@ void showHistoryResult(BuildContext context, Map<String, dynamic> data) {
   showDialog(
       context: context,
       builder: (_) => AlertDialog(
-            title: Text('${data['title'] ?? 'Activity'}'),
+            title: AppText('${data['title'] ?? 'Activity'}'),
             content: SizedBox(
                 width: 420,
                 child: SingleChildScrollView(
@@ -39,20 +41,20 @@ void showHistoryResult(BuildContext context, Map<String, dynamic> data) {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (data['kind'] == 'subscription')
-                      Text(
+                      AppText(
                           "${data['plan']}\n${data['price']} OMR\nStatus: ${data['status']}\nDemo subscription • No real charge")
                     else if (data['previewBase64'] is String ||
                         data['imagePath'] is String) ...[
                       SizedBox(height: 330, child: HistoryPreview(data)),
-                      const Text('Saved preview'),
+                      const AppText('Saved preview'),
                     ] else
-                      const Text('No saved image for this older activity.'),
+                      const AppText('No saved image for this older activity.'),
                   ],
                 ))),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'))
+                  child: const AppText('Close'))
             ],
           ));
 }

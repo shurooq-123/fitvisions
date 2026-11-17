@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import '../services/notification_service.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ class AccountHeader extends StatelessWidget {
   const AccountHeader({super.key});
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     if (Firebase.apps.isEmpty) return const SizedBox.shrink();
     return StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
@@ -36,7 +38,7 @@ class AccountHeader extends StatelessWidget {
                               return Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 12),
-                                  child: Text(
+                                  child: AppText(
                                       name.isEmpty
                                           ? (user.displayName ?? 'FitVisions')
                                           : name,
@@ -54,13 +56,13 @@ class AccountHeader extends StatelessWidget {
                                   .length ??
                               0;
                           return IconButton(
-                              tooltip: 'Notifications ($count unread)',
+                              tooltip: tr('Notifications ($count unread)'),
                               onPressed: () => NotificationService
                                   .navigator.currentState!
                                   .pushNamed('/notifications'),
                               icon: Badge(
                                   isLabelVisible: count > 0,
-                                  label: Text('$count'),
+                                  label: AppText('$count'),
                                   child: const Icon(
                                       Icons.notifications_outlined)));
                         }),
@@ -72,7 +74,7 @@ class AccountHeader extends StatelessWidget {
                         builder: (_, snapshot) =>
                             snapshot.data?.data()?['role'] == 'admin'
                                 ? IconButton(
-                                    tooltip: 'Download and share reports',
+                                    tooltip: tr('Download and share reports'),
                                     icon:
                                         const Icon(Icons.description_outlined),
                                     onPressed: () => NotificationService

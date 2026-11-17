@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -113,75 +114,80 @@ class _AvatarComparisonScreenState extends State<AvatarComparisonScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => PrototypePage(
-      title: 'Compare Avatar Models',
-      child: Column(children: [
-        const Text(
-            'Both models receive the same measurements, images, prompt, output size and seed. This tests visual resemblance, not centimetre accuracy.',
-            textAlign: TextAlign.center),
-        SizedBox(height: 180, child: Image.memory(widget.bodyImage)),
-        Text(widget.measurements.entries
-            .map((e) => '${e.key}: ${e.value} cm')
-            .join(' • ')),
-        for (final personal in [false, true]) ...[
-          Text(
-              personal
-                  ? 'Personal photo (optional)'
-                  : 'Garment photo (optional)',
-              style: const TextStyle(fontWeight: FontWeight.bold)),
-          Wrap(children: [
-            TextButton.icon(
-                onPressed:
-                    busy ? null : () => choose(personal, ImageSource.gallery),
-                icon: const Icon(Icons.photo_library),
-                label: const Text('Gallery')),
-            TextButton.icon(
-                onPressed:
-                    busy ? null : () => choose(personal, ImageSource.camera),
-                icon: const Icon(Icons.camera_alt),
-                label: const Text('Camera'))
-          ]),
-          if ((personal ? person : garment) != null) ...[
-            SizedBox(
-                height: 160,
-                child: Image.memory((personal ? person : garment)!)),
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => PrototypePage(
+          title: 'Compare Avatar Models',
+          child: Column(children: [
+            const AppText(
+                'Both models receive the same measurements, images, prompt, output size and seed. This tests visual resemblance, not centimetre accuracy.',
+                textAlign: TextAlign.center),
+            SizedBox(height: 180, child: Image.memory(widget.bodyImage)),
+            AppText(widget.measurements.entries
+                .map((e) => '${e.key}: ${e.value} cm')
+                .join(' • ')),
+            for (final personal in [false, true]) ...[
+              AppText(
+                  personal
+                      ? 'Personal photo (optional)'
+                      : 'Garment photo (optional)',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              Wrap(children: [
+                TextButton.icon(
+                    onPressed: busy
+                        ? null
+                        : () => choose(personal, ImageSource.gallery),
+                    icon: const Icon(Icons.photo_library),
+                    label: const AppText('Gallery')),
+                TextButton.icon(
+                    onPressed: busy
+                        ? null
+                        : () => choose(personal, ImageSource.camera),
+                    icon: const Icon(Icons.camera_alt),
+                    label: const AppText('Camera'))
+              ]),
+              if ((personal ? person : garment) != null) ...[
+                SizedBox(
+                    height: 160,
+                    child: Image.memory((personal ? person : garment)!)),
+                TextButton(
+                    onPressed: busy
+                        ? null
+                        : () => setState(() {
+                              if (personal) {
+                                person = null;
+                              } else {
+                                garment = null;
+                              }
+                              results.clear();
+                            }),
+                    child: const AppText('Remove photo'))
+              ],
+            ],
+            const AppText(
+                'Starting sends these selected images and measurements to Cloudflare and uses two generations from your account quota. Results remain on this page until you leave.',
+                textAlign: TextAlign.center),
+            if (busy) const CircularProgressIndicator(),
+            AppText(status),
             TextButton(
-                onPressed: busy
-                    ? null
-                    : () => setState(() {
-                          if (personal) {
-                            person = null;
-                          } else {
-                            garment = null;
-                          }
-                          results.clear();
-                        }),
-                child: const Text('Remove photo'))
-          ],
-        ],
-        const Text(
-            'Starting sends these selected images and measurements to Cloudflare and uses two generations from your account quota. Results remain on this page until you leave.',
-            textAlign: TextAlign.center),
-        if (busy) const CircularProgressIndicator(),
-        Text(status),
-        TextButton(
-            onPressed: busy ? null : compare,
-            child: const Text('Run comparison')),
-        for (final r in results)
-          Card(
-              child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(children: [
-                    Text(r['model'] as String,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    if (r['image'] != null) ...[
-                      Image.memory(r['image'] as Uint8List),
-                      Text(
-                          '${(r['seconds'] as double).toStringAsFixed(1)} seconds'),
-                      const Text(
-                          'Compare body silhouette, garment cut, colour, pattern and face. These results do not verify physical dimensions.')
-                    ] else
-                      Text(r['error'] as String),
-                  ]))),
-      ]));
+                onPressed: busy ? null : compare,
+                child: const AppText('Run comparison')),
+            for (final r in results)
+              Card(
+                  child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(children: [
+                        AppText(r['model'] as String,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                        if (r['image'] != null) ...[
+                          Image.memory(r['image'] as Uint8List),
+                          AppText(
+                              '${(r['seconds'] as double).toStringAsFixed(1)} seconds'),
+                          const AppText(
+                              'Compare body silhouette, garment cut, colour, pattern and face. These results do not verify physical dimensions.')
+                        ] else
+                          AppText(r['error'] as String),
+                      ]))),
+          ])));
 }

@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import '../widgets/subscription_summary.dart';
 import '../widgets/prototype_ui.dart';
@@ -33,8 +34,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   Future<void> continueWithPlan() async {
     if (saving) return;
     if (selectedPlanId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please choose a subscription plan')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: AppText('Please choose a subscription plan')));
       return;
     }
     setState(() => saving = true);
@@ -48,7 +49,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           Navigator.pop(context, true);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('You already have an active subscription.')));
+              content: AppText('You already have an active subscription.')));
         }
         return;
       }
@@ -73,7 +74,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(
+            content: AppText(
                 'Could not save the subscription. Check your connection and try again.')));
       }
     } finally {
@@ -82,63 +83,68 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => PrototypePage(
-      title: 'Subscription',
-      child: Column(children: [
-        if (widget.firestore == null) const SubscriptionSummary(),
-        TextButton(
-            onPressed: () => setState(() => renewalRequested = true),
-            child: Text(renewalRequested
-                ? 'Choose a plan to renew'
-                : 'Renew subscription')),
-        const SizedBox(height: 18),
-        if (activated && checkoutArguments?['returnToDesign'] == true)
-          PrototypeButton('Continue',
-              onPressed: () => Navigator.pop(context, true)),
-        if (!activated)
-          StreamBuilder<QuerySnapshot>(
-              stream: plansStream,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const Text('Could not load plans. Please try again.');
-                }
-                if (!snapshot.hasData) return const CircularProgressIndicator();
-                final plans = <QueryDocumentSnapshot>[];
-                for (final doc in snapshot.data!.docs) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final price = data['price'];
-                  if (price is num && SubscriptionAccess.planMonths(data) > 0) {
-                    plans.add(doc);
-                  }
-                }
-                if (plans.isEmpty) {
-                  return const Text('No subscription plans available');
-                }
-                return Column(
-                    children: plans.map((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  return Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      child: SubscriptionPlanCard(
-                          data: data,
-                          selected: selectedPlanId == doc.id,
-                          onTap: () {
-                            if (saving) return;
-                            setState(() {
-                              selectedPlanId = doc.id;
-                              selectedPlan = data['name'] ?? '';
-                              selectedPrice =
-                                  (data['price'] as num?)?.toDouble() ?? 0;
-                            });
-                            continueWithPlan();
-                          }));
-                }).toList());
-              }),
-        if (saving) const CircularProgressIndicator(),
-        const SizedBox(height: 8),
-        const Text('Demo subscription • No real charge',
-            style: TextStyle(fontSize: 11)),
-      ]));
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => PrototypePage(
+          title: 'Subscription',
+          child: Column(children: [
+            if (widget.firestore == null) const SubscriptionSummary(),
+            TextButton(
+                onPressed: () => setState(() => renewalRequested = true),
+                child: AppText(renewalRequested
+                    ? 'Choose a plan to renew'
+                    : 'Renew subscription')),
+            const SizedBox(height: 18),
+            if (activated && checkoutArguments?['returnToDesign'] == true)
+              PrototypeButton('Continue',
+                  onPressed: () => Navigator.pop(context, true)),
+            if (!activated)
+              StreamBuilder<QuerySnapshot>(
+                  stream: plansStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return const AppText(
+                          'Could not load plans. Please try again.');
+                    }
+                    if (!snapshot.hasData)
+                      return const CircularProgressIndicator();
+                    final plans = <QueryDocumentSnapshot>[];
+                    for (final doc in snapshot.data!.docs) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final price = data['price'];
+                      if (price is num &&
+                          SubscriptionAccess.planMonths(data) > 0) {
+                        plans.add(doc);
+                      }
+                    }
+                    if (plans.isEmpty) {
+                      return const AppText('No subscription plans available');
+                    }
+                    return Column(
+                        children: plans.map((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      return Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: SubscriptionPlanCard(
+                              data: data,
+                              selected: selectedPlanId == doc.id,
+                              onTap: () {
+                                if (saving) return;
+                                setState(() {
+                                  selectedPlanId = doc.id;
+                                  selectedPlan = data['name'] ?? '';
+                                  selectedPrice =
+                                      (data['price'] as num?)?.toDouble() ?? 0;
+                                });
+                                continueWithPlan();
+                              }));
+                    }).toList());
+                  }),
+            if (saving) const CircularProgressIndicator(),
+            const SizedBox(height: 8),
+            const AppText('Demo subscription • No real charge',
+                style: TextStyle(fontSize: 11)),
+          ])));
 }
 
 class SubscriptionPlanCard extends StatelessWidget {
@@ -152,6 +158,7 @@ class SubscriptionPlanCard extends StatelessWidget {
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     final price = (data['price'] as num?)?.toDouble() ?? 0;
     final amount = price == price.roundToDouble()
         ? price.toInt().toString()
@@ -178,11 +185,11 @@ class SubscriptionPlanCard extends StatelessWidget {
                         color: selected ? prototypeBrown : Colors.transparent,
                         width: 2)),
                 child: Column(children: [
-                  Text(data['name'] ?? '',
+                  AppText(data['name'] ?? '',
                       style: const TextStyle(
                           fontSize: 21, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
-                  Text('$amount OMR / $duration',
+                  AppText('$amount OMR / $duration',
                       style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
@@ -193,7 +200,7 @@ class SubscriptionPlanCard extends StatelessWidget {
                                 size: 18, color: AppColors.muted(context)),
                             const SizedBox(width: 3),
                             Expanded(
-                                child: Text(
+                                child: AppText(
                                     v.replaceFirst(RegExp(r'^\s*[✓✔]\s*'), ''),
                                     style: TextStyle(
                                         fontSize: 15,

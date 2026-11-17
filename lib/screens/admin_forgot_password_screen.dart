@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import 'package:flutter/material.dart';
 import 'forgot_password_screen.dart';
 
@@ -5,5 +6,6 @@ import 'forgot_password_screen.dart';
 class AdminForgotPasswordScreen extends StatelessWidget {
   const AdminForgotPasswordScreen({super.key});
   @override
-  Widget build(BuildContext context) => const ForgotPasswordScreen();
+  Widget build(BuildContext context) =>
+      AppLanguage.observe(context, () => const ForgotPasswordScreen());
 }

@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'dart:ui' as ui;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -47,12 +48,13 @@ class _AvatarScreenState extends State<AvatarScreen> {
           .invokeMethod<String>('savePreview', data.buffer.asUint8List());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Preview saved to Downloads / FitVisions.')));
+            content: AppText('Preview saved to Downloads / FitVisions.')));
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Could not download the preview on this device.')));
+            content:
+                AppText('Could not download the preview on this device.')));
       }
     } finally {
       if (mounted) setState(() => downloading = false);
@@ -60,85 +62,92 @@ class _AvatarScreenState extends State<AvatarScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => PrototypePage(
-      child: measurements == null
-          ? const Text('Please sign in to view your avatar.')
-          : FutureBuilder<DocumentSnapshot>(
-              future: measurements,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const Text(
-                      'Could not load your saved photos. Please try again.');
-                }
-                if (snapshot.connectionState != ConnectionState.done) {
-                  return const CircularProgressIndicator();
-                }
-                final data =
-                    snapshot.data?.data() as Map<String, dynamic>? ?? {};
-                final personal =
-                    data['personalImagePath'] ?? data['personImagePath'];
-                final cloth = data['clothImagePath'];
-                return Column(children: [
-                  const PrototypeLogo(width: 195, symbolOnly: true),
-                  const SizedBox(height: 16),
-                  const Text('Avatar Preview',
-                      style:
-                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 20),
-                  RepaintBoundary(
-                      key: previewKey,
-                      child: AvatarPreview(personal: personal, cloth: cloth)),
-                  const SizedBox(height: 10),
-                  Text('Photo preview • AI generation will be connected later',
-                      style: TextStyle(
-                          fontSize: 11, color: AppColors.muted(context))),
-                  const SizedBox(height: 22),
-                  Row(children: [
-                    Expanded(
-                        child: PrototypeButton('Edit',
-                            onPressed: () => Navigator.pushNamed(
-                                context, '/generateAvatar'))),
-                    const SizedBox(width: 16),
-                    Expanded(
-                        child: PrototypeButton(
-                            downloading ? 'Saving...' : 'Download',
-                            onPressed: downloading ? null : download))
-                  ]),
-                  const SizedBox(height: 18),
-                  PrototypeButton('Subscription',
-                      onPressed: () =>
-                          Navigator.pushNamed(context, '/subscription')),
-                ]);
-              }));
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => PrototypePage(
+          child: measurements == null
+              ? const AppText('Please sign in to view your avatar.')
+              : FutureBuilder<DocumentSnapshot>(
+                  future: measurements,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return const AppText(
+                          'Could not load your saved photos. Please try again.');
+                    }
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return const CircularProgressIndicator();
+                    }
+                    final data =
+                        snapshot.data?.data() as Map<String, dynamic>? ?? {};
+                    final personal =
+                        data['personalImagePath'] ?? data['personImagePath'];
+                    final cloth = data['clothImagePath'];
+                    return Column(children: [
+                      const PrototypeLogo(width: 195, symbolOnly: true),
+                      const SizedBox(height: 16),
+                      const AppText('Avatar Preview',
+                          style: TextStyle(
+                              fontSize: 22, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 20),
+                      RepaintBoundary(
+                          key: previewKey,
+                          child:
+                              AvatarPreview(personal: personal, cloth: cloth)),
+                      const SizedBox(height: 10),
+                      AppText(
+                          'Photo preview • AI generation will be connected later',
+                          style: TextStyle(
+                              fontSize: 11, color: AppColors.muted(context))),
+                      const SizedBox(height: 22),
+                      Row(children: [
+                        Expanded(
+                            child: PrototypeButton('Edit',
+                                onPressed: () => Navigator.pushNamed(
+                                    context, '/generateAvatar'))),
+                        const SizedBox(width: 16),
+                        Expanded(
+                            child: PrototypeButton(
+                                downloading ? 'Saving...' : 'Download',
+                                onPressed: downloading ? null : download))
+                      ]),
+                      const SizedBox(height: 18),
+                      PrototypeButton('Subscription',
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/subscription')),
+                    ]);
+                  })));
 }
 
 class AvatarPreview extends StatelessWidget {
   const AvatarPreview({super.key, this.personal, this.cloth});
   final String? personal, cloth;
   @override
-  Widget build(BuildContext context) => Container(
-      height: 300,
-      width: double.infinity,
-      color: AppColors.page(context),
-      child: Stack(alignment: Alignment.center, children: [
-        if (personal != null && personal!.isNotEmpty)
-          SavedImage(personal!, height: 300, fit: BoxFit.contain)
-        else
-          Image.asset('images/fv1.png', height: 300, fit: BoxFit.contain),
-        if (cloth != null && cloth!.isNotEmpty)
-          Positioned(
-              top: 70,
-              child: SavedImage(cloth!,
-                  width: 135, height: 160, fit: BoxFit.contain)),
-        if (personal == null || personal!.isEmpty)
-          const Positioned(
-              top: 4,
-              right: 4,
-              child: Text('Sample avatar', style: TextStyle(fontSize: 10))),
-        Positioned(
-            bottom: 4,
-            left: 8,
-            child: Icon(Icons.smart_toy_outlined,
-                color: AppColors.accent(context), size: 44)),
-      ]));
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => Container(
+          height: 300,
+          width: double.infinity,
+          color: AppColors.page(context),
+          child: Stack(alignment: Alignment.center, children: [
+            if (personal != null && personal!.isNotEmpty)
+              SavedImage(personal!, height: 300, fit: BoxFit.contain)
+            else
+              Image.asset('images/fv1.png', height: 300, fit: BoxFit.contain),
+            if (cloth != null && cloth!.isNotEmpty)
+              Positioned(
+                  top: 70,
+                  child: SavedImage(cloth!,
+                      width: 135, height: 160, fit: BoxFit.contain)),
+            if (personal == null || personal!.isEmpty)
+              const Positioned(
+                  top: 4,
+                  right: 4,
+                  child:
+                      AppText('Sample avatar', style: TextStyle(fontSize: 10))),
+            Positioned(
+                bottom: 4,
+                left: 8,
+                child: Icon(Icons.smart_toy_outlined,
+                    color: AppColors.accent(context), size: 44)),
+          ])));
 }

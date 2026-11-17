@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import '../widgets/prototype_ui.dart';
 import 'package:flutter/material.dart';
@@ -38,15 +39,15 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Feedback Sent'),
-            content: const Text('Thank you, your feedback has been sent.'),
+            title: const AppText('Feedback Sent'),
+            content: const AppText('Thank you, your feedback has been sent.'),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
                   Navigator.pushReplacementNamed(context, '/history');
                 },
-                child: const Text('OK'),
+                child: const AppText('OK'),
               ),
             ],
           );
@@ -61,7 +62,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   void showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text), backgroundColor: brown),
+      SnackBar(content: AppText(text), backgroundColor: brown),
     );
   }
 
@@ -72,59 +73,62 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => PrototypePage(
-      title: 'Feedback',
-      child: Column(children: [
-        PrototypePanel(
-            child: Column(children: [
-          const Text('Rate Your Experience',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          Row(
-              children: List.generate(
-                  5,
-                  (i) => Expanded(
-                      child: IconButton(
-                          padding: EdgeInsets.zero,
-                          onPressed: () => setState(() => rating = i + 1),
-                          icon: Icon(
-                              i < rating ? Icons.star : Icons.star_border,
-                              color: Colors.amber,
-                              size: 32))))),
-          const SizedBox(height: 16),
-          const Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Write the feedback:',
-                  style: TextStyle(fontWeight: FontWeight.bold))),
-          const SizedBox(height: 6),
-          TextField(
-              controller: feedbackController,
-              maxLines: 7,
-              maxLength: 4000,
-              decoration: InputDecoration(
-                  filled: true,
-                  fillColor: AppColors.field(context, const Color(0xFFE8EBF3)),
-                  border: prototypeFieldBorder)),
-        ])),
-        const SizedBox(height: 14),
-        PrototypeButton(loading ? 'Sending...' : 'Submit',
-            onPressed: loading ? null : submitFeedback),
-        TextButton(
-            onPressed: loading
-                ? null
-                : () {
-                    if (ModalRoute.of(context)?.settings.arguments ==
-                        'afterPayment') {
-                      Navigator.pushReplacementNamed(context, '/history');
-                    } else {
-                      Navigator.maybePop(context);
-                    }
-                  },
-            child: const Text('Skip feedback')),
-        const SizedBox(height: 10),
-        const Text('Your feedback helps us improve\nthe app !!',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold)),
-      ]));
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => PrototypePage(
+          title: 'Feedback',
+          child: Column(children: [
+            PrototypePanel(
+                child: Column(children: [
+              const AppText('Rate Your Experience',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              Row(
+                  children: List.generate(
+                      5,
+                      (i) => Expanded(
+                          child: IconButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: () => setState(() => rating = i + 1),
+                              icon: Icon(
+                                  i < rating ? Icons.star : Icons.star_border,
+                                  color: Colors.amber,
+                                  size: 32))))),
+              const SizedBox(height: 16),
+              const Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppText('Write the feedback:',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              const SizedBox(height: 6),
+              TextField(
+                  controller: feedbackController,
+                  maxLines: 7,
+                  maxLength: 4000,
+                  decoration: InputDecoration(
+                      filled: true,
+                      fillColor:
+                          AppColors.field(context, const Color(0xFFE8EBF3)),
+                      border: prototypeFieldBorder)),
+            ])),
+            const SizedBox(height: 14),
+            PrototypeButton(loading ? 'Sending...' : 'Submit',
+                onPressed: loading ? null : submitFeedback),
+            TextButton(
+                onPressed: loading
+                    ? null
+                    : () {
+                        if (ModalRoute.of(context)?.settings.arguments ==
+                            'afterPayment') {
+                          Navigator.pushReplacementNamed(context, '/history');
+                        } else {
+                          Navigator.maybePop(context);
+                        }
+                      },
+                child: const AppText('Skip feedback')),
+            const SizedBox(height: 10),
+            const AppText('Your feedback helps us improve\nthe app !!',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.bold)),
+          ])));
 }

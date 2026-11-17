@@ -1,3 +1,4 @@
+import 'app_language.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -28,7 +29,7 @@ class EventNotificationService {
       if (!pending.contains(entry)) {
         await prefs.setStringList(key, [...pending, entry]);
         NotificationService.messenger.currentState?.showSnackBar(SnackBar(
-            content: Text(message),
+            content: AppText(message),
             action: SnackBarAction(
                 label: 'Notifications',
                 onPressed: () => NotificationService.navigator.currentState
@@ -37,7 +38,7 @@ class EventNotificationService {
       unawaited(flush());
     } catch (_) {
       NotificationService.messenger.currentState?.showSnackBar(const SnackBar(
-          content: Text(
+          content: AppText(
               'تم الحفظ، لكن تعذر تجهيز إشعار البريد. | Saved, but the email notification could not be queued.')));
     }
   }

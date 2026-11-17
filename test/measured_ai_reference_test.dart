@@ -6,6 +6,39 @@ import 'package:fitvisions/services/body_size_presets.dart';
 import 'package:fitvisions/services/measurement_avatar.dart';
 
 void main() {
+  testWidgets('Mismatched clothing stops generation before any image request',
+      (tester) async {
+    var calls = 0;
+    await tester.pumpWidget(MaterialApp(
+        home: AiGenerationScreen(
+      title: 'Generate Avatar',
+      prompt: '',
+      avatar: true,
+      measuredBodyReference: true,
+      avatarGender: AvatarGender.male,
+      clothingPhoto: 'images/bridal_satin.png',
+      measurements: const {
+        'Height': '180',
+        'Chest': '100',
+        'Waist': '82',
+        'Hips': '106'
+      },
+      clothingClassifier: (_) async => 'female',
+      generator: (_, photos) async {
+        calls++;
+        return photos.first;
+      },
+    )));
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Generate'));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+    await tester.pumpAndSettle();
+    expect(calls, 0);
+    expect(find.textContaining('does not match the selected gender'),
+        findsOneWidget);
+  });
+
   testWidgets(
       'Cloud avatar generates the measured body first and dresses it second',
       (tester) async {

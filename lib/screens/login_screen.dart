@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../widgets/prototype_ui.dart';
@@ -74,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: AppText(message),
         backgroundColor: brown,
       ),
     );
@@ -89,6 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
@@ -122,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Center(
-                          child: Text(
+                          child: AppText(
                             'LOGIN',
                             style: TextStyle(fontSize: 21),
                           ),
@@ -149,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 '/forgot',
                               );
                             },
-                            child: Text(
+                            child: AppText(
                               'Forget Password ?',
                               style: TextStyle(
                                 color: AppColors.ink(context, Colors.black87),
@@ -184,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Text(
+                                  : const AppText(
                                       'LOGIN',
                                       style: TextStyle(
                                         color: Colors.white,
@@ -203,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 '/register',
                               );
                             },
-                            child: const Text(
+                            child: const AppText(
                               'Don’t have an account? Sign Up',
                               textAlign: TextAlign.center,
                               style: TextStyle(
@@ -226,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget label(String text) {
-    return Text(
+    return AppText(
       text,
       style: const TextStyle(fontSize: 14),
     );
@@ -241,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
       controller: controller,
       keyboardType: keyboard,
       decoration: InputDecoration(
-        hintText: hint,
+        hintText: trError(hint),
         filled: true,
         fillColor: AppColors.field(context),
         contentPadding: prototypeFieldPadding,

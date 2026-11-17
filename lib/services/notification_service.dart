@@ -1,3 +1,4 @@
+import 'app_language.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -22,8 +23,8 @@ class NotificationService {
     FirebaseMessaging.onMessage.listen((message) {
       if (FirebaseAuth.instance.currentUser?.uid != message.data['uid']) return;
       messenger.currentState?.showSnackBar(SnackBar(
-          content:
-              Text(message.notification?.body ?? 'You have a new notification'),
+          content: AppText(
+              message.notification?.body ?? 'You have a new notification'),
           action: SnackBarAction(
               label: 'View',
               onPressed: () =>

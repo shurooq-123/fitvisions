@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import '../services/password_policy.dart';
 import 'package:flutter/material.dart';
@@ -67,7 +68,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   void showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: brown),
+      SnackBar(content: AppText(message), backgroundColor: brown),
     );
   }
 
@@ -81,6 +82,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
       body: SafeArea(
@@ -103,7 +105,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   ),
                   child: Column(
                     children: [
-                      const Text(
+                      const AppText(
                         'CHANGE PASSWORD',
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -114,7 +116,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       const SizedBox(height: 24),
                       const Align(
                         alignment: Alignment.centerLeft,
-                        child: Text('Current Password'),
+                        child: AppText('Current Password'),
                       ),
                       const SizedBox(height: 5),
                       passwordField(
@@ -125,7 +127,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       const SizedBox(height: 16),
                       const Align(
                         alignment: Alignment.centerLeft,
-                        child: Text('New Password'),
+                        child: AppText('New Password'),
                       ),
                       const SizedBox(height: 5),
                       passwordField(
@@ -138,7 +140,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       const SizedBox(height: 16),
                       const Align(
                         alignment: Alignment.centerLeft,
-                        child: Text('Confirm Password'),
+                        child: AppText('Confirm Password'),
                       ),
                       const SizedBox(height: 5),
                       passwordField(
@@ -149,7 +151,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         },
                       ),
                       const SizedBox(height: 10),
-                      Text(
+                      AppText(
                         PasswordPolicy.description,
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -178,7 +180,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text(
+                              : const AppText(
                                   'Change password',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(color: Colors.white),
@@ -205,7 +207,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       controller: controller,
       obscureText: hide,
       decoration: InputDecoration(
-        hintText: 'Aa@12345',
+        hintText: trError('Aa@12345'),
         filled: true,
         fillColor: AppColors.field(context),
         contentPadding: prototypeFieldPadding,

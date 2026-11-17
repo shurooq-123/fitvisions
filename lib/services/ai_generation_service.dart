@@ -62,6 +62,15 @@ class AiGenerationService {
         .replaceFirst(RegExp(r'^data:image/[^;]+;base64,'), ''));
   }
 
+  static Future<String> clothingCategory(Uint8List photo) async {
+    final data =
+        await _post('/clothing-category', {'image': await reference(photo)});
+    final category = data['category'];
+    if (!['male', 'female', 'unisex', 'unknown'].contains(category))
+      return 'unknown';
+    return category as String;
+  }
+
   static Future<String> estimateSkin(Uint8List photo) async {
     final data = await _post('/skin-tone', {'image': await reference(photo)});
     final tone = data['tone'];

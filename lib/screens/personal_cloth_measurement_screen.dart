@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'dart:io';
 
@@ -47,11 +48,11 @@ class _PersonalClothMeasurementScreenState
                   child: Wrap(children: [
                 ListTile(
                     leading: const Icon(Icons.camera_alt),
-                    title: const Text('Camera'),
+                    title: const AppText('Camera'),
                     onTap: () => Navigator.pop(context, ImageSource.camera)),
                 ListTile(
                     leading: const Icon(Icons.photo_library),
-                    title: const Text('Album'),
+                    title: const AppText('Album'),
                     onTap: () => Navigator.pop(context, ImageSource.gallery)),
               ])));
       if (source == null) return;
@@ -157,57 +158,60 @@ class _PersonalClothMeasurementScreenState
   void showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(text),
+        content: AppText(text),
         backgroundColor: brown,
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context) => PrototypePage(
-          child: Column(children: [
-        const PrototypeLogo(width: 225),
-        const SizedBox(height: 12),
-        const Text('Generate Avatar',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        PrototypePanel(
-            child: Column(children: [
-          BodyMeasurements(
-            avatarSizing: true,
-            onChanged: (values) => bodyMeasurements = values,
-            onSize: (size) => selectedSize = size,
-            onUnitChanged: (value) => inches = value,
-            afterFields: Padding(
-              padding: const EdgeInsets.only(top: 10),
-              child: DropdownButtonFormField<AvatarGender>(
-                initialValue: gender,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Gender',
-                  border: OutlineInputBorder(),
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => PrototypePage(
+              child: Column(children: [
+            const PrototypeLogo(width: 225),
+            const SizedBox(height: 12),
+            const AppText('Generate Avatar',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            PrototypePanel(
+                child: Column(children: [
+              BodyMeasurements(
+                avatarSizing: true,
+                onChanged: (values) => bodyMeasurements = values,
+                onSize: (size) => selectedSize = size,
+                onUnitChanged: (value) => inches = value,
+                afterFields: Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: DropdownButtonFormField<AvatarGender>(
+                    initialValue: gender,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: tr('Gender'),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                          value: AvatarGender.female, child: AppText('Female')),
+                      DropdownMenuItem(
+                          value: AvatarGender.male, child: AppText('Male')),
+                    ],
+                    onChanged: loading
+                        ? null
+                        : (value) => setState(() => gender = value),
+                  ),
                 ),
-                items: const [
-                  DropdownMenuItem(
-                      value: AvatarGender.female, child: Text('Female')),
-                  DropdownMenuItem(
-                      value: AvatarGender.male, child: Text('Male')),
-                ],
-                onChanged:
-                    loading ? null : (value) => setState(() => gender = value),
               ),
-            ),
-          ),
-          photoBox('Clothing image', clothImage, pickClothImage),
-          const SizedBox(height: 10),
-          photoBox(
-              'Personal photo (optional)', personalImage, pickPersonalImage),
-          const SizedBox(height: 22),
-          PrototypeButton(loading ? 'Saving...' : 'Generate',
-              onPressed: loading ? null : saveData),
-        ])),
-      ]));
+              photoBox('Clothing image', clothImage, pickClothImage),
+              const SizedBox(height: 10),
+              photoBox('Personal photo (optional)', personalImage,
+                  pickPersonalImage),
+              const SizedBox(height: 22),
+              PrototypeButton(loading ? 'Saving...' : 'Generate',
+                  onPressed: loading ? null : saveData),
+            ])),
+          ])));
   Widget photoBox(String label, File? file, VoidCallback pick) => Material(
         color: AppColors.panel(context, Colors.white),
         shape: RoundedRectangleBorder(
@@ -226,7 +230,7 @@ class _PersonalClothMeasurementScreenState
                   Icon(Icons.photo_library_outlined,
                       color: AppColors.ink(context, prototypeBrown)),
                   const SizedBox(width: 8),
-                  Expanded(child: Text(label)),
+                  Expanded(child: AppText(label)),
                 ]),
                 if (file != null) ...[
                   const SizedBox(height: 8),
@@ -234,7 +238,7 @@ class _PersonalClothMeasurementScreenState
                   Wrap(children: [
                     TextButton.icon(
                         icon: const Icon(Icons.zoom_in),
-                        label: const Text('Zoom preview'),
+                        label: const AppText('Zoom preview'),
                         onPressed: () => showDialog(
                             context: context,
                             builder: (context) => Dialog(
@@ -252,11 +256,11 @@ class _PersonalClothMeasurementScreenState
                                       TextButton(
                                           onPressed: () =>
                                               Navigator.pop(context),
-                                          child: const Text('Close'))
+                                          child: const AppText('Close'))
                                     ])))),
                     TextButton.icon(
                         icon: const Icon(Icons.delete_outline),
-                        label: const Text('Remove'),
+                        label: const AppText('Remove'),
                         onPressed: loading
                             ? null
                             : () => setState(() {

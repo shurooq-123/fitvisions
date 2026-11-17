@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -6,6 +7,7 @@ class FeedbackMessage extends StatelessWidget {
   final Map<String, dynamic> data;
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     final raw = data['rating'];
     final rating =
         (raw is num ? raw.toInt() : int.tryParse('$raw') ?? 0).clamp(0, 5);
@@ -24,7 +26,7 @@ class FeedbackMessage extends StatelessWidget {
           Icon(Icons.chat_bubble_outline, color: AppColors.accent(context)),
           const SizedBox(width: 10),
           Expanded(
-              child: Text('${data['email'] ?? 'User'}',
+              child: AppText('${data['email'] ?? 'User'}',
                   style: const TextStyle(fontWeight: FontWeight.bold)))
         ]),
         const SizedBox(height: 10),
@@ -36,7 +38,7 @@ class FeedbackMessage extends StatelessWidget {
                     (i) => Icon(i < rating ? Icons.star : Icons.star_border,
                         color: Colors.amber, size: 24)))),
         const SizedBox(height: 12),
-        Text('${data['message'] ?? ''}',
+        AppText('${data['message'] ?? ''}',
             style: const TextStyle(fontSize: 15, height: 1.5)),
       ]),
     );

@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -43,7 +44,7 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
     if (selectedMethod == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please choose a try-on method'),
+          content: AppText('Please choose a try-on method'),
           backgroundColor: brown,
         ),
       );
@@ -59,6 +60,7 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     return Scaffold(
       bottomNavigationBar: const PrototypeNav(),
       backgroundColor: AppColors.page(context, bg),
@@ -78,7 +80,7 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
                     if (widget.dashboard)
                       const Padding(
                           padding: EdgeInsets.only(bottom: 14),
-                          child: Text('User Dashboard',
+                          child: AppText('User Dashboard',
                               style: TextStyle(
                                   fontSize: 20, fontWeight: FontWeight.bold))),
                     if (widget.dashboard)
@@ -86,17 +88,17 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
                         future: userName,
                         builder: (context, snapshot) => Column(
                           children: [
-                            const Text('Welcome',
+                            const AppText('Welcome',
                                 style: TextStyle(
                                     fontSize: 19, fontWeight: FontWeight.bold)),
                             if (snapshot.data case final name?)
-                              Text(name, textAlign: TextAlign.center),
+                              AppText(name, textAlign: TextAlign.center),
                           ],
                         ),
                       ),
                     const PrototypeLogo(width: 200, symbolOnly: true),
                     const SizedBox(height: 20),
-                    const Text(
+                    const AppText(
                       'Choose Your Try-On\nMethod',
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -143,11 +145,11 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Flexible(
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(text,
+            AppText(text,
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 19)),
             const SizedBox(height: 6),
-            Text(
+            AppText(
                 const [
                   'Create a 3D-style image from your measurements.',
                   'Design an outfit with your own preferences.',

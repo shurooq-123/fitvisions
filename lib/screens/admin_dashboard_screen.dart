@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,7 @@ import 'admin_user_subscriptions_screen.dart';
 import 'admin_system_screen.dart';
 import 'admin_users_screen.dart';
 
-enum _AdminSetting { lightMode, darkMode, changePassword }
+enum _AdminSetting { lightMode, darkMode, arabic, english, changePassword }
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key, this.firestore});
@@ -30,76 +31,79 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   late final payments = db.collection('payments').snapshots();
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppColors.page(context, bg),
-        bottomNavigationBar: adminBottomNav(context, 0),
-        body: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(child: _dashboardHeader(context)),
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream: users,
-                      builder: (context, snapshot) => _statBox(
-                        Icons.groups,
-                        'Total Users',
-                        snapshot.data?.docs
-                                .where((doc) => doc.data()['archived'] != true)
-                                .length
-                                .toString() ??
-                            (snapshot.hasError ? 'Unavailable' : '…'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                AdminUserSubscriptionsScreen(firestore: db),
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => Scaffold(
+            backgroundColor: AppColors.page(context, bg),
+            bottomNavigationBar: adminBottomNav(context, 0),
+            body: SafeArea(
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(child: _dashboardHeader(context)),
+                  SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                          stream: users,
+                          builder: (context, snapshot) => _statBox(
+                            Icons.groups,
+                            'Total Users',
+                            snapshot.data?.docs
+                                    .where(
+                                        (doc) => doc.data()['archived'] != true)
+                                    .length
+                                    .toString() ??
+                                (snapshot.hasError ? 'Unavailable' : '…'),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    AdminUserSubscriptionsScreen(firestore: db),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 10),
+                        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                          stream: payments,
+                          builder: (context, snapshot) {
+                            final total =
+                                snapshot.data?.docs.fold<num>(0, (sum, doc) {
+                              final data = doc.data();
+                              return const ['pending', 'demo_active', 'paid']
+                                          .contains(data['status']) &&
+                                      data['amount'] is num
+                                  ? sum + (data['amount'] as num)
+                                  : sum;
+                            });
+                            return _statBox(
+                              Icons.stacked_line_chart,
+                              'Demo Revenue',
+                              total == null
+                                  ? (snapshot.hasError ? 'Unavailable' : '…')
+                                  : '${total.toStringAsFixed(2)} OMR',
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        _managementButtons(context),
+                      ],
                     ),
-                    const SizedBox(height: 10),
-                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream: payments,
-                      builder: (context, snapshot) {
-                        final total =
-                            snapshot.data?.docs.fold<num>(0, (sum, doc) {
-                          final data = doc.data();
-                          return const ['pending', 'demo_active', 'paid']
-                                      .contains(data['status']) &&
-                                  data['amount'] is num
-                              ? sum + (data['amount'] as num)
-                              : sum;
-                        });
-                        return _statBox(
-                          Icons.stacked_line_chart,
-                          'Demo Revenue',
-                          total == null
-                              ? (snapshot.hasError ? 'Unavailable' : '…')
-                              : '${total.toStringAsFixed(2)} OMR',
-                        );
-                      },
+                  ),
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const SizedBox(height: 18),
+                        _logoutButton(context),
+                      ],
                     ),
-                    const SizedBox(height: 10),
-                    _managementButtons(context),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const SizedBox(height: 18),
-                    _logoutButton(context),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+            ),
+          ));
 
   Widget _dashboardHeader(BuildContext context) => Column(
         children: [
@@ -113,13 +117,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     size: 32, color: AppColors.ink(context)),
               ),
               PopupMenuButton<_AdminSetting>(
-                tooltip: 'Account settings',
+                tooltip: tr('Account settings'),
                 onSelected: (setting) async {
                   switch (setting) {
                     case _AdminSetting.lightMode:
                       await Appearance.setDark(false);
                     case _AdminSetting.darkMode:
                       await Appearance.setDark(true);
+                    case _AdminSetting.arabic:
+                      await AppLanguage.set('ar');
+                    case _AdminSetting.english:
+                      await AppLanguage.set('en');
                     case _AdminSetting.changePassword:
                       await Navigator.pushNamed(context, '/changePassword');
                   }
@@ -130,21 +138,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     CheckedPopupMenuItem(
                         value: _AdminSetting.lightMode,
                         checked: !dark,
-                        child: const Text('Light mode')),
+                        child: const AppText('Light mode')),
                     CheckedPopupMenuItem(
                         value: _AdminSetting.darkMode,
                         checked: dark,
-                        child: const Text('Dark mode')),
+                        child: const AppText('Dark mode')),
+                    CheckedPopupMenuItem(
+                        value: _AdminSetting.arabic,
+                        checked: AppLanguage.locale.value.languageCode == 'ar',
+                        child: const AppText('العربية')),
+                    CheckedPopupMenuItem(
+                        value: _AdminSetting.english,
+                        checked: AppLanguage.locale.value.languageCode == 'en',
+                        child: const AppText('English')),
                     const PopupMenuItem(
                         value: _AdminSetting.changePassword,
-                        child: Text('Change password')),
+                        child: AppText('Change password')),
                   ];
                 },
               ),
             ],
           ),
           const SizedBox(height: 28),
-          const Text('Admin Dashboard',
+          const AppText('Admin Dashboard',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 22),
         ],
@@ -168,13 +184,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       color: AppColors.accent(context, purple), size: 28),
                   const SizedBox(width: 12),
                   Expanded(
-                      child: Text(label,
+                      child: AppText(label,
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'serif',
                           ))),
-                  Text(value,
+                  AppText(value,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -223,7 +239,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Flexible(
-                child: Text(label,
+                child: AppText(label,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColors.ink(context),
@@ -257,7 +273,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(7)),
               ),
-              child: const Text('Logout',
+              child: const AppText('Logout',
                   style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
@@ -302,15 +318,15 @@ Widget adminBottomNav(BuildContext context, int index) {
       BottomNavigationBarItem(
         icon: Icon(Icons.stacked_line_chart,
             color: AppColors.accent(context, purple)),
-        label: 'Dashboard',
+        label: tr('Dashboard'),
       ),
       BottomNavigationBarItem(
         icon: Icon(Icons.groups, color: AppColors.accent(context, purple)),
-        label: 'Users',
+        label: tr('Users'),
       ),
       BottomNavigationBarItem(
         icon: Icon(Icons.settings, color: AppColors.accent(context, purple)),
-        label: 'System',
+        label: tr('System'),
       ),
     ],
   );

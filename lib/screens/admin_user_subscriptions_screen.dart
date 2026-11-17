@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -23,79 +24,84 @@ class _AdminUserSubscriptionsScreenState
   int? filter;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppColors.page(context, background),
-        appBar: AppBar(
-          backgroundColor: AppColors.page(context, background),
-          title: const Text('Total Users'),
-        ),
-        body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: users,
-          builder: (context, userSnapshot) =>
-              StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: payments,
-            builder: (context, paymentSnapshot) {
-              if (userSnapshot.hasError || paymentSnapshot.hasError) {
-                return const Center(
-                    child: Text('Could not load users and subscriptions.'));
-              }
-              if (!userSnapshot.hasData || !paymentSnapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              final plans = _latestPlans(paymentSnapshot.data!.docs);
-              final visible = userSnapshot.data!.docs
-                  .where((user) => user.data()['archived'] != true)
-                  .where((user) =>
-                      filter == null || (plans[user.id]?.amount ?? 0) == filter)
-                  .toList();
-              return Column(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
-                    child: Text('Latest demo subscription per user · Oman time',
-                        textAlign: TextAlign.center),
-                  ),
-                  Wrap(
-                    spacing: 8,
-                    alignment: WrapAlignment.center,
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => Scaffold(
+            backgroundColor: AppColors.page(context, background),
+            appBar: AppBar(
+              backgroundColor: AppColors.page(context, background),
+              title: const AppText('Total Users'),
+            ),
+            body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: users,
+              builder: (context, userSnapshot) =>
+                  StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: payments,
+                builder: (context, paymentSnapshot) {
+                  if (userSnapshot.hasError || paymentSnapshot.hasError) {
+                    return const Center(
+                        child:
+                            AppText('Could not load users and subscriptions.'));
+                  }
+                  if (!userSnapshot.hasData || !paymentSnapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final plans = _latestPlans(paymentSnapshot.data!.docs);
+                  final visible = userSnapshot.data!.docs
+                      .where((user) => user.data()['archived'] != true)
+                      .where((user) =>
+                          filter == null ||
+                          (plans[user.id]?.amount ?? 0) == filter)
+                      .toList();
+                  return Column(
                     children: [
-                      for (final (value, label) in const [
-                        (null, 'All users'),
-                        (3, '3 OMR'),
-                        (7, '7 OMR'),
-                        (0, 'No plan'),
-                      ])
-                        ChoiceChip(
-                          label: Text(label),
-                          selected: filter == value,
-                          selectedColor: AppColors.accent(context, purple)
-                              .withValues(alpha: 0.18),
-                          backgroundColor:
-                              AppColors.panel(context, const Color(0xFFF4F4F4)),
-                          onSelected: (_) => setState(() => filter = value),
-                        ),
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
+                        child: AppText(
+                            'Latest demo subscription per user · Oman time',
+                            textAlign: TextAlign.center),
+                      ),
+                      Wrap(
+                        spacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          for (final (value, label) in const [
+                            (null, 'All users'),
+                            (3, '3 OMR'),
+                            (7, '7 OMR'),
+                            (0, 'No plan'),
+                          ])
+                            ChoiceChip(
+                              label: AppText(label),
+                              selected: filter == value,
+                              selectedColor: AppColors.accent(context, purple)
+                                  .withValues(alpha: 0.18),
+                              backgroundColor: AppColors.panel(
+                                  context, const Color(0xFFF4F4F4)),
+                              onSelected: (_) => setState(() => filter = value),
+                            ),
+                        ],
+                      ),
+                      Expanded(
+                        child: visible.isEmpty
+                            ? const Center(
+                                child: AppText('No users match this filter.'))
+                            : ListView.builder(
+                                padding: const EdgeInsets.all(12),
+                                itemCount: visible.length,
+                                itemBuilder: (context, index) {
+                                  final user = visible[index];
+                                  return _userRow(context, user.data(), user.id,
+                                      plans[user.id]);
+                                },
+                              ),
+                      ),
                     ],
-                  ),
-                  Expanded(
-                    child: visible.isEmpty
-                        ? const Center(
-                            child: Text('No users match this filter.'))
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(12),
-                            itemCount: visible.length,
-                            itemBuilder: (context, index) {
-                              final user = visible[index];
-                              return _userRow(context, user.data(), user.id,
-                                  plans[user.id]);
-                            },
-                          ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      );
+                  );
+                },
+              ),
+            ),
+          ));
 
   Map<String, _Plan> _latestPlans(
       List<QueryDocumentSnapshot<Map<String, dynamic>>> records) {
@@ -151,18 +157,18 @@ class _AdminUserSubscriptionsScreenState
       child: ListTile(
         leading: Icon(Icons.person_outline,
             color: AppColors.accent(context, purple)),
-        title: Text(name.isEmpty ? contact : name),
+        title: AppText(name.isEmpty ? contact : name),
         subtitle: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (name.isNotEmpty && email.isNotEmpty) Text(email),
+            if (name.isNotEmpty && email.isNotEmpty) AppText(email),
             if (plan == null)
-              const Text('No subscription')
+              const AppText('No subscription')
             else ...[
-              Text(
+              AppText(
                   '${plan.name} · ${plan.amount} OMR · $months ${months == 1 ? 'month' : 'months'}'),
-              Text(date),
+              AppText(date),
             ],
           ],
         ),

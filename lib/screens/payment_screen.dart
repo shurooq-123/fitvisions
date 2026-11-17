@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../widgets/prototype_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -65,8 +66,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content:
-              Text('Demo subscription activated. No money has been charged.')));
+          content: AppText(
+              'Demo subscription activated. No money has been charged.')));
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       if (args?['returnToSubscription'] == true ||
@@ -79,7 +80,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Could not save the request. Please try again.')));
+            content: AppText('Could not save the request. Please try again.')));
       }
     } finally {
       if (mounted) setState(() => loading = false);
@@ -88,6 +89,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppLanguage.watch(context);
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final subscriptionId = args?['subscriptionId'] as String?;
@@ -101,7 +103,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           if (plan != null && price != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Text('$plan • ${price.toStringAsFixed(0)} OMR',
+              child: AppText('$plan • ${price.toStringAsFixed(0)} OMR',
                   style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           PrototypePanel(
@@ -113,7 +115,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         const Center(child: Icon(Icons.credit_card, size: 40)),
                         const SizedBox(height: 12),
                         const Center(
-                            child: Text('Demo payment • No real charge',
+                            child: AppText('Demo payment • No real charge',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(fontSize: 12))),
                         const SizedBox(height: 16),
@@ -137,7 +139,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         }),
                       ]))),
           const SizedBox(height: 24),
-          const Text(
+          const AppText(
               'No money will be charged. Use test details only. Card details are never saved or sent.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12)),
@@ -179,8 +181,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 if (digits != null) LengthLimitingTextInputFormatter(digits),
               ],
         decoration: InputDecoration(
-            labelText: label,
-            hintText: hint,
+            labelText: tr(label),
+            hintText: trError(hint),
             suffixIconConstraints:
                 isExpiry ? const BoxConstraints(minWidth: 32) : null,
             suffixIcon: isExpiry
@@ -188,26 +190,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 : null),
         validator: (value) {
           final text = (value ?? '').trim();
-          if (text.isEmpty) return 'Enter $label';
+          if (text.isEmpty) return tr('Enter $label');
           if (isName &&
               (!nameCharacters.hasMatch(text) || !hasLetter.hasMatch(text))) {
-            return 'Use letters and spaces only';
+            return tr('Use letters and spaces only');
           }
           if (digits != null &&
               (text.length != digits || !positiveDigits.hasMatch(text))) {
-            return 'Enter $digits digits';
+            return tr('Enter $digits digits');
           }
           if (digits == 16 && RegExp(r'^0+$').hasMatch(text)) {
-            return 'Enter a valid card number';
+            return tr('Enter a valid card number');
           }
           if (isExpiry) {
             final match = RegExp(r'^(0[1-9]|1[0-2])/(\d{2})$').firstMatch(text);
-            if (match == null) return 'Use MM/YY';
+            if (match == null) return tr('Use MM/YY');
             final month =
                 DateTime(2000 + int.parse(match[2]!), int.parse(match[1]!));
             final now = DateTime.now();
             if (month.isBefore(DateTime(now.year, now.month))) {
-              return 'This card has expired';
+              return tr('This card has expired');
             }
           }
           return null;

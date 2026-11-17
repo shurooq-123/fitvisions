@@ -137,6 +137,7 @@ String cloudMeasuredAvatarPrompt(
   return '${garmentReplacement}Edit reference image 0 in place. It shows the complete person to dress. '
       'Preserve the person’s face, pose, shoulder width, chest volume, abdominal depth, hip width and leg fullness. '
       'Change only the clothes, leaving the same body underneath. '
+      'The selected avatar is an adult ${gender?.subject ?? 'person'}. Preserve this gender and all entered measurements even for unisex clothing. Never infer the avatar gender or body dimensions from the garment or its model. '
       '$stature $framing'
       'Retain the complete outfit and both feet in frame. '
       'Return one realistic full-body adult fashion avatar wearing the outfit, '

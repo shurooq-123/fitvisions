@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import '../widgets/feedback_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -12,38 +13,43 @@ class AdminSystemScreen extends StatelessWidget {
   static const purple = Color(0xFF51227D);
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-      backgroundColor: AppColors.page(context, bg),
-      body: SafeArea(
-          child: SingleChildScrollView(
-              child: Center(
-                  child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 390),
-        child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(children: [
-              Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                      onPressed: () => Navigator.maybePop(context),
-                      icon: const Icon(Icons.arrow_back_ios, size: 28))),
-              const SizedBox(height: 25),
-              const Text('Manage System',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 30),
-              const Text('Subscription Plans',
-                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              plansCard(context),
-              const SizedBox(height: 30),
-              const Text('Feedback',
-                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              feedbackList(),
-              const SizedBox(height: 24),
-            ])),
-      )))),
-      bottomNavigationBar: adminBottomNav(context, 2));
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => Scaffold(
+          backgroundColor: AppColors.page(context, bg),
+          body: SafeArea(
+              child: SingleChildScrollView(
+                  child: Center(
+                      child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 390),
+            child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Column(children: [
+                  Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                          onPressed: () => Navigator.maybePop(context),
+                          icon: const Icon(Icons.arrow_back_ios, size: 28))),
+                  const SizedBox(height: 25),
+                  const AppText('Manage System',
+                      style:
+                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 30),
+                  const AppText('Subscription Plans',
+                      style:
+                          TextStyle(fontSize: 19, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  plansCard(context),
+                  const SizedBox(height: 30),
+                  const AppText('Feedback',
+                      style:
+                          TextStyle(fontSize: 19, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  feedbackList(),
+                  const SizedBox(height: 24),
+                ])),
+          )))),
+          bottomNavigationBar: adminBottomNav(context, 2)));
 
   void showPayments(BuildContext context) {
     showModalBottomSheet(
@@ -56,22 +62,22 @@ class AdminSystemScreen extends StatelessWidget {
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return const Center(
-                        child: Text('Could not load payments.'));
+                        child: AppText('Could not load payments.'));
                   }
                   if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (snapshot.data!.docs.isEmpty) {
-                    return const Center(child: Text('No demo payments yet'));
+                    return const Center(child: AppText('No demo payments yet'));
                   }
                   return ListView(
                       children: snapshot.data!.docs.map((doc) {
                     final data = doc.data() as Map<String, dynamic>;
                     return ListTile(
-                        title: Text('${data['plan'] ?? 'Payment'}'),
-                        subtitle: Text(
+                        title: AppText('${data['plan'] ?? 'Payment'}'),
+                        subtitle: AppText(
                             '${data['email'] ?? ''}\n${data['status'] ?? 'Unverified'}'),
-                        trailing: Text('${data['amount'] ?? 0} OMR'));
+                        trailing: AppText('${data['amount'] ?? 0} OMR'));
                   }).toList());
                 })));
   }
@@ -102,7 +108,7 @@ class AdminSystemScreen extends StatelessWidget {
             ),
             SizedBox(width: 18),
             Expanded(
-              child: Text(
+              child: AppText(
                 'Manage Subscription Plans',
                 style: TextStyle(
                   fontSize: 16,
@@ -128,7 +134,7 @@ class AdminSystemScreen extends StatelessWidget {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const Text(
+          return const AppText(
               'Could not load feedback. Check your connection and admin permissions.');
         }
         if (!snapshot.hasData) {
@@ -154,7 +160,7 @@ class AdminSystemScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(25),
             ),
             child: const Center(
-              child: Text('No feedback yet'),
+              child: AppText('No feedback yet'),
             ),
           );
         }

@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -36,64 +37,66 @@ class _DressedAvatarViewState extends State<DressedAvatarView> {
   }
 
   @override
-  Widget build(BuildContext context) => PrototypePanel(
-        child: Column(children: [
-          const Text('Your 3D avatar',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Semantics(
-            image: true,
-            label: showMeasurements
-                ? widget.model.dimensions.entries
-                    .map((entry) => '${entry.key} ${entry.value} cm')
-                    .join(', ')
-                : 'Dressed 3D avatar',
-            child: GestureDetector(
-              onPanUpdate: (event) =>
-                  rotate(event.delta.dx / 85, event.delta.dy / 85),
-              child: SizedBox(
-                width: double.infinity,
-                height: 380,
-                child: CustomPaint(
-                  painter: MeasurementAvatarPainter(
-                    widget.model,
-                    angle: angle,
-                    pitch: pitch,
-                    atlas: widget.atlas,
-                    portrait: widget.portrait,
-                    showMeasurements: showMeasurements,
+  Widget build(BuildContext context) => AppLanguage.observe(
+      context,
+      () => PrototypePanel(
+            child: Column(children: [
+              const AppText('Your 3D avatar',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Semantics(
+                image: true,
+                label: showMeasurements
+                    ? widget.model.dimensions.entries
+                        .map((entry) => '${entry.key} ${entry.value} cm')
+                        .join(', ')
+                    : 'Dressed 3D avatar',
+                child: GestureDetector(
+                  onPanUpdate: (event) =>
+                      rotate(event.delta.dx / 85, event.delta.dy / 85),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 380,
+                    child: CustomPaint(
+                      painter: MeasurementAvatarPainter(
+                        widget.model,
+                        angle: angle,
+                        pitch: pitch,
+                        atlas: widget.atlas,
+                        portrait: widget.portrait,
+                        showMeasurements: showMeasurements,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-          Wrap(alignment: WrapAlignment.center, children: [
-            IconButton(
-              tooltip: 'Rotate left',
-              onPressed: () => rotate(-math.pi / 8, 0),
-              icon: const Icon(Icons.arrow_back),
-            ),
-            IconButton(
-              tooltip: 'View from above',
-              onPressed: () => rotate(0, math.pi / 8),
-              icon: const Icon(Icons.arrow_upward),
-            ),
-            IconButton(
-              tooltip: 'View from below',
-              onPressed: () => rotate(0, -math.pi / 8),
-              icon: const Icon(Icons.arrow_downward),
-            ),
-            IconButton(
-              tooltip: 'Rotate right',
-              onPressed: () => rotate(math.pi / 8, 0),
-              icon: const Icon(Icons.arrow_forward),
-            ),
-          ]),
-          SwitchListTile(
-            title: const Text('Show measurements'),
-            value: showMeasurements,
-            onChanged: (value) => setState(() => showMeasurements = value),
-          ),
-        ]),
-      );
+              Wrap(alignment: WrapAlignment.center, children: [
+                IconButton(
+                  tooltip: tr('Rotate left'),
+                  onPressed: () => rotate(-math.pi / 8, 0),
+                  icon: const Icon(Icons.arrow_back),
+                ),
+                IconButton(
+                  tooltip: tr('View from above'),
+                  onPressed: () => rotate(0, math.pi / 8),
+                  icon: const Icon(Icons.arrow_upward),
+                ),
+                IconButton(
+                  tooltip: tr('View from below'),
+                  onPressed: () => rotate(0, -math.pi / 8),
+                  icon: const Icon(Icons.arrow_downward),
+                ),
+                IconButton(
+                  tooltip: tr('Rotate right'),
+                  onPressed: () => rotate(math.pi / 8, 0),
+                  icon: const Icon(Icons.arrow_forward),
+                ),
+              ]),
+              SwitchListTile(
+                title: const AppText('Show measurements'),
+                value: showMeasurements,
+                onChanged: (value) => setState(() => showMeasurements = value),
+              ),
+            ]),
+          ));
 }

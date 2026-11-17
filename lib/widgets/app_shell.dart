@@ -1,3 +1,4 @@
+import '../services/app_language.dart';
 import 'package:flutter/material.dart';
 import 'account_header.dart';
 
@@ -35,5 +36,6 @@ class _AppShellState extends State<AppShell> {
   }
 
   @override
-  Widget build(BuildContext context) => Overlay(initialEntries: [entry]);
+  Widget build(BuildContext context) =>
+      AppLanguage.observe(context, () => Overlay(initialEntries: [entry]));
 }
