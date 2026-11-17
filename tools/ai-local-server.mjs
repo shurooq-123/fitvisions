@@ -46,7 +46,16 @@ for (let n=0; n<9000 && !token; n++) {
 setupServer.close();
 for (const suffix of ['.public.pem','.bin','.ready']) await unlink(exchange+suffix).catch(()=>{});
 if (!token) throw new Error('Credential transfer timed out');
-const session = randomBytes(32).toString('hex');
+// Reuse only an explicitly selected local app-session config, never the API key.
+// This lets the already installed USB trial reconnect after a bridge restart.
+const sessionConfig = process.env.FITVISIONS_AI_SESSION_CONFIG;
+const savedSession = sessionConfig
+  ? JSON.parse(await readFile(resolve(sessionConfig), 'utf8')).FITVISIONS_AI_SESSION
+  : null;
+if (sessionConfig && !/^[a-f0-9]{64}$/.test(savedSession ?? '')) {
+  throw new Error('Invalid local app session configuration');
+}
+const session = savedSession ?? randomBytes(32).toString('hex');
 let busy=false, count=0;
 function reply(res,status,data) {
   res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});
