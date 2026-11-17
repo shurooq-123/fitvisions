@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'services/notification_service.dart';
-import 'widgets/account_header.dart';
+import 'widgets/app_shell.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/reports_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -68,10 +68,7 @@ class FitVisionsApp extends StatelessWidget {
         value: Theme.of(context).brightness == Brightness.dark
             ? SystemUiOverlayStyle.light
             : SystemUiOverlayStyle.dark,
-        child: Column(children: [
-          const AccountHeader(),
-          Expanded(child: child ?? const SizedBox.shrink())
-        ]),
+        child: AppShell(child: child ?? const SizedBox.shrink()),
       ),
       darkTheme: ThemeData(
         useMaterial3: false,
