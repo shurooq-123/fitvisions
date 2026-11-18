@@ -103,7 +103,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               alignment: Alignment.centerLeft,
               child: IconButton(
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.maybePop(context);
                 },
                 icon: const Icon(
                   Icons.arrow_back_ios,

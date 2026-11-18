@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/appearance.dart';
 import 'admin_user_subscriptions_screen.dart';
-import 'admin_system_screen.dart';
-import 'admin_users_screen.dart';
+
+
 
 enum _AdminSetting { lightMode, darkMode, arabic, english, changePassword }
 
@@ -112,7 +112,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.maybePop(context),
                 icon: Icon(Icons.arrow_back_ios,
                     size: 32, color: AppColors.ink(context)),
               ),
@@ -291,27 +291,13 @@ Widget adminBottomNav(BuildContext context, int index) {
     type: BottomNavigationBarType.fixed,
     backgroundColor: AppColors.panel(context, Colors.white),
     onTap: (i) {
+      if (i == index) return;
+      final route = ['/adminDashboard', '/adminUsers', '/adminSystem'][i];
       if (i == 0) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const AdminDashboardScreen(),
-          ),
-        );
-      } else if (i == 1) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const AdminUsersScreen(),
-          ),
-        );
-      } else if (i == 2) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const AdminSystemScreen(),
-          ),
-        );
+        Navigator.pushNamedAndRemoveUntil(context, route, (_) => false);
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+            context, route, (r) => r.settings.name == '/adminDashboard');
       }
     },
     items: [
@@ -331,3 +317,4 @@ Widget adminBottomNav(BuildContext context, int index) {
     ],
   );
 }
+

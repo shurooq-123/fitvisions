@@ -9,15 +9,16 @@ class CustomBackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     AppLanguage.watch(context);
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Padding(
-        padding: const EdgeInsets.only(
-          left: 6,
+        padding: const EdgeInsetsDirectional.only(
+          start: 6,
           top: 6,
         ),
         child: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.maybePop(context);
           },
           icon: Icon(
             Icons.arrow_back_ios,

@@ -38,12 +38,9 @@ class AccountHeader extends StatelessWidget {
                               return Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 12),
-                                  child: AppText(
-                                      name.isEmpty
-                                          ? (user.displayName ?? 'FitVisions')
-                                          : name,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis));
+                                  child: AccountName(name.isEmpty
+                                      ? (user.displayName ?? 'FitVisions')
+                                      : name));
                             })),
                     StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                         stream: FirebaseFirestore.instance
@@ -84,4 +81,22 @@ class AccountHeader extends StatelessWidget {
                   ])));
         });
   }
+}
+
+/// Keep user-entered names literal in both languages, with the full name
+/// available to accessibility services even if the visible text is truncated.
+class AccountName extends StatelessWidget {
+  const AccountName(this.name, {super.key});
+  final String name;
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label: name,
+        excludeSemantics: true,
+        child: Tooltip(
+            message: name,
+            child: Text(name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600))),
+      );
 }

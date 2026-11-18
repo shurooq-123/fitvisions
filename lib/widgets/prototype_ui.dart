@@ -1,4 +1,5 @@
 import '../services/app_language.dart';
+import 'custom_back_button.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
@@ -119,13 +120,7 @@ class PrototypePage extends StatelessWidget {
                               MediaQuery.sizeOf(context).width <= 340 ? 16 : 20,
                               24),
                           child: Column(children: [
-                            Align(
-                                alignment: Alignment.centerLeft,
-                                child: IconButton(
-                                    onPressed: () =>
-                                        Navigator.maybePop(context),
-                                    icon: const Icon(Icons.arrow_back_ios,
-                                        size: 30))),
+                            const CustomBackButton(),
                             if (title != null) ...[
                               const SizedBox(height: 16),
                               AppText(title!,
