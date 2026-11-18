@@ -1,4 +1,6 @@
 import '../services/app_language.dart';
+import '../services/avatar_gender.dart';
+import 'live_measurement_preview.dart';
 import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../services/body_size_presets.dart';
@@ -42,6 +44,15 @@ class MeasurementLabel extends StatelessWidget {
             showDuration: const Duration(seconds: 7),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Flexible(child: AppText(label)),
+              if (value != null && previous != null && value != previous)
+                Icon(
+                    value! > previous!
+                        ? Icons.arrow_upward
+                        : Icons.arrow_downward,
+                    size: 14,
+                    semanticLabel: tr(value! > previous!
+                        ? 'Measurement increased'
+                        : 'Measurement decreased')),
               const SizedBox(width: 3),
               const Icon(Icons.info_outline, size: 14)
             ]),
@@ -244,12 +255,14 @@ class BodyMeasurements extends StatefulWidget {
       this.onSize,
       this.onUnitChanged,
       this.afterFields,
-      this.avatarSizing = false});
+      this.avatarSizing = false,
+      this.gender});
   final ValueChanged<Map<String, String>> onChanged;
   final ValueChanged<String>? onSize;
   final ValueChanged<bool>? onUnitChanged;
   final Widget? afterFields;
   final bool avatarSizing;
+  final AvatarGender? gender;
   @override
   State<BodyMeasurements> createState() => _BodyMeasurementsState();
 }
@@ -295,6 +308,11 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
   Widget build(BuildContext context) => AppLanguage.observe(
       context,
       () => Column(children: [
+            if (widget.avatarSizing)
+              LiveMeasurementPreview(values: {
+                for (final e in centimetres.entries)
+                  if (e.value != null) e.key: e.value.toString()
+              }, gender: widget.gender),
             DropdownButton<bool>(
                 isExpanded: true,
                 value: inches,
@@ -309,7 +327,10 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
                     inches = v;
                     for (final key in fields.keys) {
                       final cm = centimetres[key];
-                      if (cm != null) setCentimetres(key, cm);
+                      if (cm != null)
+                        fields[key]!.text = inches
+                            ? (cm / 2.54).toStringAsFixed(2)
+                            : cm.toString();
                     }
                   });
                   widget.onUnitChanged?.call(inches);

@@ -13,3 +13,12 @@ test('expires at exact boundary and rejects cancelled access',()=>{
  assert.equal(!!active({...record,status:'cancelled'},new Date('2026-02-01')),false);
 });
 test('invalid durations cannot activate',()=>{for(const n of [0,-1,1.5,121])assert.throws(()=>addMonths(new Date(),n));});
+
+test('archive protection rejects active accounts and administrators but permits expired accounts',()=>{
+ const {archiveRestriction}=require('../policy');
+ const payment={createdAt:stamp('2026-01-01T12:00:00Z'),startsAt:stamp('2026-02-01T12:00:00Z'),durationMonths:1,status:'paid'};
+ assert.match(archiveRestriction({role:'user'},[payment],new Date('2026-02-20T12:00:00Z')),/active subscription/);
+ assert.equal(archiveRestriction({role:'user'},[payment],new Date('2026-03-01T12:00:00Z')),null);
+ assert.match(archiveRestriction({role:'admin'},[]),/Administrator/);
+ assert.match(archiveRestriction(null,[]),/not found/);
+});

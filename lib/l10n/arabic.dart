@@ -1,5 +1,9 @@
 // Presentation strings; stored database values remain unchanged.
 const arabic = <String, String>{
+  "This user has an active subscription. Wait until it expires.":
+      "هذا المستخدم لديه اشتراك نشط. انتظر حتى انتهاء الاشتراك.",
+  "Account archiving is unavailable. No records were deleted.":
+      "أرشفة الحساب غير متاحة حاليًا. لم يتم حذف أي سجلات.",
   "Language": "اللغة",
   "English": "English",
   "Welcome": "مرحبًا",
@@ -748,5 +752,11 @@ const arabic = <String, String>{
   "Expiry date": "تاريخ الانتهاء",
   "Registration date": "تاريخ التسجيل",
   "Please choose a try-on method": "اختر طريقة تجربة الملابس",
-  "If an account exists, you will receive a FitVisions email. Open the newest link to choose a different password.": "إذا كان الحساب موجودًا فستصلك رسالة من FitVisions. افتح أحدث رابط لاختيار كلمة مرور مختلفة.",
+  "If an account exists, you will receive a FitVisions email. Open the newest link to choose a different password.":
+      "إذا كان الحساب موجودًا فستصلك رسالة من FitVisions. افتح أحدث رابط لاختيار كلمة مرور مختلفة.",
+  "Live measurement preview": "معاينة مباشرة للمقاسات",
+  "Shape updates immediately. Apply changes to regenerate the dressed AI image.":
+      "يتغير المجسم فورًا. اضغط تطبيق التعديلات لإعادة إنشاء صورة الأفتار بالملابس.",
+  "Measurement increased": "زاد المقاس",
+  "Measurement decreased": "نقص المقاس",
 };

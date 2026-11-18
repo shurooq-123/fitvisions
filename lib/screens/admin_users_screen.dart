@@ -1,4 +1,5 @@
 import '../services/app_language.dart';
+import '../services/subscription_access.dart';
 import '../constants/app_colors.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,6 +23,18 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
   Future<void> deleteUser(String id) async {
     try {
+      final payments = await (widget.firestore ?? FirebaseFirestore.instance)
+          .collection('payments')
+          .where('uid', isEqualTo: id)
+          .get();
+      if (SubscriptionAccess.active(payments.docs.map((doc) => doc.data())) !=
+          null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: AppText(
+                'This user has an active subscription. Wait until it expires.')));
+        return;
+      }
       await FirebaseFunctions.instance
           .httpsCallable('archiveUser')
           .call({'uid': id});
@@ -31,7 +44,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: AppText(e.message ?? 'Could not archive this account.')));
+          content: AppText(
+              ['not-found', 'unavailable', 'unimplemented'].contains(e.code)
+                  ? 'Account archiving is unavailable. No records were deleted.'
+                  : e.message ?? 'Could not archive this account.')));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -60,7 +76,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 Navigator.pop(context);
                 await deleteUser(id);
               },
-              child: const AppText('Delete'),
+              child: const AppText('Archive User'),
             ),
           ],
         );
@@ -234,9 +250,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                       builder: (_) => AdminUserHistoryScreen(
                           uid: id, name: name, firestore: widget.firestore)))),
           IconButton(
-              tooltip: tr('Delete user'),
+              tooltip: tr('Archive User'),
               onPressed: () => confirmDelete(id, name),
-              icon: const Icon(Icons.delete, color: Colors.red)),
+              icon: const Icon(Icons.archive_outlined, color: Colors.red)),
         ],
       ),
     );

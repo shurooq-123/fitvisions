@@ -15,10 +15,16 @@ function duration(record) {
 function endOf(record) {
   if (record.expiresAt?.toDate) return record.expiresAt.toDate();
   if (!record.createdAt?.toDate || !duration(record)) return null;
-  return addMonths(record.createdAt.toDate(),duration(record));
+  return addMonths((record.startsAt ?? record.createdAt).toDate(),duration(record));
 }
 function active(record, now = new Date()) {
   const end = endOf(record); const start = (record.startsAt ?? record.createdAt)?.toDate?.();
   return ['pending','demo_active','paid'].includes(record.status) && end && start && start <= now && end > now;
 }
-module.exports={addMonths,duration,endOf,active};
+function archiveRestriction(target, payments, now = new Date()) {
+  if (!target) return 'Account not found.';
+  if (target.role === 'admin') return 'Administrator accounts cannot be archived here.';
+  if (payments.some(record => active(record, now))) return 'This user has an active subscription. Wait until it expires.';
+  return null;
+}
+module.exports={addMonths,duration,endOf,active,archiveRestriction};

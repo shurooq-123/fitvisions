@@ -5,7 +5,7 @@ const {getMessaging} = require('firebase-admin/messaging');
 const {onDocumentCreated} = require('firebase-functions/v2/firestore');
 const {onCall,HttpsError} = require('firebase-functions/v2/https');
 const {onSchedule} = require('firebase-functions/v2/scheduler');
-const {addMonths,duration,endOf,active} = require('./policy');
+const {addMonths,duration,endOf,active,archiveRestriction} = require('./policy');
 initializeApp(); const db = getFirestore();
 function notice(uid,title,body,kind) {return {uid,title,body,kind,read:false,createdAt:FieldValue.serverTimestamp()};}
 
@@ -64,14 +64,15 @@ exports.archiveUser=onCall(async request=>{
   const caller=request.auth?.uid;const uid=request.data?.uid;
   if(!caller)throw new HttpsError('unauthenticated','Please sign in.');
   if(typeof uid!=='string'||uid===caller||uid.includes('/'))throw new HttpsError('invalid-argument','You cannot archive this account.');
-  if((await db.doc(`users/${caller}`).get()).data()?.role!=='admin')throw new HttpsError('permission-denied','Administrator access required.');
+  const callerProfile=(await db.doc(`users/${caller}`).get()).data();
+  if(callerProfile?.role!=='admin'||callerProfile.archived===true)throw new HttpsError('permission-denied','Administrator access required.');
   const userRef=db.doc(`users/${uid}`);
   await db.runTransaction(async tx=>{
     const target=await tx.get(userRef);
     const payments=await tx.get(db.collection('payments').where('uid','==',uid));
     if(!target.exists)throw new HttpsError('not-found','Account not found.');
-    if(target.data().role==='admin')throw new HttpsError('failed-precondition','Administrator accounts cannot be archived here.');
-    if(payments.docs.some(d=>active(d.data())))throw new HttpsError('failed-precondition','This user has an active subscription. Wait until it expires.');
+    const restriction=archiveRestriction(target.data(),payments.docs.map(d=>d.data()));
+    if(restriction)throw new HttpsError('failed-precondition',restriction);
     tx.update(userRef,{archived:true,archivedAt:FieldValue.serverTimestamp()});
   });
   await getAuth().updateUser(uid,{disabled:true});

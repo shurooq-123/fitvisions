@@ -15,6 +15,7 @@ import '../services/body_size_presets.dart';
 import '../widgets/measurement_avatar_view.dart';
 import '../services/app_data_service.dart';
 import '../widgets/measurement_guide.dart';
+import '../widgets/live_measurement_preview.dart';
 import '../widgets/prototype_ui.dart';
 import '../widgets/clothing_library.dart';
 import '../services/dress_reference.dart';
@@ -83,6 +84,8 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   late final AvatarGarment? garmentCut;
   late final int avatarSeed = Random().nextInt(1 << 31);
   final editedCentimetres = <String, String>{};
+  final previousMeasurements = <String, double?>{};
+  int resultRevision = 0;
   late bool inches = widget.measurementsInInches;
   Map<String, String> bodyReferenceMeasurements = const {};
   Uint8List? generatedBodyReference;
@@ -208,7 +211,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
       };
 
   void editMeasurement(String key, String text) {
+    final old = double.tryParse(currentMeasurements[key] ?? '');
     update(() {
+      previousMeasurements[key] = old;
       if (hasMeasuredPreview) {
         final value = double.tryParse(text);
         editedCentimetres[key] =
@@ -286,11 +291,11 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                             Navigator.pop(editorContext, true);
                             return;
                           }
-                          final previous = output;
+                          final previousRevision = resultRevision;
                           await applyChanges();
                           if (!editorContext.mounted ||
                               ModalRoute.of(editorContext)?.isCurrent != true ||
-                              identical(output, previous)) {
+                              resultRevision == previousRevision) {
                             return;
                           }
                           Navigator.pop(editorContext, true);
@@ -334,13 +339,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
         ));
   }
 
-  Future<void> applyChanges() async {
-    if ((hasMeasuredPreview || widget.compactDesignResult) &&
-        (!await checkout(avatarAction: 'edit') || !mounted)) {
-      return;
-    }
-    await generate(edit: true);
-  }
+  Future<void> applyChanges() => generate(edit: true);
 
   Future<void> replaceClothing() async {
     if (busy) return;
@@ -357,7 +356,8 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
 
   Future<void> generate({bool edit = false}) async {
     if (busy) return;
-    if (output != null && widget.generator == null) {
+    if ((output != null || edit) &&
+        (widget.generator == null || widget.subscriptionCheck != null)) {
       if (!await checkout(avatarAction: 'edit') || !mounted) return;
     }
     if (pendingHistoryImage != null) {
@@ -417,6 +417,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
       if (!mounted) return;
       update(() {
         output = result;
+        resultRevision++;
         resultMeasurements = measurements;
         avatarViews.clear();
         avatarView = AvatarViewAngle.front;
@@ -456,6 +457,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
           'chest': measurements['Chest'],
           'waist': measurements['Waist'],
           'hip': measurements['Hips'],
+          'shoulders': measurements['Shoulders'],
           'clothImagePath': clothingPhoto,
           'personalImagePath': widget.personalPhoto,
         });
@@ -495,7 +497,8 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
       final guide = gender == null
           ? null
           : await renderBodyReferenceSheet(
-              MeasurementAvatar(measurements, garment: AvatarGarment.separates),
+              MeasurementAvatar(measurements,
+                  garment: AvatarGarment.separates, gender: gender),
               includeLabels: false);
       body = await generator(
         cloudMeasuredAvatarPrompt(
@@ -793,6 +796,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
               initiallyExpanded: hasMeasuredPreview,
               children: [
                 if (hasMeasuredPreview)
+                  LiveMeasurementPreview(
+                      values: currentMeasurements, gender: widget.avatarGender),
+                if (hasMeasuredPreview)
                   DropdownButton<bool>(
                     isExpanded: true,
                     value: inches,
@@ -809,7 +815,11 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Row(children: [
                         SizedBox(
-                            width: 100, child: MeasurementLabel(entry.key)),
+                            width: 100,
+                            child: MeasurementLabel(entry.key,
+                                value: double.tryParse(
+                                    currentMeasurements[entry.key] ?? ''),
+                                previous: previousMeasurements[entry.key])),
                         Expanded(
                             child: TextField(
                                 controller: entry.value,

@@ -1,12 +1,7 @@
 import 'measurement_avatar.dart';
 
-enum AvatarGender {
-  female('woman'),
-  male('man');
-
-  const AvatarGender(this.subject);
-  final String subject;
-}
+import 'avatar_gender.dart';
+export 'avatar_gender.dart';
 
 enum AvatarViewAngle {
   front('Front', 'straight from the front, with both shoulders facing camera'),

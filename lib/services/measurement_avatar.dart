@@ -1,3 +1,4 @@
+import 'avatar_gender.dart';
 import 'dart:math' as math;
 
 class AvatarPoint {
@@ -19,7 +20,8 @@ enum AvatarGarment { separates, dress, longDress, robe }
 /// constrained, along with shoulder width when supplied.
 class MeasurementAvatar {
   MeasurementAvatar(Map<String, String> values,
-      {this.depthRatio = .68, this.garment}) {
+      {double? depthRatio, this.garment, this.gender})
+      : depthRatio = depthRatio ?? (gender == AvatarGender.male ? .72 : .68) {
     for (final name in ['Height', 'Chest', 'Waist', 'Hips']) {
       final n = double.tryParse(values[name] ?? '');
       if (n == null ||
@@ -38,11 +40,14 @@ class MeasurementAvatar {
       }
       dimensions['Shoulders'] = width;
     }
-    if (!depthRatio.isFinite || depthRatio < .45 || depthRatio > 1) {
+    if (!this.depthRatio.isFinite ||
+        this.depthRatio < .45 ||
+        this.depthRatio > 1) {
       throw ArgumentError('Invalid depth ratio');
     }
     _build();
   }
+  final AvatarGender? gender;
   final double depthRatio;
   final AvatarGarment? garment;
   final dimensions = <String, double>{};

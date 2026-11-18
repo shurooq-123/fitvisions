@@ -179,6 +179,7 @@ class _PersonalClothMeasurementScreenState
                 child: Column(children: [
               BodyMeasurements(
                 avatarSizing: true,
+              gender: gender,
                 onChanged: (values) => bodyMeasurements = values,
                 onSize: (size) => selectedSize = size,
                 onUnitChanged: (value) => inches = value,
