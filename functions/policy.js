@@ -1,10 +1,11 @@
 function addMonths(date, months) {
   if (!Number.isInteger(months) || months < 1 || months > 120) throw new Error('Invalid duration');
-  const result = new Date(date);
+  const offset = 4 * 60 * 60 * 1000; // Asia/Muscat subscription calendar.
+  const result = new Date(new Date(date).getTime() + offset);
   const day = result.getUTCDate(); result.setUTCDate(1);
   result.setUTCMonth(result.getUTCMonth() + months);
   const last = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth()+1,0)).getUTCDate();
-  result.setUTCDate(Math.min(day,last)); return result;
+  result.setUTCDate(Math.min(day,last)); return new Date(result.getTime() - offset);
 }
 function duration(record) {
   if (Number.isInteger(record.durationMonths) && record.durationMonths > 0 && record.durationMonths <= 120) return record.durationMonths;

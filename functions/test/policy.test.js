@@ -22,3 +22,7 @@ test('archive protection rejects active accounts and administrators but permits 
  assert.match(archiveRestriction({role:'admin'},[]),/Administrator/);
  assert.match(archiveRestriction(null,[]),/not found/);
 });
+
+test('Oman midnight renewal clamps to the local last day',()=>{
+ assert.equal(addMonths(new Date('2026-01-30T20:00:00Z'),1).toISOString(),'2026-02-27T20:00:00.000Z');
+});

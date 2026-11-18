@@ -1,3 +1,5 @@
+> Superseded availability/status: see [18 November audit](REVIEW_AUDIT_2026-11-18.md). Historical results below describe the 16 November state. Firestore rules were subsequently deployed; reports are now admin-only by user request.
+
 # CP2 Group 13 — latest-source review implementation
 
 Source: `FitVisions-Latest-2026-11-16.zip`, extracted into this project on 16 November 2026. The supplied source is preserved as a separate Git commit. New email-link registration, light/dark appearance, removed ready-made screen, and the admin user-subscriptions page are retained.
