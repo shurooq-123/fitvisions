@@ -3,6 +3,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fitvisions/widgets/app_shell.dart';
 
 void main() {
+  testWidgets('Shared header stays visible while page scrolls', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      builder: (_, child) => AppShell(header: const Material(child: SizedBox(height:48, child: Text('Fixed account header'))), child:child!),
+      home: Scaffold(body: ListView(children: List.generate(60, (i)=>SizedBox(height:60, child:Text('Row $i'))))),
+    ));
+    final before=tester.getTopLeft(find.text('Fixed account header'));
+    await tester.drag(find.byType(ListView),const Offset(0,-700));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.text('Fixed account header')),before);
+    expect(find.text('Fixed account header').hitTestable(),findsOneWidget);
+  });
+  testWidgets('Home ignores system back but explicit pop can leave a child', (tester) async {
+    final key=GlobalKey<NavigatorState>();
+    await tester.pumpWidget(MaterialApp(navigatorKey:key, home:const PopScope(canPop:false,child:Scaffold(body:Text('Signed-in home')))));
+    await tester.binding.handlePopRoute();await tester.pumpAndSettle();
+    expect(find.text('Signed-in home'),findsOneWidget);
+    key.currentState!.push(MaterialPageRoute<void>(builder:(_)=>const Scaffold(body:Text('Details'))));
+    await tester.pumpAndSettle();key.currentState!.pop();await tester.pumpAndSettle();
+    expect(find.text('Signed-in home'),findsOneWidget);
+  });
+
   testWidgets(
       'Signed-in header tooltip has an Overlay above the route navigator',
       (tester) async {

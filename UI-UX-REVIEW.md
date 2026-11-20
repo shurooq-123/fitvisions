@@ -21,3 +21,9 @@
 4. Switch language and theme, then confirm entered form data and navigation remain usable.
 
 Phone installation and physical verification were deferred at the user's request. Welcome/root screens have no preceding application screen to return to; Back must not remove their only route.
+
+## 21 November navigation update
+- Authenticated shared header now contains a fixed Back button outside page scrolling.
+- Successful user/admin login clears authentication routes from the back stack.
+- Home/dashboard PopScope blocks system swipe/back from leaving the root. The explicit fixed Back button closes the Android activity when there is no prior route; it does not sign out. Logout remains the account sign-out action.
+- Header remains conditional on Firebase authentication. Fixed scrolling and root-back tests pass with the full 217-test suite.

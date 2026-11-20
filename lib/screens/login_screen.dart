@@ -53,15 +53,10 @@ class _LoginScreenState extends State<LoginScreen> {
         showMessage('Signed in, but the login email could not be sent.');
 
       if (role == 'admin') {
-        Navigator.pushReplacementNamed(
-          context,
-          '/adminDashboard',
-        );
+        Navigator.pushNamedAndRemoveUntil(
+            context, '/adminDashboard', (_) => false);
       } else {
-        Navigator.pushReplacementNamed(
-          context,
-          '/home',
-        );
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
       }
     } catch (e) {
       if (mounted) showMessage(AuthService.errorMessage(e));

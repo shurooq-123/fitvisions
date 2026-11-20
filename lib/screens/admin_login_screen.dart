@@ -41,7 +41,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       if (!mounted) return;
       if (!emailSent)
         showMessage('Signed in, but the login email could not be sent.');
-      Navigator.pushReplacementNamed(context, '/adminDashboard');
+      Navigator.pushNamedAndRemoveUntil(
+          context, '/adminDashboard', (_) => false);
     } catch (e) {
       if (mounted) {
         showMessage(AuthService.errorMessage(e));

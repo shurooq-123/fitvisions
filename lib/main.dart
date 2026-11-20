@@ -150,7 +150,8 @@ class FitVisionsApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/forgot': (context) => const ForgotPasswordScreen(),
-        '/home': (context) => const UserHomeScreen(),
+        '/home': (context) =>
+            const PopScope(canPop: false, child: UserHomeScreen()),
         '/avatar': (context) => const AvatarScreen(),
         '/measurement': (context) => const MeasurementScreen(),
         '/subscription': (context) => const SubscriptionScreen(),
@@ -169,7 +170,8 @@ class FitVisionsApp extends StatelessWidget {
         '/profile': (context) => const ProfileScreen(),
         '/adminLogin': (context) => const AdminLoginScreen(),
         '/adminForgot': (context) => const AdminForgotPasswordScreen(),
-        '/adminDashboard': (context) => const AdminDashboardScreen(),
+        '/adminDashboard': (context) =>
+            const PopScope(canPop: false, child: AdminDashboardScreen()),
         '/adminUsers': (context) => const AdminUsersScreen(),
         '/adminSystem': (context) => const AdminSystemScreen(),
         '/adminPlans': (context) => const AdminPlansScreen(),

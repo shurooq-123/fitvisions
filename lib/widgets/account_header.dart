@@ -2,6 +2,7 @@ import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import '../services/notification_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -23,6 +24,23 @@ class AccountHeader extends StatelessWidget {
               child: SafeArea(
                   bottom: false,
                   child: Row(children: [
+                    IconButton(
+                      key: const ValueKey('fixed-account-back'),
+                      tooltip:
+                          MaterialLocalizations.of(context).backButtonTooltip,
+                      icon: const BackButtonIcon(),
+                      onPressed: () {
+                        final navigator =
+                            NotificationService.navigator.currentState;
+                        if (navigator == null) return;
+                        if (navigator.canPop()) {
+                          navigator.pop();
+                        } else {
+                          // Explicit button exit only: root swipe/back is blocked.
+                          SystemNavigator.pop();
+                        }
+                      },
+                    ),
                     Expanded(
                         child: StreamBuilder<
                                 DocumentSnapshot<Map<String, dynamic>>>(
