@@ -8,7 +8,8 @@ import '../services/app_data_service.dart';
 import '../widgets/prototype_ui.dart';
 
 class ReportsScreen extends StatefulWidget {
-  const ReportsScreen({super.key});
+  const ReportsScreen({super.key, this.userId, this.userName});
+  final String? userId, userName;
   @override
   State<ReportsScreen> createState() => _ReportsScreenState();
 }
@@ -18,7 +19,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   String? error;
   Uint8List? pdf;
   String selected = 'Activity';
-  String? filterUid;
+  String? get filterUid => widget.userId;
   Future<void> generate() async {
     setState(() {
       busy = true;
@@ -55,8 +56,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 0)
             .compareTo(
                 (a['createdAt'] as Timestamp?)?.millisecondsSinceEpoch ?? 0));
+      final targetProfile = filterUid == null ? null : (await db.collection('users').doc(filterUid).get(const GetOptions(source: Source.server))).data();
       final bytes = await buildReportPdf(
-          selected: selected, name: name, admin: admin, records: records);
+          selected: selected,
+          name: widget.userName ?? name,
+          admin: admin,
+          records: records, profile: targetProfile);
       if (mounted) setState(() => pdf = bytes);
     } catch (_) {
       if (mounted) {
@@ -91,7 +96,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Widget reportContent(BuildContext context) => PrototypePage(
       nav: false,
-      title: 'Reports',
+      title:
+          widget.userName == null ? 'Reports' : 'Reports: ${widget.userName}',
       child: Column(children: [
         DropdownButtonFormField<String>(
             initialValue: selected,

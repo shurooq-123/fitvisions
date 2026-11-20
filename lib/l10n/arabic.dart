@@ -1,5 +1,8 @@
 // Presentation strings; stored database values remain unchanged.
 const arabic = <String, String>{
+  "Edit clothing design": "تعديل تصميم الملابس",
+  "Could not open this saved image.": "تعذر فتح الصورة المحفوظة.",
+
   "This user has an active subscription. Wait until it expires.":
       "هذا المستخدم لديه اشتراك نشط. انتظر حتى انتهاء الاشتراك.",
   "Account archiving is unavailable. No records were deleted.":

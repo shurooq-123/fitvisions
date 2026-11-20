@@ -91,9 +91,10 @@ service cloud.firestore {
       allow get: if member() && !exists(/databases/$(database)/documents/history/$(id)) && id.matches(request.auth.uid + "_.*");
       allow read: if ownRecord() || admin();
       allow create: if newOwner()
-        && request.resource.data.keys().hasOnly(['uid','email','title','createdAt','kind','previewBase64'])
+        && request.resource.data.keys().hasOnly(['uid','email','title','createdAt','kind','previewBase64','editData'])
         && (!('kind' in request.resource.data) || request.resource.data.kind in ['avatar','clothes'])
         && (!('previewBase64' in request.resource.data) || (text(request.resource.data.previewBase64, 700000) && request.resource.data.kind in ['avatar','clothes']))
+        && (!('editData' in request.resource.data) || (request.resource.data.editData is map && request.resource.data.editData.keys().hasOnly(['measurements','gender','prompt','outfitDetails'])))
         && text(request.resource.data.title, 500)
         && request.resource.data.createdAt == request.time;
       allow delete: if ownRecord();

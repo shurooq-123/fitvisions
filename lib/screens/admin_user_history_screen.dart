@@ -1,4 +1,5 @@
 import '../services/app_language.dart';
+import 'reports_screen.dart';
 import '../constants/app_colors.dart';
 import '../widgets/history_preview.dart';
 import '../widgets/feedback_message.dart';
@@ -43,6 +44,16 @@ class _AdminUserHistoryScreenState extends State<AdminUserHistoryScreen> {
                     AppColors.page(context, const Color(0xFFD5DBCD)),
                 elevation: 0,
                 title: const AppText('User History'),
+                actions: [
+                  IconButton(
+                      tooltip: 'Download and share reports',
+                      icon: const Icon(Icons.description_outlined),
+                      onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) =>
+                                  ReportsScreen(userId: uid, userName: name))))
+                ],
                 bottom: const TabBar(tabs: [
                   Tab(text: 'History / Try-ons'),
                   Tab(text: 'Feedback'),

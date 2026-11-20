@@ -1,4 +1,5 @@
 import '../services/app_language.dart';
+import '../services/admin_archive_service.dart';
 import '../services/subscription_access.dart';
 import '../constants/app_colors.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -35,9 +36,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 'This user has an active subscription. Wait until it expires.')));
         return;
       }
-      await FirebaseFunctions.instance
-          .httpsCallable('archiveUser')
-          .call({'uid': id});
+      await AdminArchiveService.archive(id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: AppText('Account archived; transaction records retained.')));

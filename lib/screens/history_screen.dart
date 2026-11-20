@@ -1,4 +1,7 @@
 import '../services/app_language.dart';
+import 'dart:convert';
+import 'ai_generation_screen.dart';
+import '../services/avatar_gender.dart';
 import '../constants/app_colors.dart';
 import '../widgets/prototype_ui.dart';
 import '../widgets/history_preview.dart';
@@ -56,6 +59,44 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   void showDetails(Map<String, dynamic> data) =>
       showHistoryResult(context, data);
+
+  void editResult(Map<String, dynamic> data) {
+    try {
+      final bytes = base64Decode(data['previewBase64'] as String);
+      final saved = Map<String, dynamic>.from(data['editData'] as Map? ?? {});
+      final avatar = data['kind'] == 'avatar';
+      final measurements = Map<String, String>.from(
+          (saved['measurements'] as Map? ?? {})
+              .map((k, v) => MapEntry(k.toString(), v.toString())));
+      if (avatar && measurements.isEmpty) {
+        for (final key in ['Height', 'Chest', 'Waist', 'Hips', 'Shoulders']) {
+          measurements[key] = '';
+        }
+      }
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => AiGenerationScreen(
+                    title: avatar ? 'Edit avatar' : 'Edit clothing design',
+                    prompt: saved['prompt']?.toString() ??
+                        'Edit the saved clothing image while preserving the person and garment identity.',
+                    outfitDetails: saved['outfitDetails']?.toString() ?? '',
+                    avatar: avatar,
+                    measurements: measurements,
+                    avatarGender: saved['gender'] == 'male'
+                        ? AvatarGender.male
+                        : saved['gender'] == 'female'
+                            ? AvatarGender.female
+                            : null,
+                    initialOutput: bytes,
+                    openHistoryEditor: true,
+                    compactDesignResult: !avatar,
+                  )));
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: AppText('Could not open this saved image.')));
+    }
+  }
 
   static const bg = Color(0xFFCED1C6);
 
@@ -184,6 +225,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     ),
                                   ),
                                 ),
+                                if (['avatar', 'clothes']
+                                        .contains(data['kind']) &&
+                                    data['previewBase64'] is String)
+                                  IconButton(
+                                      tooltip: tr('Edit'),
+                                      icon: const Icon(Icons.edit_outlined),
+                                      onPressed: () => editResult(data)),
                                 const Icon(Icons.arrow_forward_ios,
                                     color: Colors.grey, size: 24),
                               ],

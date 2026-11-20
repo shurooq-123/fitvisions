@@ -114,10 +114,13 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
 
         showMessage('Plan added successfully');
       } else {
-        await (widget.firestore ?? FirebaseFirestore.instance)
-            .collection('plans')
-            .doc(editingId)
-            .update(data);
+        final db = widget.firestore ?? FirebaseFirestore.instance;
+        final batch = db.batch();
+        // Publish a new catalogue entry; purchased subscription snapshots stay intact.
+        batch.set(db.collection('plans').doc(),
+            {...data, 'createdAt': FieldValue.serverTimestamp()});
+        batch.delete(db.collection('plans').doc(editingId));
+        await batch.commit();
 
         showMessage('Plan updated successfully');
       }

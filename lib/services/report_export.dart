@@ -7,7 +7,8 @@ Future<Uint8List> buildReportPdf(
     {required String selected,
     required String name,
     required bool admin,
-    required List<Map<String, dynamic>> records}) async {
+    required List<Map<String, dynamic>> records,
+    Map<String, dynamic>? profile}) async {
   String date(dynamic v) => v is Timestamp
       ? v.toDate().toLocal().toString().split('.').first
       : 'Not recorded';
@@ -58,6 +59,11 @@ Future<Uint8List> buildReportPdf(
       build: (_) => [
             pw.Header(level: 0, text: 'FitVisions - $selected report'),
             pw.Text('Prepared for: $name (${admin ? 'Admin' : 'User'})'),
+            if (profile != null) ...[
+              pw.Text('Account: ${profile['firstName'] ?? ''} ${profile['lastName'] ?? ''}'),
+              pw.Text('Email: ${profile['email'] ?? ''}'),
+              pw.Text('Phone: ${profile['phone'] ?? ''}'),
+            ],
             pw.Text('Generated: ${DateTime.now().toLocal()}'),
             pw.Text('Records: ${records.length}. Order: newest to oldest.'),
             if (selected == 'Subscriptions and payments')

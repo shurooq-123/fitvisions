@@ -135,7 +135,7 @@ void main() {
     failPayment = false;
     await tapVisible(tester, 'Pay');
     await tapVisible(tester, 'Continue');
-    expect(find.text('Edit avatar'), findsOneWidget);
+    expect(find.text('Edit clothing design'), findsOneWidget);
     expect(find.text('Describe your changes'), findsNothing);
     expect(generated, 1);
     expect(payments, 1);

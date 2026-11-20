@@ -1,5 +1,6 @@
 import 'package:country_picker/country_picker.dart';
 import 'services/app_language.dart';
+import 'services/route_visibility.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'services/event_notification_service.dart';
 import 'dart:async';
@@ -54,6 +55,8 @@ void main() async {
   }));
 }
 
+final appRouteObserver = RouteVisibility();
+
 class FitVisionsApp extends StatelessWidget {
   const FitVisionsApp({super.key});
 
@@ -70,6 +73,7 @@ class FitVisionsApp extends StatelessWidget {
       navigatorKey: NotificationService.navigator,
       scaffoldMessengerKey: NotificationService.messenger,
       title: 'FitVisions',
+      navigatorObservers: [appRouteObserver],
       locale: AppLanguage.locale.value,
       supportedLocales: const [Locale('en'), Locale('ar')],
       localizationsDelegates: [

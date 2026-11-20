@@ -45,7 +45,7 @@ class AppDataService {
   }
 
   static Future<void> saveGeneration(String title, Uint8List bytes, String kind,
-      {String? recordId}) async {
+      {String? recordId, Map<String, dynamic>? editData}) async {
     final user = requireUser();
     final codec = await ui.instantiateImageCodec(bytes, targetWidth: 320);
     final frame = await codec.getNextFrame();
@@ -67,6 +67,7 @@ class AppDataService {
       'title': title.length > 500 ? title.substring(0, 500) : title,
       'kind': kind,
       'previewBase64': preview,
+      if (editData != null) 'editData': editData,
       'createdAt': FieldValue.serverTimestamp(),
     });
     await EventNotificationService.enqueue('generation', record.id,

@@ -158,3 +158,10 @@ test('idempotent generation save can inspect a missing own ID but not another us
  await env.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),'history','alice_bob'),{...identity('bob'),title:'Private',createdAt:serverTimestamp()}));
  await assertFails(getDoc(doc(alice.firestore(),'history','alice_bob')));
 });
+
+test('history editing context is owner-scoped and does not allow foreign fields',async()=>{
+ const record={...identity('alice'),title:'Generated avatar',kind:'avatar',previewBase64:'image',createdAt:serverTimestamp(),editData:{measurements:{Height:'170',Waist:'80'},gender:'female',prompt:'Preserve clothing',outfitDetails:''}};
+ await assertSucceeds(setDoc(doc(alice.firestore(),'history','alice_editable'),record));
+ await assertFails(getDoc(doc(bob.firestore(),'history','alice_editable')));
+ await assertFails(setDoc(doc(alice.firestore(),'history','alice_invalid'),{...record,editData:{role:'admin'}}));
+});

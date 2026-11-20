@@ -1,4 +1,5 @@
 import '../services/app_language.dart';
+import '../services/route_visibility.dart';
 import '../constants/app_colors.dart';
 import '../services/notification_service.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,13 @@ class AccountHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     AppLanguage.watch(context);
     if (Firebase.apps.isEmpty) return const SizedBox.shrink();
+    return ValueListenableBuilder<bool>(
+        valueListenable: RouteVisibility.publicPage,
+        builder: (context, publicPage, _) =>
+            publicPage ? const SizedBox.shrink() : _signedInHeader(context));
+  }
+
+  Widget _signedInHeader(BuildContext context) {
     return StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         initialData: FirebaseAuth.instance.currentUser,

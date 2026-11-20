@@ -44,8 +44,10 @@ class AiGenerationScreen extends StatefulWidget {
       this.autoGenerate = false,
       this.compactDesignResult = false,
       this.initialOutput,
+      this.openHistoryEditor = false,
       this.geometryOnly = false,
       this.measuredBodyReference = false});
+  final bool openHistoryEditor;
   final Uint8List? initialOutput;
   final bool geometryOnly;
   final bool measuredBodyReference;
@@ -99,7 +101,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
     try {
       await AppDataService.saveGeneration(pendingHistoryTitle!,
           pendingHistoryImage!, widget.avatar ? 'avatar' : 'clothes',
-          recordId: pendingHistoryId);
+          recordId: pendingHistoryId, editData: historyEditData);
       if (mounted)
         update(() {
           pendingHistoryImage = null;
@@ -159,6 +161,12 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
       if (hasMeasuredPreview && !widget.measurements.containsKey('Shoulders'))
         'Shoulders': TextEditingController(),
     };
+    if (widget.openHistoryEditor) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted)
+          avatarAction(context, 'edit', closeOptionsAfterEdit: false);
+      });
+    }
     if (widget.autoGenerate) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) generate();
@@ -166,6 +174,12 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
     }
   }
 
+  Map<String, dynamic> get historyEditData => {
+        'measurements': currentMeasurements,
+        'gender': widget.avatarGender?.name ?? '',
+        'prompt': widget.prompt,
+        'outfitDetails': widget.outfitDetails,
+      };
   void update(VoidCallback change) {
     setState(change);
     actionUpdates.value++;
@@ -275,7 +289,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
         builder: (editorContext) => ListenableBuilder(
           listenable: actionUpdates,
           builder: (_, __) => PrototypePage(
-            title: 'Edit avatar',
+            title: widget.avatar ? 'Edit avatar' : 'Edit clothing design',
             nav: false,
             child: Column(children: [
               ...editorFields(),
@@ -378,7 +392,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
     if (!hasMeasuredPreview &&
         widget.avatar &&
         measures.isNotEmpty &&
-        !validMeasurements(measurements)) {
+        !(widget.openHistoryEditor ? validAvatarMeasurements(measurements) : validMeasurements(measurements))) {
       update(() => error = 'Enter valid positive measurements in cm and kg.');
       return;
     }
@@ -436,7 +450,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
           pendingHistoryImage = result;
           await AppDataService.saveGeneration(
               description, result, widget.avatar ? 'avatar' : 'clothes',
-              recordId: pendingHistoryId);
+              recordId: pendingHistoryId, editData: historyEditData);
           pendingHistoryImage = null;
         } catch (_) {
           if (mounted) {
@@ -672,7 +686,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   Future<Uint8List> generateImage(Map<String, String> measurements,
       {required bool edit}) async {
     final photos = <Uint8List>[];
-    final editImage = edit && output != null && !structureChanged;
+    final editImage = edit && output != null && (widget.openHistoryEditor || !structureChanged);
     if (editImage) {
       photos.add(output!);
     } else {
@@ -706,7 +720,7 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
         : widget.prompt;
     return (widget.generator ?? AiGenerationService.generate)(
       editImage
-          ? 'Edit reference image 0: $editInstructions. $genderInstruction $bodyInstruction Preserve all other details. Fully clothed, non-explicit fashion image. ${widget.outfitDetails}'
+          ? 'Edit reference image 0: $editInstructions. ${structureChanged ? 'Reshape the same dressed figure using these body measurements in cm: $measurements. Preserve the garment design.' : ''} $genderInstruction $bodyInstruction Preserve all other details. Fully clothed, non-explicit fashion image. ${widget.outfitDetails}'
           : '${widget.outfitDetails} $basePrompt$genderInstruction$bodyInstruction ${edit ? 'Additional requested changes: $editInstructions' : ''}',
       photos,
     );
