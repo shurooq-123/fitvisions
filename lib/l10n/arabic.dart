@@ -1,5 +1,9 @@
 // Presentation strings; stored database values remain unchanged.
 const arabic = <String, String>{
+  "Zoom in": "تكبير",
+  "Zoom out": "تصغير",
+  "Reset zoom": "إعادة الحجم",
+
   "Edit clothing design": "تعديل تصميم الملابس",
   "Could not open this saved image.": "تعذر فتح الصورة المحفوظة.",
 

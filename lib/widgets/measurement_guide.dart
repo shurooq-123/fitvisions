@@ -1,6 +1,5 @@
 import '../services/app_language.dart';
 import '../services/avatar_gender.dart';
-import 'live_measurement_preview.dart';
 import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../services/body_size_presets.dart';
@@ -27,21 +26,12 @@ class MeasurementLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AppLanguage.observe(
       context,
-      () => Tooltip(
-            richMessage: WidgetSpan(
-                child: SizedBox(
-                    width: 130,
-                    height: 180,
-                    child: Semantics(
-                        label: measurementHelp[label] ?? label,
-                        child: CustomPaint(
-                            painter: BodyMeasurePainter(label,
-                                value: value, previous: previous))))),
-            decoration: BoxDecoration(
-                color: AppColors.ink(context, const Color(0xFF574543)),
-                borderRadius: BorderRadius.circular(12)),
-            triggerMode: TooltipTriggerMode.tap,
-            showDuration: const Duration(seconds: 7),
+      () => InkWell(
+            onTap: () => showDialog<void>(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => MeasurementIllustration(
+                    label: label, value: value, previous: previous)),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Flexible(child: AppText(label)),
               if (value != null && previous != null && value != previous)
@@ -57,6 +47,83 @@ class MeasurementLabel extends StatelessWidget {
               const Icon(Icons.info_outline, size: 14)
             ]),
           ));
+}
+
+class MeasurementIllustration extends StatefulWidget {
+  const MeasurementIllustration(
+      {super.key, required this.label, this.value, this.previous});
+  final String label;
+  final double? value, previous;
+  @override
+  State<MeasurementIllustration> createState() =>
+      _MeasurementIllustrationState();
+}
+
+class _MeasurementIllustrationState extends State<MeasurementIllustration> {
+  final transform = TransformationController();
+  void zoom(double factor) {
+    final scale =
+        (transform.value.getMaxScaleOnAxis() * factor).clamp(1.0, 4.0);
+    transform.value = Matrix4.identity()..scale(scale);
+  }
+
+  @override
+  void dispose() {
+    transform.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final drawing = SizedBox(
+        width: 130,
+        height: 180,
+        child: Semantics(
+            label: measurementHelp[widget.label] ?? widget.label,
+            child: CustomPaint(
+                painter: BodyMeasurePainter(widget.label,
+                    value: widget.value, previous: widget.previous))));
+    return Dialog(
+        child: SizedBox(
+            width: 320,
+            height: MediaQuery.sizeOf(context).height * .7,
+            child: Column(children: [
+              Row(children: [
+                const SizedBox(width: 12),
+                Expanded(child: AppText(widget.label)),
+                IconButton(
+                    tooltip:
+                        MaterialLocalizations.of(context).closeButtonTooltip,
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context))
+              ]),
+              Expanded(
+                  child: ColoredBox(
+                      color: const Color(0xFF574543),
+                      child: InteractiveViewer(
+                          transformationController: transform,
+                          minScale: 1,
+                          maxScale: 4,
+                          child: Center(
+                              child: AspectRatio(
+                                  aspectRatio: 130 / 180,
+                                  child: FittedBox(child: drawing)))))),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                IconButton(
+                    tooltip: tr('Zoom out'),
+                    onPressed: () => zoom(1 / 1.25),
+                    icon: const Icon(Icons.zoom_out)),
+                IconButton(
+                    tooltip: tr('Reset zoom'),
+                    onPressed: () => transform.value = Matrix4.identity(),
+                    icon: const Icon(Icons.center_focus_strong)),
+                IconButton(
+                    tooltip: tr('Zoom in'),
+                    onPressed: () => zoom(1.25),
+                    icon: const Icon(Icons.zoom_in)),
+              ]),
+            ])));
+  }
 }
 
 // Illustrative adult ranges, not a garment manufacturer's sizing standard.
@@ -308,11 +375,6 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
   Widget build(BuildContext context) => AppLanguage.observe(
       context,
       () => Column(children: [
-            if (widget.avatarSizing)
-              LiveMeasurementPreview(values: {
-                for (final e in centimetres.entries)
-                  if (e.value != null) e.key: e.value.toString()
-              }, gender: widget.gender),
             DropdownButton<bool>(
                 isExpanded: true,
                 value: inches,

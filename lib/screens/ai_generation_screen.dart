@@ -15,7 +15,6 @@ import '../services/body_size_presets.dart';
 import '../widgets/measurement_avatar_view.dart';
 import '../services/app_data_service.dart';
 import '../widgets/measurement_guide.dart';
-import '../widgets/live_measurement_preview.dart';
 import '../widgets/prototype_ui.dart';
 import '../widgets/clothing_library.dart';
 import '../services/dress_reference.dart';
@@ -392,7 +391,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
     if (!hasMeasuredPreview &&
         widget.avatar &&
         measures.isNotEmpty &&
-        !(widget.openHistoryEditor ? validAvatarMeasurements(measurements) : validMeasurements(measurements))) {
+        !(widget.openHistoryEditor
+            ? validAvatarMeasurements(measurements)
+            : validMeasurements(measurements))) {
       update(() => error = 'Enter valid positive measurements in cm and kg.');
       return;
     }
@@ -686,7 +687,9 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   Future<Uint8List> generateImage(Map<String, String> measurements,
       {required bool edit}) async {
     final photos = <Uint8List>[];
-    final editImage = edit && output != null && (widget.openHistoryEditor || !structureChanged);
+    final editImage = edit &&
+        output != null &&
+        (widget.openHistoryEditor || !structureChanged);
     if (editImage) {
       photos.add(output!);
     } else {
@@ -809,9 +812,6 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
               title: const AppText('Edit measurements / clothing'),
               initiallyExpanded: hasMeasuredPreview,
               children: [
-                if (hasMeasuredPreview)
-                  LiveMeasurementPreview(
-                      values: currentMeasurements, gender: widget.avatarGender),
                 if (hasMeasuredPreview)
                   DropdownButton<bool>(
                     isExpanded: true,
