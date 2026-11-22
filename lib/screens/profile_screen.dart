@@ -162,14 +162,20 @@ class _AppearanceSwitch extends StatelessWidget {
     return PrototypePanel(
       radius: 24,
       padding: 4,
-      child: SwitchListTile(
-        title: const AppText('Dark mode'),
-        subtitle: AppText(dark ? 'Dark' : 'Light'),
-        secondary:
-            Icon(dark ? Icons.dark_mode_outlined : Icons.light_mode_outlined),
-        value: dark,
-        onChanged: Appearance.setDark,
-      ),
+      child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Wrap(spacing: 12, runSpacing: 8, children: [
+            ChoiceChip(
+                avatar: const Icon(Icons.light_mode_outlined),
+                label: const AppText('Light'),
+                selected: !dark,
+                onSelected: (_) => Appearance.setDark(false)),
+            ChoiceChip(
+                avatar: const Icon(Icons.dark_mode_outlined),
+                label: const AppText('Dark'),
+                selected: dark,
+                onSelected: (_) => Appearance.setDark(true)),
+          ])),
     );
   }
 }

@@ -146,7 +146,7 @@ void main() {
     expect(find.textContaining('11:40'), findsOneWidget);
     await tester.tap(find.byType(DropdownButton<bool>));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Oldest to newest').last);
+    await tester.tap(find.text('Oldest').last);
     await tester.pumpAndSettle();
     expect(tester.getTopLeft(find.textContaining('Older result')).dy,
         lessThan(tester.getTopLeft(find.textContaining('Newer result')).dy));

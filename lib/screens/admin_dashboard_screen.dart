@@ -7,8 +7,6 @@ import '../services/auth_service.dart';
 import '../services/appearance.dart';
 import 'admin_user_subscriptions_screen.dart';
 
-
-
 enum _AdminSetting { lightMode, darkMode, arabic, english, changePassword }
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -138,19 +136,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     CheckedPopupMenuItem(
                         value: _AdminSetting.lightMode,
                         checked: !dark,
-                        child: const AppText('Light mode')),
+                        child: const Row(children: [
+                          Icon(Icons.light_mode_outlined),
+                          SizedBox(width: 8),
+                          AppText('Light mode')
+                        ])),
                     CheckedPopupMenuItem(
                         value: _AdminSetting.darkMode,
                         checked: dark,
-                        child: const AppText('Dark mode')),
+                        child: const Row(children: [
+                          Icon(Icons.dark_mode_outlined),
+                          SizedBox(width: 8),
+                          AppText('Dark mode')
+                        ])),
                     CheckedPopupMenuItem(
                         value: _AdminSetting.arabic,
                         checked: AppLanguage.locale.value.languageCode == 'ar',
-                        child: const AppText('العربية')),
+                        child: const Row(children: [
+                          Icon(Icons.translate),
+                          SizedBox(width: 8),
+                          Text('العربية')
+                        ])),
                     CheckedPopupMenuItem(
                         value: _AdminSetting.english,
                         checked: AppLanguage.locale.value.languageCode == 'en',
-                        child: const AppText('English')),
+                        child: const Row(children: [
+                          Icon(Icons.translate),
+                          SizedBox(width: 8),
+                          Text('English')
+                        ])),
                     const PopupMenuItem(
                         value: _AdminSetting.changePassword,
                         child: AppText('Change password')),

@@ -1,3 +1,4 @@
+import 'photo_editor_screen.dart';
 import '../services/app_language.dart';
 import '../services/clothing_compatibility.dart';
 import '../constants/app_colors.dart';
@@ -361,8 +362,10 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
         (!await checkout(avatarAction: 'edit') || !mounted)) return;
     final selected = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (selected != null && mounted) {
+      final edited = await editPhoto(context, selected.path);
+      if (edited == null || !mounted) return;
       update(() {
-        clothingPhoto = selected.path;
+        clothingPhoto = edited;
         structureChanged = true;
       });
     }

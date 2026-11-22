@@ -143,9 +143,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 value: newestFirst,
                 items: const [
                   DropdownMenuItem(
-                      value: true, child: AppText('Newest to oldest')),
+                      value: true,
+                      child: Row(children: [
+                        Icon(Icons.south),
+                        SizedBox(width: 8),
+                        AppText('Latest')
+                      ])),
                   DropdownMenuItem(
-                      value: false, child: AppText('Oldest to newest'))
+                      value: false,
+                      child: Row(children: [
+                        Icon(Icons.north),
+                        SizedBox(width: 8),
+                        AppText('Oldest')
+                      ]))
                 ],
                 onChanged: (v) => setState(() => newestFirst = v ?? true)),
             Expanded(

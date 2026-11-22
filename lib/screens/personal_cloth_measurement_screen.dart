@@ -1,3 +1,4 @@
+import 'photo_editor_screen.dart';
 import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'dart:io';
@@ -59,14 +60,16 @@ class _PersonalClothMeasurementScreenState
       final image = await ImagePicker().pickImage(
           source: source, maxWidth: 2048, maxHeight: 2048, imageQuality: 90);
       if (image == null || !mounted) return;
-      final path = await AppDataService.saveImage(image.path, kind);
+      final edited = await editPhoto(context, image.path);
+      if (edited == null || !mounted) return;
+      final path = await AppDataService.saveImage(edited, kind);
       if (!mounted) return;
       setState(() {
         if (kind == 'cloth') {
-          clothImage = File(path.startsWith('gs://') ? image.path : path);
+          clothImage = File(path.startsWith('gs://') ? edited : path);
           savedClothPath = path;
         } else {
-          personalImage = File(path.startsWith('gs://') ? image.path : path);
+          personalImage = File(path.startsWith('gs://') ? edited : path);
           savedPersonalPath = path;
         }
       });
@@ -179,7 +182,7 @@ class _PersonalClothMeasurementScreenState
                 child: Column(children: [
               BodyMeasurements(
                 avatarSizing: true,
-              gender: gender,
+                gender: gender,
                 onChanged: (values) => bodyMeasurements = values,
                 onSize: (size) => selectedSize = size,
                 onUnitChanged: (value) => inches = value,

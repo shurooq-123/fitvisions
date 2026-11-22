@@ -6,16 +6,23 @@ class LanguageSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ValueListenableBuilder<Locale>(
       valueListenable: AppLanguage.locale,
-      builder: (_, locale, __) => ListTile(
-          leading: const Icon(Icons.language),
-          title: const AppText('Language'),
-          trailing: DropdownButton<String>(
-              value: locale.languageCode,
-              items: const [
-                DropdownMenuItem(value: 'en', child: Text('English')),
-                DropdownMenuItem(value: 'ar', child: Text('العربية'))
-              ],
-              onChanged: (value) {
-                if (value != null) AppLanguage.set(value);
-              })));
+      builder: (_, locale, __) => Padding(
+            padding: const EdgeInsets.all(16),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Row(children: [
+                Icon(Icons.translate),
+                SizedBox(width: 8),
+                AppText('Language')
+              ]),
+              const SizedBox(height: 10),
+              Wrap(spacing: 10, runSpacing: 8, children: [
+                for (final entry in {'en': 'English', 'ar': 'العربية'}.entries)
+                  ChoiceChip(
+                      label: Text(entry.value),
+                      selected: locale.languageCode == entry.key,
+                      onSelected: (_) => AppLanguage.set(entry.key)),
+              ]),
+            ]),
+          ));
 }

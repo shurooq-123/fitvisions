@@ -1,5 +1,31 @@
 // Presentation strings; stored database values remain unchanged.
 const arabic = <String, String>{
+  "Edit photo": "تعديل الصورة",
+  "Use original": "استخدام الأصل",
+  "Crop": "قص",
+  "Arrow": "سهم",
+  "Text": "نص",
+  "Drag on the image to select the area to keep.":
+      "اسحب على الصورة لتحديد الجزء المراد الاحتفاظ به.",
+  "Drag to draw an arrow.": "اسحب لرسم سهم.",
+  "Enter text, then tap its position on the image.":
+      "اكتب النص ثم اضغط على مكانه في الصورة.",
+  "Annotation text": "نص التعليق",
+  "Selected colour": "اللون المحدد",
+  "Choose colour": "اختر اللون",
+  "Reset crop": "إلغاء القص",
+  "Undo annotation": "تراجع عن التعليق",
+  "Width (px)": "العرض بالبكسل",
+  "Height (px)": "الارتفاع بالبكسل",
+  "Keep proportions": "الحفاظ على النسبة",
+  "Save edited copy": "حفظ نسخة معدلة",
+  "Could not open image.": "تعذر فتح الصورة.",
+  "Could not save edited photo. Try again.":
+      "تعذر حفظ الصورة المعدلة. حاول مرة أخرى.",
+  "Use dimensions from 64 to 4096 pixels, up to 16 megapixels.":
+      "اختر أبعاداً من 64 إلى 4096 بكسل وبحد أقصى 16 ميجابكسل.",
+  "Latest": "الأحدث",
+  "Oldest": "الأقدم",
   "AI recommendations": "توصيات الذكاء الاصطناعي",
   "AI assistant": "مساعد الذكاء الاصطناعي",
   "AI size and colour recommendations": "توصيات المقاسات والألوان",
@@ -9,21 +35,21 @@ const arabic = <String, String>{
   "Get recommendations": "احصل على التوصيات",
   "Clear conversation": "مسح المحادثة",
   "Enter your question.": "اكتب سؤالك.",
-  "Enter valid measurements and your preferences.": "أدخل مقاسات صحيحة وتفضيلاتك.",
+  "Enter valid measurements and your preferences.":
+      "أدخل مقاسات صحيحة وتفضيلاتك.",
   "How do I upload clothes?": "كيف أرفع صورة الملابس؟",
   "How do I edit my avatar?": "كيف أعدل الأفتار؟",
   "Why is AI not connected?": "لماذا الذكاء الاصطناعي غير متصل؟",
   "You": "أنت",
-  "Your measurements and preferences are sent to Cloudflare AI when you request recommendations. Sizes are suggestions; check the brand chart.": "تُرسل مقاساتك وتفضيلاتك إلى Cloudflare AI عند طلب التوصيات. المقاسات إرشادية؛ تحقق من جدول العلامة التجارية.",
-  "Ask about uploading clothes, virtual fitting or using FitVisions. Your messages are sent to Cloudflare AI. Do not enter passwords or payment details.": "اسأل عن رفع الملابس أو التجربة الافتراضية أو استخدام FitVisions. تُرسل رسائلك إلى Cloudflare AI. لا تدخل كلمات المرور أو بيانات الدفع.",
-
+  "Your measurements and preferences are sent to Cloudflare AI when you request recommendations. Sizes are suggestions; check the brand chart.":
+      "تُرسل مقاساتك وتفضيلاتك إلى Cloudflare AI عند طلب التوصيات. المقاسات إرشادية؛ تحقق من جدول العلامة التجارية.",
+  "Ask about uploading clothes, virtual fitting or using FitVisions. Your messages are sent to Cloudflare AI. Do not enter passwords or payment details.":
+      "اسأل عن رفع الملابس أو التجربة الافتراضية أو استخدام FitVisions. تُرسل رسائلك إلى Cloudflare AI. لا تدخل كلمات المرور أو بيانات الدفع.",
   "Zoom in": "تكبير",
   "Zoom out": "تصغير",
   "Reset zoom": "إعادة الحجم",
-
   "Edit clothing design": "تعديل تصميم الملابس",
   "Could not open this saved image.": "تعذر فتح الصورة المحفوظة.",
-
   "This user has an active subscription. Wait until it expires.":
       "هذا المستخدم لديه اشتراك نشط. انتظر حتى انتهاء الاشتراك.",
   "Account archiving is unavailable. No records were deleted.":

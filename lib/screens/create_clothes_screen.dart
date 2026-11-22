@@ -1,3 +1,4 @@
+import 'photo_editor_screen.dart';
 import '../services/app_language.dart';
 import '../services/avatar_prompt.dart';
 import '../constants/app_colors.dart';
@@ -338,7 +339,9 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
       final photo = await ImagePicker().pickImage(
           source: source, maxWidth: 1200, maxHeight: 1200, imageQuality: 90);
       if (photo == null || !mounted) return;
-      setState(() => facePhoto = photo.path);
+      final edited = await editPhoto(context, photo.path);
+      if (edited == null || !mounted) return;
+      setState(() => facePhoto = edited);
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
