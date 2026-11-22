@@ -1,3 +1,4 @@
+import {assistantMessages} from './assistant-prompts.mjs';
 // Emulator-only trial bridge. Cloudflare credentials remain in this process.
 import http from 'node:http';
 import {generateKeyPairSync, privateDecrypt, constants, randomBytes, timingSafeEqual} from 'node:crypto';
@@ -62,7 +63,7 @@ function reply(res,status,data) {
   res.end(JSON.stringify(data));
 }
 const server = http.createServer(async(req,res)=>{
-  if (!['/generate','/skin-tone','/clothing-category'].includes(req.url) || req.method !== 'POST') return reply(res,404,{error:'Not found'});
+  if (!['/generate','/skin-tone','/clothing-category','/chat','/recommendations'].includes(req.url) || req.method !== 'POST') return reply(res,404,{error:'Not found'});
   const supplied = Buffer.from(req.headers['x-fitvisions-session'] || '');
   const expected = Buffer.from(session);
   if (supplied.length!==expected.length || !timingSafeEqual(supplied,expected)) return reply(res,401,{error:'Restart the trial app.'});
@@ -78,6 +79,19 @@ const server = http.createServer(async(req,res)=>{
     }
     let data;
     try { data=JSON.parse(Buffer.concat(chunks)); } catch { return reply(res,400,{error:'Invalid request'}); }
+    if (req.url === '/chat' || req.url === '/recommendations') {
+      let messages;try {messages=assistantMessages(req.url,data);}catch(e){return reply(res,400,{error:e.message});}
+      if(!token)return reply(res,503,{error:'AI is not connected. Connect Workers AI first.'});
+      count++;
+      const upstream=await fetch('https://api.cloudflare.com/client/v4/accounts/0111d4c60ec1f60dc6c783f0b62854dd/ai/run/@cf/google/gemma-4-26b-a4b-it',{
+        method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},signal:AbortSignal.timeout(120000),
+        body:JSON.stringify({messages,max_completion_tokens:800,temperature:0.3,chat_template_kwargs:{enable_thinking:false}})
+      });
+      if(!upstream.ok)return reply(res,502,{error:'AI assistance unavailable. Please retry.'});
+      const result=await upstream.json();const answer=result.result?.choices?.[0]?.message?.content ?? result.result?.response;
+      if(typeof answer!=='string'||!answer.trim())return reply(res,502,{error:'AI returned no answer. Please retry.'});
+      return reply(res,200,{answer:answer.trim().slice(0,6000)});
+    }
     if (req.url === '/clothing-category') {
       if (typeof data.image !== 'string' || data.image.length > 1_500_000 || !/^[A-Za-z0-9+/]+={0,2}$/.test(data.image)) return reply(res,400,{error:'Invalid clothing photo.'});
       count++;

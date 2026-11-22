@@ -1,5 +1,22 @@
 // Presentation strings; stored database values remain unchanged.
 const arabic = <String, String>{
+  "AI recommendations": "توصيات الذكاء الاصطناعي",
+  "AI assistant": "مساعد الذكاء الاصطناعي",
+  "AI size and colour recommendations": "توصيات المقاسات والألوان",
+  "FitVisions AI assistant": "مساعد FitVisions",
+  "Clothing and colour preferences": "تفضيلات الملابس والألوان",
+  "Your question": "سؤالك",
+  "Get recommendations": "احصل على التوصيات",
+  "Clear conversation": "مسح المحادثة",
+  "Enter your question.": "اكتب سؤالك.",
+  "Enter valid measurements and your preferences.": "أدخل مقاسات صحيحة وتفضيلاتك.",
+  "How do I upload clothes?": "كيف أرفع صورة الملابس؟",
+  "How do I edit my avatar?": "كيف أعدل الأفتار؟",
+  "Why is AI not connected?": "لماذا الذكاء الاصطناعي غير متصل؟",
+  "You": "أنت",
+  "Your measurements and preferences are sent to Cloudflare AI when you request recommendations. Sizes are suggestions; check the brand chart.": "تُرسل مقاساتك وتفضيلاتك إلى Cloudflare AI عند طلب التوصيات. المقاسات إرشادية؛ تحقق من جدول العلامة التجارية.",
+  "Ask about uploading clothes, virtual fitting or using FitVisions. Your messages are sent to Cloudflare AI. Do not enter passwords or payment details.": "اسأل عن رفع الملابس أو التجربة الافتراضية أو استخدام FitVisions. تُرسل رسائلك إلى Cloudflare AI. لا تدخل كلمات المرور أو بيانات الدفع.",
+
   "Zoom in": "تكبير",
   "Zoom out": "تصغير",
   "Reset zoom": "إعادة الحجم",

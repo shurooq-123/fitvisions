@@ -68,6 +68,17 @@ class AiGenerationService {
         .replaceFirst(RegExp(r'^data:image/[^;]+;base64,'), ''));
   }
 
+  static Future<String> assistance(
+      String path, Map<String, dynamic> input) async {
+    if (!['/chat', '/recommendations'].contains(path))
+      throw ArgumentError('Invalid assistance action');
+    final data = await _post(path, input);
+    final answer = data['answer'];
+    if (answer is! String || answer.trim().isEmpty)
+      throw Exception('AI returned no answer. Please retry.');
+    return answer;
+  }
+
   static Future<String> clothingCategory(Uint8List photo) async {
     final data =
         await _post('/clothing-category', {'image': await reference(photo)});
