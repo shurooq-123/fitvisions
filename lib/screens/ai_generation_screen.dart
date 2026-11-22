@@ -16,6 +16,7 @@ import '../widgets/measurement_avatar_view.dart';
 import '../services/app_data_service.dart';
 import '../widgets/measurement_guide.dart';
 import '../widgets/prototype_ui.dart';
+import '../widgets/zoomable_result.dart';
 import '../widgets/clothing_library.dart';
 import '../services/dress_reference.dart';
 import '../services/design_edit_prompt.dart';
@@ -592,19 +593,10 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
   Widget avatarResult() {
     final canRotate = loadingView == null && !busy && !checkingOut;
     return Column(children: [
-      GestureDetector(
-        onHorizontalDragEnd: !canRotate
-            ? null
-            : (event) {
-                final velocity = event.primaryVelocity ?? 0;
-                if (velocity.abs() > 100) rotateAvatar(velocity < 0 ? 1 : -1);
-              },
-        child: Image.memory(
-          avatarViews[avatarView] ?? output!,
-          gaplessPlayback: true,
-          semanticLabel: '${avatarView.label} avatar view',
-        ),
-      ),
+      ZoomableResult(
+          child: Image.memory(avatarViews[avatarView] ?? output!,
+              gaplessPlayback: true,
+              semanticLabel: '${avatarView.label} avatar view')),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         IconButton(
           tooltip: tr('Previous avatar view'),
@@ -931,7 +923,8 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
             if (output != null)
               hasMeasuredPreview
                   ? avatarResult()
-                  : Image.memory(output!, gaplessPlayback: true),
+                  : ZoomableResult(
+                      child: Image.memory(output!, gaplessPlayback: true)),
             if (hasMeasuredPreview && resultMeasurements.isNotEmpty) ...[
               const SizedBox(height: 12),
               measurementCards(),

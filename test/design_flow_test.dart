@@ -141,7 +141,10 @@ void main() {
     expect(payments, 1);
     await tester.tap(find.byIcon(Icons.arrow_back_ios).last);
     await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Save'));
+    await tester.pumpAndSettle();
     await tester.runAsync(() async {
       await tester.tap(find.text('Save'));
       for (var n = 0; n < 100 && downloads == 0; n++) {
@@ -317,3 +320,5 @@ void main() {
     expect(validMeasurements({'Height': 'NaN'}), isFalse);
   });
 }
+
+

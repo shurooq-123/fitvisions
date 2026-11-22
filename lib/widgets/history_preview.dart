@@ -3,6 +3,7 @@ import '../constants/app_colors.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'saved_image.dart';
+import 'zoomable_result.dart';
 
 class HistoryPreview extends StatelessWidget {
   const HistoryPreview(this.data, {super.key});
@@ -45,7 +46,11 @@ void showHistoryResult(BuildContext context, Map<String, dynamic> data) {
                           "${data['plan']}\n${data['price']} OMR\nStatus: ${data['status']}\nDemo subscription • No real charge")
                     else if (data['previewBase64'] is String ||
                         data['imagePath'] is String) ...[
-                      SizedBox(height: 330, child: HistoryPreview(data)),
+                      SizedBox(
+                          height: 330,
+                          child: SingleChildScrollView(
+                              child:
+                                  ZoomableResult(child: HistoryPreview(data)))),
                       const AppText('Saved preview'),
                     ] else
                       const AppText('No saved image for this older activity.'),

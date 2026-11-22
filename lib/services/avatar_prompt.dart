@@ -25,7 +25,7 @@ String cloudAvatarAnglePrompt(AvatarViewAngle angle,
     'Show the same full-body avatar in reference image 0 ${angle.direction}. '
     'Change only the camera viewpoint. Preserve the head, body size, abdomen, '
     'shoulder width, proportions, outfit cut, sleeves, hem, color and fabric. '
-    'Keep both feet and the entire head visible against the same plain background. '
+    'Keep both feet and the entire head visible against the same flat pale sage-grey background (#CED1C6). '
     '${angle == AvatarViewAngle.back ? 'Show the back of the head and outfit; the face and front neckline must be out of view. ' : ''}'
     '${hasPortrait ? 'Preserve the avatar’s facial features wherever visible from this angle.' : _blankAvatarFace} '
     'One avatar, no labels and no extra objects.';
@@ -33,7 +33,7 @@ String cloudAvatarAnglePrompt(AvatarViewAngle angle,
 String avatarPrompt(Map<String, String> measurements,
         {bool clothing = false, bool person = false}) =>
     'A polished 3D-rendered full-body adult fashion avatar, a stylized digital character with smooth CGI materials and studio lighting, NOT a photograph of a real person. '
-    'Standing head to feet, neutral background, fully clothed in a modest outfit. '
+    'Standing head to feet, flat pale sage-grey background (#CED1C6), fully clothed in a modest outfit. '
     'Approximate body proportions: ${measurements.entries.map((e) => '${e.key} ${e.value} ${e.key == 'Weight' ? 'kg' : 'cm'}').join(', ')}. '
     'Use these numbers as visual guidance, do not display numbers or text. '
     '${clothing ? 'Dress the avatar in the garment from reference image 0, keeping its design and colours.' : 'Use a simple neutral outfit.'} '
@@ -110,7 +110,7 @@ String cloudMeasuredAvatarPrompt(
         '$build The large body proportions must be immediately visible when the measurements call for them. '
         'Show the natural abdomen shape and waist width in a straight front pose, '
         'with both arms relaxed away from the sides. Wear a plain fitted charcoal T-shirt and trousers. '
-        'Head to toe, plain background, no text. Entered measurements: height $height cm, '
+        'Head to toe, flat pale sage-grey background (#CED1C6), no text. Entered measurements: height $height cm, '
         'chest circumference $chest cm, waist and abdomen circumference $waist cm, '
         'hip circumference $hips cm, '
         '${shoulder == null ? 'shoulder width proportional to the chest' : 'shoulder width across the back $shoulder cm'}. '
@@ -137,7 +137,7 @@ String cloudMeasuredAvatarPrompt(
       'Retain the complete outfit and both feet in frame. '
       'Return one realistic full-body adult fashion avatar wearing the outfit, '
       'seen from head to toe straight from the front, arms relaxed '
-      'and away from the waist. Plain background, consistent lighting and no text. '
+      'and away from the waist. Flat pale sage-grey background (#CED1C6), consistent lighting and no text. '
       'Fit the body to these input measurements in centimeters. '
       'Height $height cm. Chest circumference $chest cm. '
       'Waist and abdomen circumference $waist cm. Hip circumference $hips cm. '

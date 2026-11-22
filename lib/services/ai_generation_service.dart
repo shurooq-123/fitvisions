@@ -42,7 +42,8 @@ class AiGenerationService {
       refs.add(await reference(image));
     }
     final data = await _post('/generate', {
-      'prompt': prompt,
+      'prompt':
+          '$prompt Background requirement: use a completely flat pale sage-grey backdrop, RGB 206 209 198, hex CED1C6, matching the FitVisions app. No white background, white border, studio wall, floor line or gradient. Preserve the subject and clothing colours; change only the surrounding background.',
       'images': refs,
       if (seed != null) 'seed': seed,
     });
@@ -52,8 +53,13 @@ class AiGenerationService {
 
   static Future<Uint8List> generateCandidate(
       String prompt, List<String> references, String model) async {
-    final data = await _post('/generate',
-        {'prompt': prompt, 'images': references, 'model': model, 'seed': 42});
+    final data = await _post('/generate', {
+      'prompt':
+          '$prompt Background requirement: use a completely flat pale sage-grey backdrop, RGB 206 209 198, hex CED1C6, matching the FitVisions app. No white background, white border, studio wall, floor line or gradient. Preserve the subject and clothing colours; change only the surrounding background.',
+      'images': references,
+      'model': model,
+      'seed': 42
+    });
     if (data['model'] != model) {
       throw Exception(
           'Restart the AI bridge to enable verified model comparisons.');
