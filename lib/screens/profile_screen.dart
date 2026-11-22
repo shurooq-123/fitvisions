@@ -53,17 +53,20 @@ class ProfileScreen extends StatelessWidget {
                             Padding(
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 14),
-                                child: Row(children: [
+                                child: Column(children: [
                                   Icon(Icons.account_circle,
                                       size: 65,
                                       color: AppColors.accent(context)),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                      child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                        AppText(name.isEmpty ? 'User' : name),
+                                  const SizedBox(height: 12),
+                                  Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        AppText(name.isEmpty ? 'User' : name,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                                fontSize: 21,
+                                                fontWeight: FontWeight.w600)),
                                         const SizedBox(height: 5),
                                         AppText(
                                             data['email'] ?? user.email ?? '',
@@ -78,7 +81,7 @@ class ProfileScreen extends StatelessWidget {
                                                   : '+968 ${data['phone']}',
                                               style: const TextStyle(
                                                   fontSize: 12)),
-                                      ]))
+                                      ])
                                 ])),
                             group(context, [
                               menu(context, Icons.history, 'My History',

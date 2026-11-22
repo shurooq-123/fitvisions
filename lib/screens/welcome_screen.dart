@@ -99,16 +99,18 @@ class WelcomeScreen extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: brown,
+          backgroundColor: text == 'Register' ? const Color(0xFFFFFAF8) : brown,
+          foregroundColor: text == 'Register' ? brown : Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(28),
+            side: BorderSide(color: brown, width: 1),
           ),
         ),
         child: AppText(
           text,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: text == 'Register' ? brown : Colors.white,
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),

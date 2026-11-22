@@ -657,7 +657,16 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: AppColors.panel(context, Colors.white),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                    color: AppColors.adaptive(context, const Color(0xFFEAD7DF),
+                        const Color(0xFF624554))),
+                boxShadow: const [
+                  BoxShadow(
+                      color: Color(0x0D85465F),
+                      blurRadius: 10,
+                      offset: Offset(0, 3))
+                ],
               ),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

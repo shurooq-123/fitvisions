@@ -112,9 +112,23 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    methodButton(index: 1, text: 'Generate Avatar'),
-                    const SizedBox(height: 16),
-                    methodButton(index: 2, text: 'Design Clothes'),
+                    LayoutBuilder(builder: (context, box) {
+                      final stacked =
+                          MediaQuery.textScalerOf(context).scale(16) > 20 ||
+                              box.maxWidth < 280;
+                      final width =
+                          stacked ? box.maxWidth : (box.maxWidth - 12) / 2;
+                      return Wrap(spacing: 12, runSpacing: 12, children: [
+                        SizedBox(
+                            width: width,
+                            child: methodButton(
+                                index: 1, text: 'Generate Avatar')),
+                        SizedBox(
+                            width: width,
+                            child:
+                                methodButton(index: 2, text: 'Design Clothes')),
+                      ]);
+                    }),
                     const SizedBox(height: 24),
                   ],
                 )),
@@ -155,23 +169,25 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
                 color: Color(0x1485465F), blurRadius: 16, offset: Offset(0, 5))
           ],
         ),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Flexible(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-            AppText(text,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 19)),
-            const SizedBox(height: 6),
-            AppText(
-                const [
-                  'Create a 3D-style image from your measurements.',
-                  'Design an outfit with your own preferences.',
-                ][index - 1],
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12))
-          ])),
-          const SizedBox(width: 18),
-          const Icon(Icons.arrow_forward_ios, size: 24)
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(index == 1 ? Icons.auto_awesome : Icons.checkroom_outlined,
+              size: 34, color: AppColors.accent(context)),
+          const SizedBox(height: 12),
+          AppText(text,
+              textAlign: TextAlign.center,
+              style:
+                  const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          AppText(
+              const [
+                'Create a 3D-style image from your measurements.',
+                'Design an outfit with your own preferences.',
+              ][index - 1],
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 12, height: 1.35, color: AppColors.muted(context))),
+          const SizedBox(height: 10),
+          Icon(Icons.chevron_right, size: 22, color: AppColors.accent(context)),
         ]),
       ),
     );

@@ -45,6 +45,28 @@ class _RoseBackdrop extends CustomPainter {
       ..lineTo(size.width, size.height)
       ..close();
     canvas.drawPath(wave, paint);
+    final ribbon = Path()
+      ..moveTo(0, size.height * .88)
+      ..cubicTo(size.width * .25, size.height * .98, size.width * .63,
+          size.height * .91, size.width, size.height * .86)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(
+        ribbon,
+        Paint()
+          ..color = dark ? const Color(0x106D4358) : const Color(0x1385465F));
+    final thread = Path()
+      ..moveTo(0, size.height * .73)
+      ..cubicTo(size.width * .23, size.height * .78, size.width * .09,
+          size.height * .96, size.width * .2, size.height);
+    canvas.drawPath(
+        thread,
+        Paint()
+          ..color = dark ? const Color(0x186F5361) : const Color(0x77FFFFFF)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1);
+
     canvas.drawOval(
         Rect.fromLTWH(size.width * .72, -70, size.width * .65, 210),
         Paint()
