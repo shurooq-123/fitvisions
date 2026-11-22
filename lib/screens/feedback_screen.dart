@@ -12,7 +12,7 @@ class FeedbackScreen extends StatefulWidget {
 }
 
 class _FeedbackScreenState extends State<FeedbackScreen> {
-  static const brown = Color(0xFF574543);
+  static const brown = Color(0xFF85465F);
 
   final feedbackController = TextEditingController();
   int rating = 5;

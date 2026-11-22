@@ -1,3 +1,4 @@
+import '../widgets/fashion_backdrop.dart';
 import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -15,8 +16,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  static const bg = Color(0xFFCED1C6);
-  static const brown = Color(0xFF574543);
+  static const bg = Color(0xFFFAF0F3);
+  static const brown = Color(0xFF85465F);
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -88,7 +89,8 @@ class _LoginScreenState extends State<LoginScreen> {
     AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
-      body: SafeArea(
+      body: FashionBackdrop(
+          child: SafeArea(
         child: Align(
           alignment: Alignment.topCenter,
           child: SizedBox(
@@ -113,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.panel(context),
-                      borderRadius: BorderRadius.circular(58),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 backgroundColor: brown,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(7),
+                                  borderRadius: BorderRadius.circular(18),
                                 ),
                               ),
                               child: loading
@@ -204,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               'Don’t have an account? Sign Up',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.blue,
+                                color: Color(0xFF85465F),
                                 fontSize: 13,
                               ),
                             ),
@@ -218,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 

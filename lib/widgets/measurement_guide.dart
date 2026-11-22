@@ -99,7 +99,7 @@ class _MeasurementIllustrationState extends State<MeasurementIllustration> {
               ]),
               Expanded(
                   child: ColoredBox(
-                      color: const Color(0xFF574543),
+                      color: const Color(0xFF85465F),
                       child: InteractiveViewer(
                           transformationController: transform,
                           minScale: 1,
@@ -188,7 +188,7 @@ class MeasurementGuide extends StatelessWidget {
       const SizedBox(height: 8),
       Table(
           border: TableBorder.all(
-              color: AppColors.muted(context, const Color(0xFFD7D8D0)),
+              color: AppColors.muted(context, const Color(0xFFE9D5DE)),
               borderRadius: BorderRadius.circular(12)),
           children: [
             for (final row in [
@@ -198,17 +198,17 @@ class MeasurementGuide extends StatelessWidget {
               TableRow(
                   decoration: BoxDecoration(
                       color: row.first == 'Size'
-                          ? const Color(0xFF574543)
+                          ? const Color(0xFF85465F)
                           : row.first == selectedSize
                               ? AppColors.adaptive(
                                   context,
-                                  const Color(0xFFE4D8E8),
-                                  const Color(0xFF54445E))
+                                  const Color(0xFFF0DCE5),
+                                  const Color(0xFF573747))
                               : rows.indexOf(row).isEven
                                   ? AppColors.field(
                                       context, const Color(0xFFFAF9F6))
                                   : AppColors.panel(
-                                      context, const Color(0xFFE6E9DF))),
+                                      context, const Color(0xFFF6E8EC))),
                   children: [
                     for (final cell in row)
                       Padding(
@@ -233,7 +233,7 @@ class MeasurementGuide extends StatelessWidget {
                                       color: row.first == 'Size'
                                           ? Colors.white
                                           : AppColors.ink(
-                                              context, const Color(0xFF37352F)),
+                                              context, const Color(0xFF382331)),
                                       fontWeight:
                                           row.first == 'Size' || row.first == selectedSize
                                               ? FontWeight.bold
@@ -259,7 +259,7 @@ class BodyMeasurePainter extends CustomPainter {
     canvas.scale(verticalMeasure ? 1 : factor, verticalMeasure ? factor : 1);
     canvas.translate(-65, -90);
     final body = Paint()
-      ..color = const Color(0xFFCED1C6)
+      ..color = const Color(0xFFB78299)
       ..strokeWidth = 12
       ..strokeCap = StrokeCap.round;
     canvas.drawCircle(const Offset(65, 20), 12, body);
@@ -448,7 +448,7 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
                                 border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: const BorderSide(
-                                        color: Color(0xFFB8B9AE))))))
+                                        color: Color(0xFFE5CED7))))))
                   ])),
             if (widget.afterFields case final field?) field,
             const SizedBox(height: 12),

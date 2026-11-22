@@ -15,7 +15,7 @@ class FeedbackMessage extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-          color: AppColors.panel(context, const Color(0xFFF4F4F4)),
+          color: AppColors.panel(context, const Color(0xFFFFFAF8)),
           borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),

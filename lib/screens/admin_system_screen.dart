@@ -1,3 +1,4 @@
+import '../widgets/fashion_backdrop.dart';
 import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import '../widgets/feedback_message.dart';
@@ -9,18 +10,19 @@ class AdminSystemScreen extends StatelessWidget {
   const AdminSystemScreen({super.key, this.firestore});
   final FirebaseFirestore? firestore;
 
-  static const bg = Color(0xFFD5DBCD);
-  static const purple = Color(0xFF51227D);
+  static const bg = Color(0xFFFAF0F3);
+  static const purple = Color(0xFF914C6A);
 
   @override
   Widget build(BuildContext context) => AppLanguage.observe(
       context,
       () => Scaffold(
           backgroundColor: AppColors.page(context, bg),
-          body: SafeArea(
-              child: SingleChildScrollView(
-                  child: Center(
-                      child: ConstrainedBox(
+          body: FashionBackdrop(
+              child: SafeArea(
+                  child: SingleChildScrollView(
+                      child: Center(
+                          child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 390),
             child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -48,7 +50,7 @@ class AdminSystemScreen extends StatelessWidget {
                   feedbackList(),
                   const SizedBox(height: 24),
                 ])),
-          )))),
+          ))))),
           bottomNavigationBar: adminBottomNav(context, 2)));
 
   void showPayments(BuildContext context) {
@@ -96,7 +98,7 @@ class AdminSystemScreen extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 90),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.panel(context, const Color(0xFFF4F4F4)),
+          color: AppColors.panel(context, const Color(0xFFFFFAF8)),
           borderRadius: BorderRadius.circular(25),
         ),
         child: const Row(
@@ -156,7 +158,7 @@ class AdminSystemScreen extends StatelessWidget {
             width: 285,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: AppColors.panel(context, const Color(0xFFF4F4F4)),
+              color: AppColors.panel(context, const Color(0xFFFFFAF8)),
               borderRadius: BorderRadius.circular(25),
             ),
             child: const Center(

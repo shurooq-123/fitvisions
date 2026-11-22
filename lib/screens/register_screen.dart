@@ -1,3 +1,4 @@
+import '../widgets/fashion_backdrop.dart';
 import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'dart:async';
@@ -20,8 +21,8 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  static const bg = Color(0xFFCED1C6);
-  static const brown = Color(0xFF574543);
+  static const bg = Color(0xFFFAF0F3);
+  static const brown = Color(0xFF85465F);
 
   final formKey = GlobalKey<FormState>();
 
@@ -231,7 +232,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
-      body: SafeArea(
+      body: FashionBackdrop(
+          child: SafeArea(
         child: Align(
           alignment: Alignment.topCenter,
           child: SizedBox(
@@ -253,7 +255,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       padding: const EdgeInsets.fromLTRB(22, 20, 22, 24),
                       decoration: BoxDecoration(
                         color: AppColors.panel(context),
-                        borderRadius: BorderRadius.circular(58),
+                        borderRadius: BorderRadius.circular(24),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,7 +406,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   backgroundColor: brown,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(7),
+                                    borderRadius: BorderRadius.circular(18),
                                   ),
                                 ),
                                 child: loading
@@ -443,7 +445,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 

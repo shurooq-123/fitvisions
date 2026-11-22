@@ -1,3 +1,4 @@
+import '../widgets/fashion_backdrop.dart';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -185,165 +186,170 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                 saving ? null : () => Navigator.pop(context, widget.path),
             child: const AppText('Use original'))
       ]),
-      body: SafeArea(
-          child: image == null
-              ? Center(
-                  child: error == null
-                      ? const CircularProgressIndicator()
-                      : AppText(error!))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(children: [
-                    Wrap(spacing: 8, children: [
-                      for (final tool in ['Crop', 'Arrow', 'Text'])
-                        ChoiceChip(
-                            label: AppText(tool),
-                            selected: mode == tool,
-                            onSelected: saving
-                                ? null
-                                : (_) => setState(() => mode = tool))
-                    ]),
-                    const SizedBox(height: 12),
-                    AppText(mode == 'Crop'
-                        ? 'Drag on the image to select the area to keep.'
-                        : mode == 'Arrow'
-                            ? 'Drag to draw an arrow.'
-                            : 'Enter text, then tap its position on the image.'),
-                    if (mode == 'Text')
-                      TextField(
-                          controller: text,
-                          maxLength: 100,
-                          decoration: InputDecoration(
-                              labelText: tr('Annotation text'))),
-                    if (mode != 'Crop')
-                      Wrap(children: [
-                        for (final c in [
-                          Colors.red,
-                          Colors.white,
-                          Colors.black,
-                          Colors.blue
-                        ])
+      body: FashionBackdrop(
+          child: SafeArea(
+              child: image == null
+                  ? Center(
+                      child: error == null
+                          ? const CircularProgressIndicator()
+                          : AppText(error!))
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(children: [
+                        Wrap(spacing: 8, children: [
+                          for (final tool in ['Crop', 'Arrow', 'Text'])
+                            ChoiceChip(
+                                label: AppText(tool),
+                                selected: mode == tool,
+                                onSelected: saving
+                                    ? null
+                                    : (_) => setState(() => mode = tool))
+                        ]),
+                        const SizedBox(height: 12),
+                        AppText(mode == 'Crop'
+                            ? 'Drag on the image to select the area to keep.'
+                            : mode == 'Arrow'
+                                ? 'Drag to draw an arrow.'
+                                : 'Enter text, then tap its position on the image.'),
+                        if (mode == 'Text')
+                          TextField(
+                              controller: text,
+                              maxLength: 100,
+                              decoration: InputDecoration(
+                                  labelText: tr('Annotation text'))),
+                        if (mode != 'Crop')
+                          Wrap(children: [
+                            for (final c in [
+                              Colors.red,
+                              Colors.white,
+                              Colors.black,
+                              Colors.blue
+                            ])
+                              IconButton(
+                                  tooltip: c == colour
+                                      ? tr('Selected colour')
+                                      : tr('Choose colour'),
+                                  onPressed: () => setState(() => colour = c),
+                                  icon: Icon(
+                                      c == colour
+                                          ? Icons.check_circle
+                                          : Icons.circle,
+                                      color: c))
+                          ]),
+                        AspectRatio(
+                            aspectRatio: image!.width / image!.height,
+                            child: LayoutBuilder(builder: (context, box) {
+                              final size = box.biggest;
+                              return GestureDetector(
+                                  onTapUp: mode != 'Text' || saving
+                                      ? null
+                                      : (d) {
+                                          if (text.text.trim().isEmpty) return;
+                                          setState(() => marks.add(PhotoMark(
+                                              point(d.localPosition, size),
+                                              Offset.zero,
+                                              colour,
+                                              text: text.text.trim())));
+                                        },
+                                  onPanStart: mode == 'Text' || saving
+                                      ? null
+                                      : (d) => setState(() {
+                                            start =
+                                                point(d.localPosition, size);
+                                            end = start;
+                                          }),
+                                  onPanUpdate: mode == 'Text' || saving
+                                      ? null
+                                      : (d) => setState(() =>
+                                          end = point(d.localPosition, size)),
+                                  onPanEnd: mode == 'Text' || saving
+                                      ? null
+                                      : (_) {
+                                          if (start == null || end == null)
+                                            return;
+                                          setState(() {
+                                            if (mode == 'Crop') {
+                                              final r =
+                                                  Rect.fromPoints(start!, end!);
+                                              if (r.width > .02 &&
+                                                  r.height > .02) {
+                                                crop = r;
+                                                resetSize();
+                                              }
+                                            } else {
+                                              marks.add(PhotoMark(
+                                                  start!, end!, colour));
+                                            }
+                                            start = null;
+                                            end = null;
+                                          });
+                                        },
+                                  child: CustomPaint(
+                                      painter: _PhotoPainter(image!, crop,
+                                          marks, mode, start, end, colour)));
+                            })),
+                        Wrap(spacing: 8, children: [
+                          TextButton(
+                              onPressed: () => setState(() {
+                                    crop = const Rect.fromLTWH(0, 0, 1, 1);
+                                    resetSize();
+                                  }),
+                              child: const AppText('Reset crop')),
+                          TextButton(
+                              onPressed: marks.isEmpty
+                                  ? null
+                                  : () => setState(marks.removeLast),
+                              child: const AppText('Undo annotation'))
+                        ]),
+                        Row(children: [
+                          Expanded(
+                              child: TextField(
+                                  controller: width,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                      labelText: tr('Width (px)')),
+                                  onChanged: (v) {
+                                    final n = int.tryParse(v);
+                                    if (locked && n != null)
+                                      height.text = (n *
+                                              image!.height *
+                                              crop.height /
+                                              (image!.width * crop.width))
+                                          .round()
+                                          .toString();
+                                  })),
                           IconButton(
-                              tooltip: c == colour
-                                  ? tr('Selected colour')
-                                  : tr('Choose colour'),
-                              onPressed: () => setState(() => colour = c),
-                              icon: Icon(
-                                  c == colour
-                                      ? Icons.check_circle
-                                      : Icons.circle,
-                                  color: c))
-                      ]),
-                    AspectRatio(
-                        aspectRatio: image!.width / image!.height,
-                        child: LayoutBuilder(builder: (context, box) {
-                          final size = box.biggest;
-                          return GestureDetector(
-                              onTapUp: mode != 'Text' || saving
-                                  ? null
-                                  : (d) {
-                                      if (text.text.trim().isEmpty) return;
-                                      setState(() => marks.add(PhotoMark(
-                                          point(d.localPosition, size),
-                                          Offset.zero,
-                                          colour,
-                                          text: text.text.trim())));
-                                    },
-                              onPanStart: mode == 'Text' || saving
-                                  ? null
-                                  : (d) => setState(() {
-                                        start = point(d.localPosition, size);
-                                        end = start;
-                                      }),
-                              onPanUpdate: mode == 'Text' || saving
-                                  ? null
-                                  : (d) => setState(
-                                      () => end = point(d.localPosition, size)),
-                              onPanEnd: mode == 'Text' || saving
-                                  ? null
-                                  : (_) {
-                                      if (start == null || end == null) return;
-                                      setState(() {
-                                        if (mode == 'Crop') {
-                                          final r =
-                                              Rect.fromPoints(start!, end!);
-                                          if (r.width > .02 && r.height > .02) {
-                                            crop = r;
-                                            resetSize();
-                                          }
-                                        } else {
-                                          marks.add(
-                                              PhotoMark(start!, end!, colour));
-                                        }
-                                        start = null;
-                                        end = null;
-                                      });
-                                    },
-                              child: CustomPaint(
-                                  painter: _PhotoPainter(image!, crop, marks,
-                                      mode, start, end, colour)));
-                        })),
-                    Wrap(spacing: 8, children: [
-                      TextButton(
-                          onPressed: () => setState(() {
-                                crop = const Rect.fromLTWH(0, 0, 1, 1);
-                                resetSize();
-                              }),
-                          child: const AppText('Reset crop')),
-                      TextButton(
-                          onPressed: marks.isEmpty
-                              ? null
-                              : () => setState(marks.removeLast),
-                          child: const AppText('Undo annotation'))
-                    ]),
-                    Row(children: [
-                      Expanded(
-                          child: TextField(
-                              controller: width,
-                              keyboardType: TextInputType.number,
-                              decoration:
-                                  InputDecoration(labelText: tr('Width (px)')),
-                              onChanged: (v) {
-                                final n = int.tryParse(v);
-                                if (locked && n != null)
-                                  height.text = (n *
-                                          image!.height *
-                                          crop.height /
-                                          (image!.width * crop.width))
-                                      .round()
-                                      .toString();
-                              })),
-                      IconButton(
-                          tooltip: tr('Keep proportions'),
-                          onPressed: () => setState(() => locked = !locked),
-                          icon: Icon(locked ? Icons.lock : Icons.lock_open)),
-                      Expanded(
-                          child: TextField(
-                              controller: height,
-                              keyboardType: TextInputType.number,
-                              decoration:
-                                  InputDecoration(labelText: tr('Height (px)')),
-                              onChanged: (v) {
-                                final n = int.tryParse(v);
-                                if (locked && n != null)
-                                  width.text = (n *
-                                          image!.width *
-                                          crop.width /
-                                          (image!.height * crop.height))
-                                      .round()
-                                      .toString();
-                              }))
-                    ]),
-                    if (error != null)
-                      AppText(error!,
-                          style: const TextStyle(color: Colors.red)),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                        onPressed: saving ? null : save,
-                        icon: const Icon(Icons.save_outlined),
-                        label:
-                            AppText(saving ? 'Saving...' : 'Save edited copy')),
-                  ]))));
+                              tooltip: tr('Keep proportions'),
+                              onPressed: () => setState(() => locked = !locked),
+                              icon:
+                                  Icon(locked ? Icons.lock : Icons.lock_open)),
+                          Expanded(
+                              child: TextField(
+                                  controller: height,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                      labelText: tr('Height (px)')),
+                                  onChanged: (v) {
+                                    final n = int.tryParse(v);
+                                    if (locked && n != null)
+                                      width.text = (n *
+                                              image!.width *
+                                              crop.width /
+                                              (image!.height * crop.height))
+                                          .round()
+                                          .toString();
+                                  }))
+                        ]),
+                        if (error != null)
+                          AppText(error!,
+                              style: const TextStyle(color: Colors.red)),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                            onPressed: saving ? null : save,
+                            icon: const Icon(Icons.save_outlined),
+                            label: AppText(
+                                saving ? 'Saving...' : 'Save edited copy')),
+                      ])))));
 }
 
 class _PhotoPainter extends CustomPainter {

@@ -1,3 +1,4 @@
+import '../widgets/fashion_backdrop.dart';
 import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -5,22 +6,23 @@ import 'package:flutter/material.dart';
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
-  static const bg = Color(0xFFCED1C6);
-  static const brown = Color(0xFF574543);
+  static const bg = Color(0xFFFAF0F3);
+  static const brown = Color(0xFF85465F);
 
   @override
   Widget build(BuildContext context) {
     AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
-      body: SafeArea(
+      body: FashionBackdrop(
+          child: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Center(
                 child: SizedBox(
-                  width: 320,
+                  width: 390,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 24),
@@ -62,7 +64,7 @@ class WelcomeScreen extends StatelessWidget {
                               backgroundColor: brown,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
+                                borderRadius: BorderRadius.circular(18),
                               ),
                             ),
                             child: const AppText(
@@ -83,7 +85,7 @@ class WelcomeScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 
@@ -92,22 +94,22 @@ class WelcomeScreen extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return SizedBox(
-      width: 127,
-      height: 43,
+      width: 280,
+      height: 52,
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: brown,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(18),
           ),
         ),
         child: AppText(
           text,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 12,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),

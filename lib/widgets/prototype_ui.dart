@@ -1,11 +1,12 @@
+import 'fashion_backdrop.dart';
 import '../services/app_language.dart';
 import 'custom_back_button.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
-const prototypeBackground = Color(0xFFCED1C6);
-const prototypeBrown = Color(0xFF574543);
-const prototypeCard = Color(0xFFEFEFEF);
+const prototypeBackground = Color(0xFFFAF0F3);
+const prototypeBrown = Color(0xFF85465F);
+const prototypeCard = Color(0xFFFFFAF8);
 const prototypeFieldBorder =
     OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(14)));
 const prototypeFieldPadding =
@@ -39,12 +40,13 @@ class PrototypeButton extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                   backgroundColor: prototypeBrown,
                   foregroundColor: Colors.white,
-                  elevation: 0,
+                  elevation: 1,
+                  shadowColor: const Color(0x3385465F),
                   minimumSize: const Size(0, 44),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14))),
+                      borderRadius: BorderRadius.circular(20))),
               child: AppText(label,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
@@ -61,7 +63,7 @@ class PrototypeNav extends StatelessWidget {
               currentIndex: index,
               backgroundColor: AppColors.panel(context, Colors.white),
               elevation: 0,
-              selectedItemColor: AppColors.ink(context, prototypeBrown),
+              selectedItemColor: AppColors.accent(context),
               unselectedItemColor: AppColors.muted(context, prototypeBrown),
               selectedLabelStyle:
                   const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
@@ -108,36 +110,41 @@ class PrototypePage extends StatelessWidget {
       context,
       () => Scaffold(
           backgroundColor: AppColors.page(context),
-          body: SafeArea(
-              child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 390),
-                      child: SingleChildScrollView(
-                          padding: EdgeInsets.fromLTRB(
-                              MediaQuery.sizeOf(context).width <= 340 ? 16 : 20,
-                              8,
-                              MediaQuery.sizeOf(context).width <= 340 ? 16 : 20,
-                              24),
-                          child: Column(children: [
-                            const CustomBackButton(),
-                            if (title != null) ...[
-                              const SizedBox(height: 16),
-                              AppText(title!,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 20)
-                            ],
-                            child,
-                          ]))))),
+          body: FashionBackdrop(
+              child: SafeArea(
+                  child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 560),
+                          child: SingleChildScrollView(
+                              padding: EdgeInsets.fromLTRB(
+                                  MediaQuery.sizeOf(context).width <= 340
+                                      ? 16
+                                      : 20,
+                                  8,
+                                  MediaQuery.sizeOf(context).width <= 340
+                                      ? 16
+                                      : 20,
+                                  24),
+                              child: Column(children: [
+                                const CustomBackButton(),
+                                if (title != null) ...[
+                                  const SizedBox(height: 16),
+                                  AppText(title!,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 20)
+                                ],
+                                child,
+                              ])))))),
           bottomNavigationBar: nav ? PrototypeNav(index: index) : null));
 }
 
 class PrototypePanel extends StatelessWidget {
   const PrototypePanel(
-      {super.key, required this.child, this.radius = 48, this.padding = 24});
+      {super.key, required this.child, this.radius = 24, this.padding = 24});
   final Widget child;
   final double radius, padding;
   @override
@@ -153,11 +160,11 @@ class PrototypePanel extends StatelessWidget {
               color: AppColors.panel(context),
               borderRadius: BorderRadius.circular(radius),
               border: Border.all(
-                  color: AppColors.adaptive(
-                      context, Colors.white70, const Color(0xFF464B40))),
+                  color: AppColors.adaptive(context, const Color(0xFFEAD7DF),
+                      const Color(0xFF624554))),
               boxShadow: const [
                 BoxShadow(
-                    color: Color(0x12574543),
+                    color: Color(0x1485465F),
                     blurRadius: 14,
                     offset: Offset(0, 4))
               ]),

@@ -17,8 +17,8 @@ class AdminUserSubscriptionsScreen extends StatefulWidget {
 
 class _AdminUserSubscriptionsScreenState
     extends State<AdminUserSubscriptionsScreen> {
-  static const background = Color(0xFFD5DBCD);
-  static const purple = Color(0xFF51227D);
+  static const background = Color(0xFFFAF0F3);
+  static const purple = Color(0xFF914C6A);
   late final users = widget.firestore.collection('users').snapshots();
   late final payments = widget.firestore.collection('payments').snapshots();
   int? filter;
@@ -77,7 +77,7 @@ class _AdminUserSubscriptionsScreenState
                               selectedColor: AppColors.accent(context, purple)
                                   .withValues(alpha: 0.18),
                               backgroundColor: AppColors.panel(
-                                  context, const Color(0xFFF4F4F4)),
+                                  context, const Color(0xFFFFFAF8)),
                               onSelected: (_) => setState(() => filter = value),
                             ),
                         ],
@@ -152,7 +152,7 @@ class _AdminUserSubscriptionsScreenState
             '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(omanTime), alwaysUse24HourFormat: true)}';
     final months = plan == null ? 0 : SubscriptionAccess.months(plan.amount);
     return Card(
-      color: AppColors.panel(context, const Color(0xFFF4F4F4)),
+      color: AppColors.panel(context, const Color(0xFFFFFAF8)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: ListTile(
         leading: Icon(Icons.person_outline,

@@ -38,10 +38,10 @@ class _AdminUserHistoryScreenState extends State<AdminUserHistoryScreen> {
       () => DefaultTabController(
           length: 3,
           child: Scaffold(
-            backgroundColor: AppColors.page(context, const Color(0xFFD5DBCD)),
+            backgroundColor: AppColors.page(context, const Color(0xFFFAF0F3)),
             appBar: AppBar(
                 backgroundColor:
-                    AppColors.page(context, const Color(0xFFD5DBCD)),
+                    AppColors.page(context, const Color(0xFFFAF0F3)),
                 elevation: 0,
                 title: const AppText('User History'),
                 actions: [
@@ -119,7 +119,7 @@ class _AdminUserHistoryScreenState extends State<AdminUserHistoryScreen> {
                               margin: const EdgeInsets.only(bottom: 12),
                               elevation: 0,
                               color: AppColors.panel(
-                                  context, const Color(0xFFF4F4F4)),
+                                  context, const Color(0xFFFFFAF8)),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(24)),
                               child: ListTile(

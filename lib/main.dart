@@ -1,3 +1,4 @@
+import 'constants/app_theme.dart';
 import 'package:country_picker/country_picker.dart';
 import 'services/app_language.dart';
 import 'services/route_visibility.dart';
@@ -11,7 +12,6 @@ import 'screens/reports_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'constants/app_colors.dart';
 import 'services/appearance.dart';
 
 import 'screens/welcome_screen.dart';
@@ -88,55 +88,8 @@ class FitVisionsApp extends StatelessWidget {
             : SystemUiOverlayStyle.dark,
         child: AppShell(child: child ?? const SizedBox.shrink()),
       ),
-      darkTheme: ThemeData(
-        useMaterial3: false,
-        fontFamily: 'TimesNewRoman',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          brightness: Brightness.dark,
-        ),
-        scaffoldBackgroundColor: const Color(0xFF1C1E1B),
-        inputDecorationTheme: const InputDecorationTheme(
-          isDense: true,
-          filled: true,
-          fillColor: Color(0xFF383B34),
-          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(14))),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            elevation: 0,
-          ),
-        ),
-      ),
-      theme: ThemeData(
-        useMaterial3: false,
-        fontFamily: 'TimesNewRoman',
-        colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF574543), brightness: Brightness.light),
-        inputDecorationTheme: const InputDecorationTheme(
-            isDense: true,
-            filled: true,
-            fillColor: Color(0xFFFFFDFC),
-            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(14))),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(14)),
-                borderSide: BorderSide(color: Color(0xFFB8B9AE))),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(14)),
-                borderSide: BorderSide(color: Color(0xFF574543), width: 1.6))),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF574543),
-                foregroundColor: Colors.white,
-                elevation: 0)),
-        scaffoldBackgroundColor: const Color(0xFFCED1C6),
-      ),
+      darkTheme: fashionTheme(Brightness.dark),
+      theme: fashionTheme(Brightness.light),
       onGenerateRoute: (settings) {
         final link = Uri.tryParse(settings.name ?? '');
         if (link?.scheme == 'https' &&

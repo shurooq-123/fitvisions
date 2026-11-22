@@ -1,3 +1,4 @@
+import '../widgets/fashion_backdrop.dart';
 import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,10 +20,10 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  static const bg = Color(0xFFD5DBCD);
-  static const brown = Color(0xFF574543);
-  static const purple = Color(0xFF51227D);
-  static const panel = Color(0xFFF4F4F4);
+  static const bg = Color(0xFFFAF0F3);
+  static const brown = Color(0xFF85465F);
+  static const purple = Color(0xFF914C6A);
+  static const panel = Color(0xFFFFFAF8);
 
   late final db = widget.firestore ?? FirebaseFirestore.instance;
   late final users = db.collection('users').snapshots();
@@ -34,7 +35,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       () => Scaffold(
             backgroundColor: AppColors.page(context, bg),
             bottomNavigationBar: adminBottomNav(context, 0),
-            body: SafeArea(
+            body: FashionBackdrop(
+                child: SafeArea(
               child: CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(child: _dashboardHeader(context)),
@@ -100,7 +102,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 ],
               ),
-            ),
+            )),
           ));
 
   Widget _dashboardHeader(BuildContext context) => Column(
@@ -202,13 +204,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'serif',
+                            fontFamily: 'sans-serif',
                           ))),
                   AppText(value,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'serif',
+                        fontFamily: 'sans-serif',
                       )),
                   if (onTap != null) ...[
                     const SizedBox(width: 6),
@@ -258,7 +260,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     style: TextStyle(
                       color: AppColors.ink(context),
                       fontSize: 16,
-                      fontFamily: 'serif',
+                      fontFamily: 'sans-serif',
                       fontWeight: FontWeight.bold,
                     ))),
             const SizedBox(width: 8),
@@ -285,7 +287,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(7)),
+                    borderRadius: BorderRadius.circular(18)),
               ),
               child: const AppText('Logout',
                   style: TextStyle(fontWeight: FontWeight.bold)),
@@ -296,10 +298,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 }
 
 Widget adminBottomNav(BuildContext context, int index) {
-  const purple = Color(0xFF51227D);
+  const purple = Color(0xFF914C6A);
 
   return BottomNavigationBar(
     currentIndex: index,
+    elevation: 0,
     selectedItemColor: AppColors.ink(context),
     unselectedItemColor: AppColors.ink(context),
     type: BottomNavigationBarType.fixed,

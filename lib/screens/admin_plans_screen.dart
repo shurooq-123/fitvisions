@@ -1,3 +1,4 @@
+import '../widgets/fashion_backdrop.dart';
 import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,9 +14,9 @@ class AdminPlansScreen extends StatefulWidget {
 }
 
 class _AdminPlansScreenState extends State<AdminPlansScreen> {
-  static const bg = Color(0xFFD5DBCD);
-  static const brown = Color(0xFF574543);
-  static const purple = Color(0xFF51227D);
+  static const bg = Color(0xFFFAF0F3);
+  static const brown = Color(0xFF85465F);
+  static const purple = Color(0xFF914C6A);
 
   final nameController = TextEditingController();
   final priceController = TextEditingController();
@@ -200,7 +201,8 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
-      body: SafeArea(
+      body: FashionBackdrop(
+          child: SafeArea(
         child: SingleChildScrollView(
           child: Center(
             child: SizedBox(
@@ -281,7 +283,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
             ),
           ),
         ),
-      ),
+      )),
       bottomNavigationBar: adminBottomNav(context, 2),
     );
   }
@@ -291,7 +293,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
       width: 295,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.panel(context, const Color(0xFFF4F4F4)),
+        color: AppColors.panel(context, const Color(0xFFFFFAF8)),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(
           color: editingId == null ? Colors.transparent : brown,
@@ -382,7 +384,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.panel(context, const Color(0xFFF4F4F4)),
+        color: AppColors.panel(context, const Color(0xFFFFFAF8)),
         borderRadius: BorderRadius.circular(25),
         border: Border.all(
           color: editingId == id ? brown : Colors.transparent,

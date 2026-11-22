@@ -129,8 +129,11 @@ class ProfileScreen extends StatelessWidget {
 
   Widget group(BuildContext context, List<Widget> children) => Container(
       decoration: BoxDecoration(
-          border: Border.all(color: AppColors.muted(context)),
-          borderRadius: BorderRadius.circular(25)),
+          color: AppColors.field(context),
+          border: Border.all(
+              color: AppColors.adaptive(
+                  context, const Color(0xFFEAD7DF), const Color(0xFF624554))),
+          borderRadius: BorderRadius.circular(20)),
       child: Column(children: children));
   Future<void> showSubscriptionDetails(BuildContext context,
       {bool showPayment = false}) {
@@ -160,9 +163,9 @@ class ProfileScreen extends StatelessWidget {
           dense: true,
           leading: Icon(icon, color: AppColors.accent(context), size: 23),
           title: AppText(text,
-              style: const TextStyle(fontFamily: 'serif', fontSize: 16)),
+              style: const TextStyle(fontFamily: 'sans-serif', fontSize: 16)),
           trailing:
-              const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 23),
+              const Icon(Icons.chevron_right, color: Colors.grey, size: 22),
           onTap: onTap ?? () => Navigator.pushNamed(context, route));
 }
 

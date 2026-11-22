@@ -1,3 +1,4 @@
+import '../widgets/fashion_backdrop.dart';
 import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -15,8 +16,8 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  static const bg = Color(0xFFCED1C6);
-  static const brown = Color(0xFF574543);
+  static const bg = Color(0xFFFAF0F3);
+  static const brown = Color(0xFF85465F);
 
   final emailController = TextEditingController();
   bool loading = false;
@@ -104,7 +105,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
-      body: SafeArea(
+      body: FashionBackdrop(
+          child: SafeArea(
         child: Align(
           alignment: Alignment.topCenter,
           child: SizedBox(
@@ -125,7 +127,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     padding: const EdgeInsets.fromLTRB(22, 20, 22, 24),
                     decoration: BoxDecoration(
                       color: AppColors.panel(context),
-                      borderRadius: BorderRadius.circular(58),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                     child: Column(
                       children: [
@@ -175,7 +177,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               backgroundColor: brown,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(7),
+                                borderRadius: BorderRadius.circular(18),
                               ),
                             ),
                             child: loading
@@ -204,7 +206,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

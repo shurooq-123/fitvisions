@@ -1,3 +1,4 @@
+import '../widgets/fashion_backdrop.dart';
 import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -12,8 +13,8 @@ class MeasurementScreen extends StatefulWidget {
 }
 
 class _MeasurementScreenState extends State<MeasurementScreen> {
-  static const bg = Color(0xFFCED1C6);
-  static const brown = Color(0xFF574543);
+  static const bg = Color(0xFFFAF0F3);
+  static const brown = Color(0xFF85465F);
 
   final heightController = TextEditingController();
   final weightController = TextEditingController();
@@ -85,7 +86,8 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
     AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
-      body: SafeArea(
+      body: FashionBackdrop(
+          child: SafeArea(
         child: Center(
           child: SizedBox(
             width: 320,
@@ -104,7 +106,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
                     padding: const EdgeInsets.fromLTRB(24, 22, 24, 26),
                     decoration: BoxDecoration(
                       color: AppColors.panel(context),
-                      borderRadius: BorderRadius.circular(45),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,7 +171,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 

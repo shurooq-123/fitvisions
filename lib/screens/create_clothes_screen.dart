@@ -470,23 +470,23 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                                     child: OutlinedButton(
                                       style: OutlinedButton.styleFrom(
                                         backgroundColor: selected
-                                            ? const Color(0xFF5C4745)
+                                            ? const Color(0xFF85465F)
                                             : AppColors.field(context,
                                                 const Color(0xFFF5F5F5)),
                                         foregroundColor: selected
                                             ? Colors.white
                                             : AppColors.ink(context,
-                                                const Color(0xFF302B2A)),
+                                                const Color(0xFF382331)),
                                         side: BorderSide(
                                             color: selected
-                                                ? const Color(0xFF5C4745)
-                                                : const Color(0xFFB9BDB2),
+                                                ? const Color(0xFF85465F)
+                                                : const Color(0xFFE5CED7),
                                             width: selected ? 2 : 1),
                                         shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(12)),
                                         textStyle: const TextStyle(
-                                            fontFamily: 'TimesNewRoman',
+                                            fontFamily: 'sans-serif',
                                             fontSize: 21,
                                             fontWeight: FontWeight.bold),
                                       ),

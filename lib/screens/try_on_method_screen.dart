@@ -1,3 +1,4 @@
+import '../widgets/fashion_backdrop.dart';
 import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,8 +16,8 @@ class TryOnMethodScreen extends StatefulWidget {
 }
 
 class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
-  static const bg = Color(0xFFCED1C6);
-  static const brown = Color(0xFF574543);
+  static const bg = Color(0xFFFAF0F3);
+  static const brown = Color(0xFF85465F);
 
   int selectedMethod = 0;
   late final Future<String?> userName = loadUserName();
@@ -64,12 +65,15 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
     return Scaffold(
       bottomNavigationBar: const PrototypeNav(),
       backgroundColor: AppColors.page(context, bg),
-      body: SafeArea(
-        child: Center(
+      body: FashionBackdrop(
+          child: SafeArea(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: SizedBox(
             width: 320,
             child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                 child: Column(
                   children: [
                     Align(
@@ -116,7 +120,7 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
                 )),
           ),
         ),
-      ),
+      )),
     );
   }
 
@@ -134,13 +138,22 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
         continueToNextPage();
       },
       child: Container(
-        width: 250,
+        width: 310,
         padding: const EdgeInsets.all(16),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: AppColors.panel(context),
-          borderRadius: BorderRadius.circular(40),
-          border: isSelected ? Border.all(color: brown, width: 2) : null,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+              color: isSelected
+                  ? brown
+                  : AppColors.adaptive(context, const Color(0xFFE5CED7),
+                      const Color(0xFF624554)),
+              width: isSelected ? 2 : 1),
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0x1485465F), blurRadius: 16, offset: Offset(0, 5))
+          ],
         ),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Flexible(

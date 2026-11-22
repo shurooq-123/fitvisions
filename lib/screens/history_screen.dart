@@ -1,3 +1,4 @@
+import '../widgets/fashion_backdrop.dart';
 import '../services/app_language.dart';
 import 'dart:convert';
 import 'ai_generation_screen.dart';
@@ -98,14 +99,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  static const bg = Color(0xFFCED1C6);
+  static const bg = Color(0xFFFAF0F3);
 
   @override
   Widget build(BuildContext context) {
     AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
-      body: SafeArea(
+      body: FashionBackdrop(
+          child: SafeArea(
         child: Column(
           children: [
             Align(
@@ -131,9 +133,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   hintText: trError('Search history or date'),
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
-                  fillColor: AppColors.field(context, const Color(0xFFEFEFEF)),
+                  fillColor: AppColors.field(context, const Color(0xFFFFFAF8)),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(20),
                       borderSide: BorderSide.none),
                 ),
               ),
@@ -213,7 +215,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.panel(context),
-                          borderRadius: BorderRadius.circular(25),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                              color: AppColors.adaptive(
+                                  context,
+                                  const Color(0xFFEAD7DF),
+                                  const Color(0xFF624554))),
+                          boxShadow: const [
+                            BoxShadow(
+                                color: Color(0x1085465F),
+                                blurRadius: 12,
+                                offset: Offset(0, 4))
+                          ],
                         ),
                         child: InkWell(
                             onTap: () {
@@ -231,7 +244,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     "$title\n${dateLabel(data['createdAt'])}",
                                     style: const TextStyle(
                                       fontSize: 15,
-                                      fontFamily: 'serif',
+                                      fontFamily: 'sans-serif',
                                     ),
                                   ),
                                 ),
@@ -254,7 +267,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ],
         ),
-      ),
+      )),
       bottomNavigationBar: bottomNav(context),
     );
   }

@@ -23,7 +23,7 @@ class PersonalClothMeasurementScreen extends StatefulWidget {
 
 class _PersonalClothMeasurementScreenState
     extends State<PersonalClothMeasurementScreen> {
-  static const brown = Color(0xFF574543);
+  static const brown = Color(0xFF85465F);
 
   Map<String, String> bodyMeasurements = {};
   String? selectedSize;

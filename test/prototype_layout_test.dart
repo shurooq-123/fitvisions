@@ -1,3 +1,4 @@
+import 'package:fitvisions/constants/app_theme.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:fitvisions/services/app_language.dart';
 // Firestore SDK interfaces are mocked only for isolated UI tests.
@@ -283,11 +284,7 @@ void main() {
                 supportedLocales: const [Locale('en'), Locale('ar')],
                 localizationsDelegates: GlobalMaterialLocalizations.delegates,
                 debugShowCheckedModeBanner: false,
-                theme: ThemeData(
-                    useMaterial3: false,
-                    fontFamily: 'TimesNewRoman',
-                    brightness:
-                        suffix == '-dark' ? Brightness.dark : Brightness.light),
+                theme: fashionTheme(suffix == '-dark' ? Brightness.dark : Brightness.light),
                 builder: (context, child) => MediaQuery(
                     data: MediaQuery.of(context)
                         .copyWith(textScaler: TextScaler.linear(scale)),

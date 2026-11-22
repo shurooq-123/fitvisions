@@ -11,11 +11,11 @@ class AdminPaymentsScreen extends StatelessWidget {
   Widget build(BuildContext context) => AppLanguage.observe(
       context,
       () => Scaffold(
-            backgroundColor: AppColors.page(context, const Color(0xFFD5DBCD)),
+            backgroundColor: AppColors.page(context, const Color(0xFFFAF0F3)),
             appBar: AppBar(
                 title: const AppText('Subscriptions / Payments'),
                 backgroundColor:
-                    AppColors.page(context, const Color(0xFFD5DBCD))),
+                    AppColors.page(context, const Color(0xFFFAF0F3))),
             bottomNavigationBar: adminBottomNav(context, 0),
             body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: (firestore ?? FirebaseFirestore.instance)

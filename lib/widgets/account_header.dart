@@ -28,7 +28,7 @@ class AccountHeader extends StatelessWidget {
           final user = auth.data;
           if (user == null) return const SizedBox.shrink();
           return Material(
-              color: AppColors.page(context, const Color(0xFFCED1C6)),
+              color: AppColors.page(context, const Color(0xFFFAF0F3)),
               child: SafeArea(
                   bottom: false,
                   child: Row(children: [

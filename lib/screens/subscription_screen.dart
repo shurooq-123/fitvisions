@@ -174,13 +174,13 @@ class SubscriptionPlanCard extends StatelessWidget {
         button: true,
         child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(52),
+            borderRadius: BorderRadius.circular(24),
             child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
                 decoration: BoxDecoration(
                     color: AppColors.panel(context),
-                    borderRadius: BorderRadius.circular(52),
+                    borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                         color: selected ? prototypeBrown : Colors.transparent,
                         width: 2)),

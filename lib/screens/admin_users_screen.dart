@@ -1,3 +1,4 @@
+import '../widgets/fashion_backdrop.dart';
 import '../services/app_language.dart';
 import '../services/admin_archive_service.dart';
 import '../services/subscription_access.dart';
@@ -17,7 +18,7 @@ class AdminUsersScreen extends StatefulWidget {
 }
 
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
-  static const bg = Color(0xFFD5DBCD);
+  static const bg = Color(0xFFFAF0F3);
 
   final searchController = TextEditingController();
   String searchText = '';
@@ -94,7 +95,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     AppLanguage.watch(context);
     return Scaffold(
       backgroundColor: AppColors.page(context, bg),
-      body: SafeArea(
+      body: FashionBackdrop(
+          child: SafeArea(
         child: Column(
           children: [
             const SizedBox(height: 12),
@@ -124,7 +126,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               height: 44,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: AppColors.panel(context, const Color(0xFFF4F4F4)),
+                color: AppColors.panel(context, const Color(0xFFFFFAF8)),
                 borderRadius: BorderRadius.circular(25),
               ),
               child: TextField(
@@ -208,7 +210,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             ),
           ],
         ),
-      ),
+      )),
       bottomNavigationBar: adminBottomNav(context, 1),
     );
   }
@@ -226,7 +228,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         vertical: 14,
       ),
       decoration: BoxDecoration(
-        color: AppColors.panel(context, const Color(0xFFF4F4F4)),
+        color: AppColors.panel(context, const Color(0xFFFFFAF8)),
         borderRadius: BorderRadius.circular(25),
       ),
       child: Row(
