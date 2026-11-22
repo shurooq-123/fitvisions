@@ -1,3 +1,4 @@
+import 'ai_assistance_screen.dart';
 import '../services/app_language.dart';
 import '../widgets/language_selector.dart';
 import '../widgets/subscription_summary.dart';
@@ -96,7 +97,20 @@ class ProfileScreen extends StatelessWidget {
                               menu(context, Icons.lock_outline,
                                   'Change Password', '/changePassword'),
                               menu(context, Icons.help_outline,
-                                  'Help & support', '/feedback'),
+                                  'Help & support', '/feedback',
+                                  onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const AiAssistanceScreen()))),
+                              menu(context, Icons.auto_awesome,
+                                  'Recommended For You', '/recommendations',
+                                  onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const AiAssistanceScreen(
+                                                  recommendations: true)))),
                               menu(context, Icons.info_outline, 'About Us',
                                   '/about'),
                             ]),

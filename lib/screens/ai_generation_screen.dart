@@ -1,3 +1,4 @@
+import 'ai_assistance_screen.dart';
 import 'photo_editor_screen.dart';
 import '../services/app_language.dart';
 import '../services/clothing_compatibility.dart';
@@ -928,6 +929,39 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                   ? avatarResult()
                   : ZoomableResult(
                       child: Image.memory(output!, gaplessPlayback: true)),
+            if (output != null && !widget.geometryOnly)
+              Card(
+                  child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(children: [
+                        const AppText('You May Also Like',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        const AppText(
+                            'Discover complementary clothing, colours and styles.'),
+                        TextButton.icon(
+                            icon: const Icon(Icons.auto_awesome),
+                            label: const AppText('Show suggestions'),
+                            onPressed: busy
+                                ? null
+                                : () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => AiAssistanceScreen(
+                                              recommendations: true,
+                                              referenceImage: output,
+                                              initialMeasurements:
+                                                  resultMeasurements.isNotEmpty
+                                                      ? resultMeasurements
+                                                      : {
+                                                          for (final e
+                                                              in measures
+                                                                  .entries)
+                                                            e.key: e.value.text
+                                                        },
+                                              clothingContext:
+                                                  'Selected garment: ${widget.outfitDetails.isNotEmpty ? widget.outfitDetails : garmentCut?.name ?? "uploaded outfit"}. Gender: ${widget.avatarGender?.name ?? "not specified"}. Colour: ${widget.preferredColour ?? "not specified"}. ${changes.text}',
+                                            )))),
+                      ]))),
             if (hasMeasuredPreview && resultMeasurements.isNotEmpty) ...[
               const SizedBox(height: 12),
               measurementCards(),

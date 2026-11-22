@@ -202,6 +202,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           if (digits == 16 && RegExp(r'^0+$').hasMatch(text)) {
             return tr('Enter a valid card number');
           }
+          if (label == 'CVV' && text == '000') return tr('Enter a valid CVV');
           if (isExpiry) {
             final match = RegExp(r'^(0[1-9]|1[0-2])/(\d{2})$').firstMatch(text);
             if (match == null) return tr('Use MM/YY');

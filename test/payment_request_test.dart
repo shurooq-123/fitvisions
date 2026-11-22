@@ -88,6 +88,17 @@ void main() {
         inputAt(2),
         '${first.month.toString().padLeft(2, '0')}/'
         '${(first.year % 100).toString().padLeft(2, '0')}');
+    final security = tester.widget<TextFormField>(fields.at(3));
+    expect(security.validator!('000'), 'Enter a valid CVV');
+    expect(security.validator!('-12'), 'Enter 3 digits');
+    expect(security.validator!('123'), isNull);
+    security.controller!.text = '000';
+    await tester.ensureVisible(find.text('Pay'));
+    await tester.tap(find.text('Pay'));
+    await tester.pumpAndSettle();
+    expect(saved, isNull);
+    expect(find.text('Enter a valid CVV'), findsOneWidget);
+    security.controller!.text = '123';
     await tester.ensureVisible(find.text('Pay'));
     await tester.tap(find.text('Pay'));
     await tester.pumpAndSettle();

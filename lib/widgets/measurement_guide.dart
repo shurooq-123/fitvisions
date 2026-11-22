@@ -323,12 +323,14 @@ class BodyMeasurements extends StatefulWidget {
       this.onUnitChanged,
       this.afterFields,
       this.avatarSizing = false,
+      this.initialValues = const {},
       this.gender});
   final ValueChanged<Map<String, String>> onChanged;
   final ValueChanged<String>? onSize;
   final ValueChanged<bool>? onUnitChanged;
   final Widget? afterFields;
   final bool avatarSizing;
+  final Map<String, String> initialValues;
   final AvatarGender? gender;
   @override
   State<BodyMeasurements> createState() => _BodyMeasurementsState();
@@ -349,6 +351,15 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
   final previousValues = <String, double?>{};
   bool inches = false;
   String? selectedSize;
+  @override
+  void initState() {
+    super.initState();
+    for (final key in fields.keys) {
+      final n = double.tryParse(widget.initialValues[key] ?? '');
+      if (n != null) setCentimetres(key, n);
+    }
+  }
+
   void emit() {
     final values = <String, String>{
       for (final key in fields.keys) key: centimetres[key]?.toString() ?? '',

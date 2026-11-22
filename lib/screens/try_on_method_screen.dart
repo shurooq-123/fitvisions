@@ -1,5 +1,4 @@
 import '../services/app_language.dart';
-import 'ai_assistance_screen.dart';
 import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -98,29 +97,6 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
                         ),
                       ),
                     const PrototypeLogo(width: 200, symbolOnly: true),
-                    if (widget.dashboard)
-                      Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 8,
-                          children: [
-                            TextButton.icon(
-                                icon: const Icon(Icons.auto_awesome),
-                                label: const AppText('AI recommendations'),
-                                onPressed: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const AiAssistanceScreen(
-                                                recommendations: true)))),
-                            TextButton.icon(
-                                icon: const Icon(Icons.chat_bubble_outline),
-                                label: const AppText('AI assistant'),
-                                onPressed: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const AiAssistanceScreen()))),
-                          ]),
                     const SizedBox(height: 20),
                     const AppText(
                       'Choose Your Try-On\nMethod',

@@ -1,5 +1,16 @@
 // Presentation strings; stored database values remain unchanged.
 const arabic = <String, String>{
+  "Recommended For You": "مقترح لك",
+  "You May Also Like": "قد يعجبك أيضاً",
+  "Latest personal recommendations": "أحدث التوصيات الشخصية",
+  "Show suggestions": "عرض الاقتراحات",
+  "Discover complementary clothing, colours and styles.":
+      "اكتشف قطع ملابس وألواناً وستايلات متناسقة.",
+  "Could not load saved preferences. You can enter them below.":
+      "تعذر تحميل البيانات المحفوظة. يمكنك إدخالها أدناه.",
+  "The displayed outfit image is sent to AI when you request suggestions.":
+      "تُرسل صورة الإطلالة المعروضة إلى الذكاء الاصطناعي عند طلب الاقتراحات.",
+  "Enter a valid CVV": "أدخل رمز أمان صحيحاً غير مكوّن من أصفار فقط",
   "Edit photo": "تعديل الصورة",
   "Use original": "استخدام الأصل",
   "Crop": "قص",
