@@ -1,3 +1,4 @@
+import 'screens/ai_assistance_screen.dart';
 import 'constants/app_theme.dart';
 import 'package:country_picker/country_picker.dart';
 import 'services/app_language.dart';
@@ -101,6 +102,7 @@ class FitVisionsApp extends StatelessWidget {
         return null;
       },
       routes: <String, WidgetBuilder>{
+        '/helpSupport': (context) => const AiAssistanceScreen(),
         '/notifications': (context) => const NotificationsScreen(),
         '/reports': (context) => const ReportsScreen(),
         '/': (context) => const WelcomeScreen(),

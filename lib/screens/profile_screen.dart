@@ -100,12 +100,7 @@ class ProfileScreen extends StatelessWidget {
                               menu(context, Icons.lock_outline,
                                   'Change Password', '/changePassword'),
                               menu(context, Icons.help_outline,
-                                  'Help & support', '/feedback',
-                                  onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (_) =>
-                                              const AiAssistanceScreen()))),
+                                  'Help & support', '/helpSupport'),
                               menu(context, Icons.auto_awesome,
                                   'Recommended For You', '/recommendations',
                                   onTap: () => Navigator.push(

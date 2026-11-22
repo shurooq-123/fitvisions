@@ -1,5 +1,6 @@
 // Presentation strings; stored database values remain unchanged.
 const arabic = <String, String>{
+  "Chatbot": "المساعد",
   "Recommended For You": "مقترح لك",
   "You May Also Like": "قد يعجبك أيضاً",
   "Latest personal recommendations": "أحدث التوصيات الشخصية",

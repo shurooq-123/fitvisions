@@ -1,3 +1,4 @@
+import 'persistent_navigation_scope.dart';
 import 'fashion_backdrop.dart';
 import '../services/app_language.dart';
 import 'custom_back_button.dart';
@@ -54,12 +55,15 @@ class PrototypeButton extends StatelessWidget {
 }
 
 class PrototypeNav extends StatelessWidget {
-  const PrototypeNav({super.key, this.index = 0});
+  const PrototypeNav({super.key, this.index = 0, this.navigatorKey});
+  final GlobalKey<NavigatorState>? navigatorKey;
   final int index;
   @override
   Widget build(BuildContext context) => AppLanguage.observe(
       context,
-      () => BottomNavigationBar(
+      () => PersistentNavigationScope.of(context)
+          ? const SizedBox.shrink()
+          : BottomNavigationBar(
               currentIndex: index,
               backgroundColor: AppColors.panel(context, Colors.white),
               elevation: 0,
@@ -71,27 +75,33 @@ class PrototypeNav extends StatelessWidget {
                   const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
               type: BottomNavigationBarType.fixed,
               onTap: (i) {
-                final route = ['/home', '/profile', '/history'][i];
+                final route =
+                    ['/home', '/profile', '/history', '/helpSupport'][i];
+                final navigator =
+                    navigatorKey?.currentState ?? Navigator.of(context);
                 if (ModalRoute.of(context)?.settings.name != route) {
                   if (route == '/home') {
-                    Navigator.pushNamedAndRemoveUntil(
-                        context, route, (r) => false);
+                    navigator.pushNamedAndRemoveUntil(route, (r) => false);
                   } else {
-                    Navigator.pushNamedAndRemoveUntil(
-                        context, route, (r) => r.settings.name == '/home');
+                    navigator.pushNamedAndRemoveUntil(
+                        route, (r) => r.settings.name == '/home');
                   }
                 }
               },
               items: [
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.home_outlined, size: 26),
-                    label: tr('Home')),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.person_outline, size: 26),
-                    label: tr('Profile')),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.history, size: 26), label: tr('History')),
-              ]));
+                  BottomNavigationBarItem(
+                      icon: Icon(Icons.home_outlined, size: 26),
+                      label: tr('Home')),
+                  BottomNavigationBarItem(
+                      icon: Icon(Icons.person_outline, size: 26),
+                      label: tr('Profile')),
+                  BottomNavigationBarItem(
+                      icon: Icon(Icons.history, size: 26),
+                      label: tr('History')),
+                  BottomNavigationBarItem(
+                      icon: Icon(Icons.chat_bubble_outline, size: 24),
+                      label: tr('Chatbot')),
+                ]));
 }
 
 class PrototypePage extends StatelessWidget {
