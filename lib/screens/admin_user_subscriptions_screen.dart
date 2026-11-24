@@ -54,9 +54,7 @@ class _AdminUserSubscriptionsScreenState
                           filter == null ||
                           (plans[user.id]?.amount ?? 0) == filter)
                       .toList();
-                  visible.sort((a, b) => newestRecordFirst(
-                      a.data() as Map<String, dynamic>,
-                      b.data() as Map<String, dynamic>));
+                  visible.sort((a, b) => newestRecordFirst(a.data(), b.data()));
                   return Column(
                     children: [
                       const Padding(
