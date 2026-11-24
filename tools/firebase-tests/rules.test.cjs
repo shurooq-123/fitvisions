@@ -72,7 +72,7 @@ test('only a verified email can create its own non-admin profile', async () => {
 test('measurement and history batch saves atomically with owner isolation',async()=>{
   const db=alice.firestore(),batch=writeBatch(db);
   batch.set(doc(db,'measurements','alice'),{...identity('alice'),measurementType:'bodyOnly',height:'170',weight:'65',chest:'90',waist:'75',hip:'95',imageStorage:'local_only',updatedAt:serverTimestamp()});
-  batch.set(doc(db,'history','measurement'),{...identity('alice'),title:'Measurements saved',createdAt:serverTimestamp()});
+  batch.set(doc(db,'history','measurement'),{...identity('alice'),title:'Measurements saved',editData:{measurements:{height:'170',chest:'90',waist:'75',hip:'95'}},createdAt:serverTimestamp()});
   await assertSucceeds(batch.commit());
   await assertSucceeds(getDoc(doc(db,'measurements','alice')));
   await assertFails(getDoc(doc(bob.firestore(),'measurements','alice')));

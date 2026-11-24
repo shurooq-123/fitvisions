@@ -1,3 +1,4 @@
+import '../services/record_order.dart';
 import '../services/app_language.dart';
 import '../constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -53,6 +54,9 @@ class _AdminUserSubscriptionsScreenState
                           filter == null ||
                           (plans[user.id]?.amount ?? 0) == filter)
                       .toList();
+                  visible.sort((a, b) => newestRecordFirst(
+                      a.data() as Map<String, dynamic>,
+                      b.data() as Map<String, dynamic>));
                   return Column(
                     children: [
                       const Padding(

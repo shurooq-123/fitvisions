@@ -29,10 +29,13 @@ class AppDataService {
 
   static Map<String, dynamic> _identity(User user) =>
       {'uid': user.uid, 'email': user.email};
-  static void _history(WriteBatch batch, User user, String title) {
+  static void _history(WriteBatch batch, User user, String title,
+      {Map<String, dynamic>? measurements}) {
     batch.set(firestore.collection('history').doc(), {
       ..._identity(user),
       'title': title,
+      if (measurements != null)
+        'editData': {'measurements': Map<String, dynamic>.from(measurements)},
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
@@ -88,7 +91,8 @@ class AppDataService {
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true));
-    _history(batch, user, 'Measurements saved / updated');
+    _history(batch, user, 'Measurements saved / updated',
+        measurements: measurements);
     await batch.commit();
   }
 

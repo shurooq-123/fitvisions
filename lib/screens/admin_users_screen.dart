@@ -1,3 +1,4 @@
+import '../services/record_order.dart';
 import '../widgets/fashion_backdrop.dart';
 import '../services/app_language.dart';
 import '../services/admin_archive_service.dart';
@@ -179,6 +180,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             email.contains(searchText));
                   }).toList();
 
+                  users.sort((a, b) => newestRecordFirst(
+                      a.data() as Map<String, dynamic>,
+                      b.data() as Map<String, dynamic>));
                   if (users.isEmpty) {
                     return const Center(
                       child: AppText('No users found'),
