@@ -23,7 +23,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: CreateClothesScreen()));
     expect(find.text('Personal photo (optional)'), findsOneWidget);
     expect(find.text('Gallery'), findsOneWidget);
-    expect(find.text('Camera'), findsOneWidget);
+    expect(find.text('Camera'), findsNothing);
     expect(find.byKey(const ValueKey('Colour palette')), findsNothing);
   });
 }

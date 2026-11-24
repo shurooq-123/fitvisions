@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class RouteVisibility extends NavigatorObserver {
+  static final currentRoute = ValueNotifier<String?>(null);
   static final tabIndex = ValueNotifier<int>(0);
   static final publicPage = ValueNotifier<bool>(true);
   static const publicRoutes = {
@@ -15,6 +16,7 @@ class RouteVisibility extends NavigatorObserver {
     if (route is! PageRoute) return;
     final hidden = publicRoutes.contains(route.settings.name);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      currentRoute.value = route.settings.name;
       publicPage.value = hidden;
       final tab = ['/home', '/profile', '/history', '/helpSupport']
           .indexOf(route.settings.name ?? '');

@@ -1,8 +1,41 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitvisions/screens/ai_assistance_screen.dart';
 
 void main() {
+  testWidgets(
+      'Recommendations show generated image with a short caption instead of the long answer',
+      (tester) async {
+    final image = File('images/bridal_satin.png').readAsBytesSync();
+    await tester.pumpWidget(MaterialApp(
+        home: AiAssistanceScreen(
+            recommendations: true,
+            initialMeasurements: const {
+              'Height': '170',
+              'Chest': '93',
+              'Waist': '75',
+              'Hips': '99'
+            },
+            clothingContext: 'Blue dress',
+            request: (p, d) async =>
+                'Long recommendation advice about a cream jacket and navy trousers.',
+            imageGenerator: (prompt, refs) async {
+              expect(prompt, contains('cream jacket'));
+              return image;
+            })));
+    await tester.ensureVisible(find.text('Get recommendations'));
+    await tester.tap(find.text('Get recommendations'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.text('Looks inspired by your measurements and preferences.'),
+        findsOneWidget);
+    expect(
+        find.text(
+            'Long recommendation advice about a cream jacket and navy trousers.'),
+        findsNothing);
+  });
+
   testWidgets(
       'Related recommendations send prefilled measurements and selected garment',
       (tester) async {

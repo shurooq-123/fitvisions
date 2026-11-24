@@ -76,11 +76,12 @@ class _TryOnMethodScreenState extends State<TryOnMethodScreen> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                 child: Column(
                   children: [
-                    Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                            onPressed: () => Navigator.maybePop(context),
-                            icon: const Icon(Icons.arrow_back_ios))),
+                    if (!widget.dashboard)
+                      Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                              onPressed: () => Navigator.maybePop(context),
+                              icon: const Icon(Icons.arrow_back_ios))),
                     if (widget.dashboard)
                       const Padding(
                           padding: EdgeInsets.only(bottom: 14),

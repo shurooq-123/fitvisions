@@ -74,18 +74,17 @@ class SubscriptionSummary extends StatelessWidget {
                     AppText('${sub['plan']}',
                         style: const TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold)),
-                    AppText('Active demo subscription • ${sub['amount']} OMR'),
-                    AppText(SubscriptionAccess.months(sub['amount'] as num) == 1
-                        ? 'Duration: 1 month'
-                        : 'Duration: 6 months'),
-                    AppText('Subscribed on: ${timestamp('startsAt')}',
-                        textAlign: TextAlign.center),
+                    AppText(
+                        '${SubscriptionAccess.planMonths(sub)} ${tr('Months')}'),
+                    const SizedBox(height: 8),
                     AppText('Expires on: ${timestamp('expiresAt')}',
                         textAlign: TextAlign.center),
-                    const AppText('Includes Generate Avatar and Design Clothes',
-                        textAlign: TextAlign.center),
-                    const AppText('No automatic renewal • No real charge',
-                        style: TextStyle(fontSize: 12)),
+                    const SizedBox(height: 8),
+                    AppText(
+                        '${((sub['expiresAt'] as DateTime).difference(DateTime.now()).inSeconds / 86400).ceil().clamp(0, 99999)} ${tr('days remaining')}',
+                        style: TextStyle(
+                            color: AppColors.accent(context),
+                            fontWeight: FontWeight.w600)),
                   ]));
             },
           ));

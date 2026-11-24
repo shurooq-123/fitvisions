@@ -582,10 +582,6 @@ class _CreateClothesScreenState extends State<CreateClothesScreen> {
                   onPressed: () => pickFace(ImageSource.gallery),
                   icon: const Icon(Icons.photo_library),
                   label: const AppText('Gallery')),
-              TextButton.icon(
-                  onPressed: () => pickFace(ImageSource.camera),
-                  icon: const Icon(Icons.camera_alt),
-                  label: const AppText('Camera')),
             ]),
             if (facePhoto != null) ...[
               Image.file(File(facePhoto!), height: 150),

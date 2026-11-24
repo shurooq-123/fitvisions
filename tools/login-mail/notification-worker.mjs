@@ -25,7 +25,7 @@ export function period(record) {
 export function reminderFor(records,now=new Date()) {
  const candidates=records.map(r=>({record:r,period:period(r)})).filter(x=>x.period).sort((a,b)=>b.period.end-a.period.end);
  const latest=candidates[0];
- if(!latest || latest.period.start>now || latest.period.end-now>3*86400000)return null;
+ if(!latest || latest.period.start>now || latest.period.end-now>2*86400000)return null;
  return {...latest,expired:latest.period.end<=now};
 }
 export function paymentNotice(record,renewal=false) {

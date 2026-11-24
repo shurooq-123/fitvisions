@@ -22,9 +22,6 @@ class ProfileScreen extends StatelessWidget {
         title: 'Profile',
         index: 1,
         child: Column(children: [
-          const _AppearanceSwitch(),
-          const LanguageSelector(),
-          const SizedBox(height: 18),
           user == null
               ? const AppText('No user logged in')
               : FutureBuilder<DocumentSnapshot>(
@@ -109,6 +106,8 @@ class ProfileScreen extends StatelessWidget {
                                           builder: (_) =>
                                               const AiAssistanceScreen(
                                                   recommendations: true)))),
+                              const _AppearanceSwitch(),
+                              const LanguageSelector(),
                               menu(context, Icons.info_outline, 'About Us',
                                   '/about'),
                             ]),

@@ -1,5 +1,10 @@
 // Presentation strings; stored database values remain unchanged.
 const arabic = <String, String>{
+  "days remaining": "يوم متبقٍ",
+  "Looks inspired by your measurements and preferences.":
+      "إطلالات مقترحة حسب مقاساتك وتفضيلاتك.",
+  "Refresh to see your recommendations as images.":
+      "حدّث التوصيات لعرضها كصور.",
   "Chatbot": "المساعد",
   "Recommended For You": "مقترح لك",
   "You May Also Like": "قد يعجبك أيضاً",

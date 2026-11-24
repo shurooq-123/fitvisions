@@ -1,3 +1,4 @@
+import {deliverExpiryEmails} from './expiry-email.mjs';
 import {deliverEvent} from './event-notifications.mjs';
 import http from 'node:http';
 import {randomBytes} from 'node:crypto';
@@ -197,3 +198,5 @@ server.listen(8789,'127.0.0.1',async()=>{
   await writeFile('build/mail-setup-url.txt',origin+setupPath);
   console.log('Local login email server ready; awaiting sender setup.');
 });
+
+setInterval(() => deliverExpiryEmails(transport,sender).catch(() => console.error('Subscription email reminder will retry.')),60000);

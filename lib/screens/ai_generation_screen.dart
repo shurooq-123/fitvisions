@@ -384,6 +384,13 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
       return;
     }
     final measurements = currentMeasurements;
+    if (measures.isNotEmpty && !validAvatarMeasurements(measurements)) {
+      update(() => error = measurements.entries
+          .where((e) => measurementError(e.key, e.value) != null)
+          .map((e) => '${tr(e.key)}: ${measurementError(e.key, e.value)}')
+          .join(' • '));
+      return;
+    }
     if (hasMeasuredPreview
         ? !validAvatarMeasurements(measurements)
         : widget.measuredBodyReference &&
@@ -849,6 +856,10 @@ class _AiGenerationScreenState extends State<AiGenerationScreen> {
                                 onChanged: (text) =>
                                     editMeasurement(entry.key, text),
                                 decoration: InputDecoration(
+                                    errorText: entry.value.text.isEmpty
+                                        ? null
+                                        : measurementError(entry.key,
+                                            currentMeasurements[entry.key]),
                                     suffixText: hasMeasuredPreview
                                         ? measurementUnit
                                         : entry.key == 'Weight'

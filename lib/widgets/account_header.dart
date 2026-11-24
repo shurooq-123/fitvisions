@@ -14,10 +14,12 @@ class AccountHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     AppLanguage.watch(context);
     if (Firebase.apps.isEmpty) return const SizedBox.shrink();
-    return ValueListenableBuilder<bool>(
-        valueListenable: RouteVisibility.publicPage,
-        builder: (context, publicPage, _) =>
-            publicPage ? const SizedBox.shrink() : _signedInHeader(context));
+    return ValueListenableBuilder<String?>(
+        valueListenable: RouteVisibility.currentRoute,
+        builder: (context, route, _) =>
+            RouteVisibility.publicRoutes.contains(route)
+                ? const SizedBox.shrink()
+                : _signedInHeader(context));
   }
 
   Widget _signedInHeader(BuildContext context) {
@@ -32,23 +34,24 @@ class AccountHeader extends StatelessWidget {
               child: SafeArea(
                   bottom: false,
                   child: Row(children: [
-                    IconButton(
-                      key: const ValueKey('fixed-account-back'),
-                      tooltip:
-                          MaterialLocalizations.of(context).backButtonTooltip,
-                      icon: const BackButtonIcon(),
-                      onPressed: () {
-                        final navigator =
-                            NotificationService.navigator.currentState;
-                        if (navigator == null) return;
-                        if (navigator.canPop()) {
-                          navigator.pop();
-                        } else {
-                          // Explicit button exit only: root swipe/back is blocked.
-                          SystemNavigator.pop();
-                        }
-                      },
-                    ),
+                    if (RouteVisibility.currentRoute.value != '/home')
+                      IconButton(
+                        key: const ValueKey('fixed-account-back'),
+                        tooltip:
+                            MaterialLocalizations.of(context).backButtonTooltip,
+                        icon: const BackButtonIcon(),
+                        onPressed: () {
+                          final navigator =
+                              NotificationService.navigator.currentState;
+                          if (navigator == null) return;
+                          if (navigator.canPop()) {
+                            navigator.pop();
+                          } else {
+                            // Explicit button exit only: root swipe/back is blocked.
+                            SystemNavigator.pop();
+                          }
+                        },
+                      ),
                     Expanded(
                         child: StreamBuilder<
                                 DocumentSnapshot<Map<String, dynamic>>>(

@@ -139,12 +139,6 @@ class _AvatarComparisonScreenState extends State<AvatarComparisonScreen> {
                         : () => choose(personal, ImageSource.gallery),
                     icon: const Icon(Icons.photo_library),
                     label: const AppText('Gallery')),
-                TextButton.icon(
-                    onPressed: busy
-                        ? null
-                        : () => choose(personal, ImageSource.camera),
-                    icon: const Icon(Icons.camera_alt),
-                    label: const AppText('Camera'))
               ]),
               if ((personal ? person : garment) != null) ...[
                 SizedBox(

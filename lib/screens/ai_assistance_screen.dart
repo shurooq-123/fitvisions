@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -15,10 +17,12 @@ class AiAssistanceScreen extends StatefulWidget {
       {super.key,
       this.recommendations = false,
       this.request,
+      this.imageGenerator,
       this.initialMeasurements = const {},
       this.clothingContext = '',
       this.referenceImage});
   final bool recommendations;
+  final Future<Uint8List> Function(String, List<Uint8List>)? imageGenerator;
   final Uint8List? referenceImage;
   final Map<String, String> initialMeasurements;
   final String clothingContext;
@@ -33,6 +37,7 @@ class _AiAssistanceScreenState extends State<AiAssistanceScreen> {
   Map<String, String> measurements = {};
   bool busy = false;
   String? error, recommendation;
+  Uint8List? recommendationImage;
   String? owner, recommendedAt;
   bool loadingProfile = false;
   @override
@@ -57,6 +62,11 @@ class _AiAssistanceScreenState extends State<AiAssistanceScreen> {
           recommendation = data['answer'] as String?;
           recommendedAt = data['at'] as String?;
           input.text = data['preferences'] as String? ?? '';
+          if (data['imagePath'] is String) {
+            final file = File(data['imagePath'] as String);
+            if (await file.exists())
+              recommendationImage = await file.readAsBytes();
+          }
         }
         if (measurements.isEmpty) {
           final doc = await FirebaseFirestore.instance
@@ -142,6 +152,24 @@ class _AiAssistanceScreenState extends State<AiAssistanceScreen> {
               .toList(),
       });
       if (!mounted) return;
+      Uint8List? visual;
+      String? imagePath;
+      if (widget.recommendations &&
+          (widget.request == null || widget.imageGenerator != null)) {
+        final visualAdvice =
+            answer.length > 4000 ? answer.substring(0, 4000) : answer;
+        visual = await (widget.imageGenerator ?? AiGenerationService.generate)(
+            'Create a professional fashion recommendation board with THREE clearly separated clothing looks. Show actual garments as clean product photography, no people, no faces, no writing, no labels. Use a dusty rose and warm white studio backdrop. Each outfit should follow this styling advice: $visualAdvice. User preferences: $text. Keep garment design and gender category consistent with the supplied advice. Do not draw a size chart.',
+            const []);
+        if (!mounted) return;
+        if (owner != null) {
+          final dir = await getApplicationSupportDirectory();
+          final file = File('${dir.path}/recommendation_$owner.png');
+          await file.writeAsBytes(visual);
+          imagePath = file.path;
+        }
+      }
+      if (!mounted) return;
       if (widget.recommendations &&
           owner != null &&
           FirebaseAuth.instance.currentUser?.uid == owner) {
@@ -152,6 +180,7 @@ class _AiAssistanceScreenState extends State<AiAssistanceScreen> {
               'recommendations.$owner',
               jsonEncode({
                 'answer': answer,
+                if (imagePath != null) 'imagePath': imagePath,
                 'at': recommendedAt,
                 'preferences': input.text.trim()
               }));
@@ -163,6 +192,7 @@ class _AiAssistanceScreenState extends State<AiAssistanceScreen> {
       setState(() {
         if (widget.recommendations) {
           recommendation = answer;
+          recommendationImage = visual;
         } else {
           messages
             ..add({'role': 'user', 'content': text})
@@ -266,7 +296,20 @@ class _AiAssistanceScreenState extends State<AiAssistanceScreen> {
             if (recommendation != null)
               Padding(
                   padding: const EdgeInsets.only(top: 16),
-                  child: SelectableText(recommendation!)),
+                  child: recommendationImage != null
+                      ? Column(children: [
+                          ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Image.memory(recommendationImage!)),
+                          const SizedBox(height: 8),
+                          const AppText(
+                              'Looks inspired by your measurements and preferences.',
+                              textAlign: TextAlign.center),
+                        ])
+                      : widget.request != null
+                          ? SelectableText(recommendation!)
+                          : const AppText(
+                              'Refresh to see your recommendations as images.')),
             if (messages.isNotEmpty)
               TextButton(
                   onPressed: busy ? null : () => setState(messages.clear),

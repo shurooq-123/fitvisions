@@ -48,10 +48,6 @@ class _PersonalClothMeasurementScreenState
           builder: (context) => SafeArea(
                   child: Wrap(children: [
                 ListTile(
-                    leading: const Icon(Icons.camera_alt),
-                    title: const AppText('Camera'),
-                    onTap: () => Navigator.pop(context, ImageSource.camera)),
-                ListTile(
                     leading: const Icon(Icons.photo_library),
                     title: const AppText('Album'),
                     onTap: () => Navigator.pop(context, ImageSource.gallery)),

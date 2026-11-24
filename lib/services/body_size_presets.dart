@@ -42,22 +42,30 @@ Map<String, String> bodySizePreset(String size, double heightCm) {
   };
 }
 
-bool completeBodyMeasurements(Map<String, String> values) =>
-    ['Height', 'Chest', 'Waist', 'Hips'].every((key) {
-      final n = double.tryParse(values[key] ?? '');
-      return n != null &&
-          n.isFinite &&
-          n > 0 &&
-          n <= (key == 'Height' ? 250 : 300);
-    });
-
-bool validAvatarMeasurements(Map<String, String> values) {
-  if (!completeBodyMeasurements(values) ||
-      double.parse(values['Height']!) < avatarMinimumHeight) {
-    return false;
+const measurementLimits = <String, (double, double)>{
+  'Height': (50, 250),
+  'Chest': (30, 300),
+  'Waist': (30, 300),
+  'Hips': (30, 300),
+  'Shoulders': (15, 100),
+};
+String? measurementError(String key, String? raw) {
+  final range = measurementLimits[key];
+  if (range == null || (key == 'Shoulders' && (raw ?? '').trim().isEmpty))
+    return null;
+  final n = double.tryParse(raw ?? '');
+  if (n == null || !n.isFinite || n < range.$1 || n > range.$2) {
+    return '${range.$1.toInt()}–${range.$2.toInt()} cm';
   }
-  final shoulders = values['Shoulders']?.trim() ?? '';
-  if (shoulders.isEmpty) return true;
-  final width = double.tryParse(shoulders);
-  return width != null && width.isFinite && width > 0 && width <= 100;
+  return null;
 }
+
+bool completeBodyMeasurements(Map<String, String> values) => [
+      'Height',
+      'Chest',
+      'Waist',
+      'Hips'
+    ].every((key) => measurementError(key, values[key]) == null);
+bool validAvatarMeasurements(Map<String, String> values) =>
+    completeBodyMeasurements(values) &&
+    measurementError('Shoulders', values['Shoulders']) == null;

@@ -433,6 +433,10 @@ class _BodyMeasurementsState extends State<BodyMeasurements> {
                               emit();
                             },
                             decoration: InputDecoration(
+                                errorText: e.value.text.isEmpty
+                                    ? null
+                                    : measurementError(
+                                        e.key, centimetres[e.key]?.toString()),
                                 hintText: trError(
                                     widget.avatarSizing && e.key == 'Height'
                                         ? (inches ? '19.69–98.43' : '50–250')
